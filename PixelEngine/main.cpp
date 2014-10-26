@@ -68,9 +68,9 @@ int main(int argc, const char * argv[]){
 			glfwPollEvents();
 		}
 
-//		SceneManager::drop();
-		//TextureManager::drop();
-		//Video::drop();
+		SceneManager::drop();
+		TextureManager::drop();
+		Video::drop();
 
 		SceneManager::getInstance().reset();
 	}

@@ -85,7 +85,8 @@ bool Q3Bsp::_loadVertexes(FILE * file) {
 	m_toDraw.vertices.reset(new Vector4f[m_toDraw.nVertices]);
 
 	for (int i = 0; i < m_toDraw.nVertices; ++i) {
-		m_vertexes.get()[i].texcoord[0][1] = 1.0f - m_vertexes.get()[i].texcoord[0][1];
+		m_vertexes[i].texcoord[0][1] = 1.0f - m_vertexes[i].texcoord[0][1];
+//		m_vertexes.get()[i].texcoord[1][0] = 1.0f - m_vertexes.get()[i].texcoord[1][0];
 	}
 
 	ILogger::log("--> %d vertexes loaded.\n", m_toDraw.nVertices);
@@ -147,11 +148,9 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 
 	ILogger::log("--> %d Shaders\n", nShaders);
 
+
 	for (int i = 0; i < nShaders; ++i) {
 		std::string name(m_bspShaders.get()[i].name);
-		Q3ShaderPass shaderPass;
-
-		m_shaders[i].addShaderPasse(shaderPass);
 
 		ILogger::log("--->  %s\n", name.c_str());
 
@@ -161,6 +160,14 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 	if (!textureManager->loadTextures(files, m_textureIds)) {
 		return false;
 	}
+
+
+	for (int i = 0; i < nShaders; ++i) {
+		Q3ShaderDefault shaderDefault(m_textureIds[i]);
+
+		m_shaders[i] = shaderDefault;
+	}
+
 
 	return true;
 }
@@ -231,9 +238,26 @@ void Q3Bsp::render() {
 			glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes.get()[face.vertex].position));
 			
 			while (shaderPasse != shaderPassesEnd) {
-				glBindTexture(GL_TEXTURE_2D, m_textureIds[face.shader]);
+//				glBindTexture(GL_TEXTURE_2D, m_textureIds[face.shader]);
 
-				glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes.get()[face.vertex].texcoord));
+				if ((*shaderPasse).flags & SHADER_LIGHTMAP) {
+					//glTexCoordPointer(2, GL_FLOAT, 0, arrays.lm_st);
+					//glBindTexture(GL_TEXTURE_2D, lightmap_tex[lmtex]);
+					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[1]));
+					glBindTexture(GL_TEXTURE_2D, face.lm_index);
+				}
+				else {
+					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[0]));
+					glBindTexture(GL_TEXTURE_2D, (*shaderPasse).texId);
+				}
+
+				if ((*shaderPasse).flags & SHADER_BLEND) {
+					glEnable(GL_BLEND);
+					glBlendFunc((*shaderPasse).blendSrc, (*shaderPasse).blendDst);
+				} 
+				else {
+					glDisable(GL_BLEND);
+				}
 
 				glDrawElements(GL_TRIANGLES, face.n_meshverts, GL_UNSIGNED_INT, &(m_meshVerts.get()[face.meshvert]));
 
@@ -249,10 +273,6 @@ void Q3Bsp::render() {
 		++children;
 	}
 
-
-
-//	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-//	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 
