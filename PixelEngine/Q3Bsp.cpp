@@ -241,8 +241,6 @@ void Q3Bsp::render() {
 //				glBindTexture(GL_TEXTURE_2D, m_textureIds[face.shader]);
 
 				if ((*shaderPasse).flags & SHADER_LIGHTMAP) {
-					//glTexCoordPointer(2, GL_FLOAT, 0, arrays.lm_st);
-					//glBindTexture(GL_TEXTURE_2D, lightmap_tex[lmtex]);
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[1]));
 					glBindTexture(GL_TEXTURE_2D, face.lm_index);
 				}

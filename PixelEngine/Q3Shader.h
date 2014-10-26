@@ -13,19 +13,19 @@
 #include <GLFW/glfw3.h>
 #include <vector>
 
-/* Shader flags */
+
 enum
 {
 	SHADER_NOCULL = 1 << 0,
 	SHADER_TRANSPARENT = 1 << 1,
-	SHADER_DEPTHWRITE = 1 << 2,  /* Also used for pass flag */
+	SHADER_DEPTHWRITE = 1 << 2, 
 	SHADER_SKY = 1 << 3,
 	SHADER_NOMIPMAPS = 1 << 4,
 	SHADER_NEEDCOLOURS = 1 << 5,
 	SHADER_DEFORMVERTS = 1 << 6
 };
 
-/* Shaderpass flags */
+
 enum
 {
 	SHADER_LIGHTMAP = 1 << 0,
@@ -71,7 +71,8 @@ public:
 
 		m_flags = 0;
 
-		shaderPass.flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
+//		shaderPass.flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
+		shaderPass.flags = 0;
 		shaderPass.texId = -1;
 		m_shaderPasses.push_back(shaderPass);
 
