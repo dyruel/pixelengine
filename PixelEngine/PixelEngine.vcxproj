@@ -82,7 +82,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Bsp.h" />
+    <ClInclude Include="Q3Bsp.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="glext.h" />
@@ -96,7 +96,7 @@
     <ClInclude Include="Video.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Bsp.cpp" />
+    <ClCompile Include="Q3Bsp.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="Input.cpp" />
