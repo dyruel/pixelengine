@@ -34,14 +34,18 @@ int main(int argc, const char * argv[]){
 
 
     std::shared_ptr<DummyNode> dummyNode(new DummyNode());
-	std::shared_ptr<CameraFree> camera(new CameraFree());
-	std::shared_ptr<Bsp> bsp(new Bsp());
+	std::shared_ptr<CameraFps> camera(new CameraFps());
+	std::shared_ptr<Q3Bsp> q3bsp(new Q3Bsp());
 
 	sceneManager->setCamera(camera);
-	sceneManager->addSceneNode(bsp);
+	sceneManager->addSceneNode(q3bsp);
     
     camera->init();
-	bsp->load("test.bsp");
+	camera->getPosition()[0] = 0.;
+	camera->getPosition()[1] = 0.;
+	camera->getPosition()[2] = 50.;
+
+	q3bsp->load("bsp/test.bsp");
     
 	GLdouble lastTime = (GLdouble) glfwGetTime();
 
