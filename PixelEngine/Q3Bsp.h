@@ -12,6 +12,7 @@
 #ifndef PixelEngine_Q3Bsp_h
 #define PixelEngine_Q3Bsp_h
 
+#include "Q3Shader.h"
 #include "Scene.h"
 
 const int Q3BSP_VERSION = 46; // quake 3 maps
@@ -177,29 +178,28 @@ typedef	struct {
 } Q3BspVisData;
 
 
-
-
 class Q3Bsp : public SceneNode {
 
 	Q3BspHeader m_header;
-	std::shared_ptr<GLuint> m_textureIds;
-	std::shared_ptr<GLuint> m_lmIds;
+	std::unique_ptr<Q3Shader[]> m_shaders;
+	std::unique_ptr<GLuint[]> m_textureIds;
+	std::unique_ptr<GLuint[]> m_lmIds;
 	GLuint m_blankTexId;
 
 	// BSP data
-	std::unique_ptr<Q3BspVertex> m_vertexes;
-	std::unique_ptr<Q3BspMeshVert> m_meshVerts;
-	std::unique_ptr<Q3BspShader> m_shaders;
-	std::unique_ptr<Q3BspLightMap> m_lightMaps;
+	std::unique_ptr<Q3BspVertex[]> m_vertexes;
+	std::unique_ptr<Q3BspMeshVert[]> m_meshVerts;
+	std::unique_ptr<Q3BspShader[]> m_bspShaders;
+	std::unique_ptr<Q3BspLightMap[]> m_lightMaps;
 	int m_nFaces;
-	std::unique_ptr<Q3BspFace> m_faces;
+	std::unique_ptr<Q3BspFace[]> m_faces;
 
 	// 
 	struct  {
 		std::unique_ptr<Vector4f>  vertices;
 		int nVertices;
 
-		std::unique_ptr<int>  meshes;
+		std::unique_ptr<int[]>  meshes;
 		int nMeshes;
 	} m_toDraw;
 
@@ -208,11 +208,10 @@ class Q3Bsp : public SceneNode {
 	bool _loadShaders(FILE * file);
 	bool _loadFaces(FILE * file);
 	bool _loadLightMaps(FILE * file);
-
 	
 public:
 	Q3Bsp();
-	~Q3Bsp();
+	virtual ~Q3Bsp();
 
 	void render();
 	void update(GLdouble delta);

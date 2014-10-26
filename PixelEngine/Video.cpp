@@ -42,14 +42,6 @@ bool Video::init() {
 
 	glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-
-	// Check extensions
-	if (glfwExtensionSupported("GL_ARB_multitexture")) {
-		
-
-	}
-
-
     
 	// FOG test
 	GLfloat fogColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };

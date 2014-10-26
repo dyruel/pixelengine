@@ -41,13 +41,14 @@ private:
 	bool deinit();
 
 	TextureManager() {};
-	~TextureManager() {};
 	TextureManager(TextureManager&);
 	void operator =(TextureManager&);
 
 public:
 
-	bool loadTextures(const std::vector<std::string>& files, std::shared_ptr<GLuint>& ids);
+	virtual ~TextureManager() {};
+
+	bool loadTextures(const std::vector<std::string>& files, std::unique_ptr<GLuint[]>& ids);
 
 	GLuint loadTextureFromFile(std::string filename);
     

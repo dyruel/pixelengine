@@ -82,11 +82,13 @@ private:
 	bool deinit();
 
 	SceneManager() {};
-	~SceneManager() {};
 	SceneManager(SceneManager&);
 	void operator =(SceneManager&);
 
 public:
+
+	virtual ~SceneManager() {};
+
     void setCamera(std::shared_ptr<Camera> camera) {
         m_camera = camera;
     }

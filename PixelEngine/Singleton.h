@@ -9,13 +9,16 @@
 #ifndef PixelEngine_Singleton_h
 #define PixelEngine_Singleton_h
 
+#include <memory>
+
 template <class T>
 class Singleton {
+
 public:
 
-	static T* getInstance() {
+	static std::shared_ptr<T> getInstance() {
 		if (!instance) {
-			instance = new T;
+			instance.reset(new T);
 			instance->init();
 		}
 		return instance;
@@ -25,8 +28,6 @@ public:
 	static void drop() {
 		if (instance) {
 			instance->deinit();
-			delete instance;
-			instance = NULL;
 		}
 	}
 
@@ -40,7 +41,7 @@ protected:
 
 private:
 
-	static T* instance; 
+	static std::shared_ptr<T> instance;
 
 	Singleton(Singleton&);
 	void operator =(Singleton&);
@@ -48,6 +49,6 @@ private:
 };
 
 
-template <class T> T* Singleton<T>::instance = NULL;
+template <class T> std::shared_ptr<T> Singleton<T>::instance = NULL;
 
 #endif

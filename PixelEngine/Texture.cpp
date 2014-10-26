@@ -30,7 +30,7 @@ bool TextureManager::deinit() {
 	return true;
 }
 
-bool TextureManager::loadTextures(const std::vector<std::string>& files, std::shared_ptr<GLuint>& ids) {
+bool TextureManager::loadTextures(const std::vector<std::string>& files, std::unique_ptr<GLuint[]>& ids) {
 
 	GLsizei n = (GLsizei) files.size();
 	std::vector<std::string>::const_iterator i = files.begin();
@@ -40,7 +40,7 @@ bool TextureManager::loadTextures(const std::vector<std::string>& files, std::sh
 	ILuint * imgIds = NULL;
 	
 	ids.reset(new GLuint[n]);
-	glGenTextures(n, ids.get());
+	glGenTextures(n, &ids[0]);
 
 	imgIds = new GLuint[n];
 	ilGenImages(n, imgIds);
@@ -71,7 +71,7 @@ bool TextureManager::loadTextures(const std::vector<std::string>& files, std::sh
 			//texture.bpp = ilGetInteger(IL_IMAGE_BPP);
 			//texture.imageData = ilGetData();
 
-			glBindTexture(GL_TEXTURE_2D, ids.get()[k]);
+			glBindTexture(GL_TEXTURE_2D, ids[k]);
 			gluBuild2DMipmaps(GL_TEXTURE_2D, 
 							  ilGetInteger(IL_IMAGE_BPP), 
 							  ilGetInteger(IL_IMAGE_WIDTH),

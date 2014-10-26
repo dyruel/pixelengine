@@ -58,6 +58,12 @@ bool Q3Bsp::load(const char* filename) {
 		return false;
 	}
 
+	// Check extensions
+	if (glfwExtensionSupported("GL_ARB_multitexture")) {
+
+
+	}
+
 
 	fclose(file);
 	ILogger::log("done\n");
@@ -124,7 +130,7 @@ bool Q3Bsp::_loadFaces(FILE * file) {
 
 
 bool Q3Bsp::_loadShaders(FILE * file) {
-	TextureManager* textureManager = TextureManager::getInstance();
+	std::shared_ptr<TextureManager> textureManager = TextureManager::getInstance();
 	std::vector<std::string> files;
 	int nShaders = 0;
 
@@ -133,17 +139,22 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 	}
 
 	nShaders = m_header.entries[LUMP_SHADERS].length / sizeof(Q3BspShader);
-	m_shaders.reset(new Q3BspShader[nShaders]);
+	m_bspShaders.reset(new Q3BspShader[nShaders]);
+	m_shaders.reset(new Q3Shader[nShaders]);
 
 	fseek(file, m_header.entries[LUMP_SHADERS].offset, SEEK_SET);
-	fread(m_shaders.get(), m_header.entries[LUMP_SHADERS].length, 1, file);
+	fread(m_bspShaders.get(), m_header.entries[LUMP_SHADERS].length, 1, file);
 
 	ILogger::log("--> %d Shaders\n", nShaders);
 
 	for (int i = 0; i < nShaders; ++i) {
-		std::string name(m_shaders.get()[i].name);
+		std::string name(m_bspShaders.get()[i].name);
+		Q3ShaderPass shaderPass;
+
+		m_shaders[i].addShaderPasse(shaderPass);
 
 		ILogger::log("--->  %s\n", name.c_str());
+
 		files.push_back(name);
 	}
 
@@ -172,10 +183,10 @@ bool Q3Bsp::_loadLightMaps(FILE * file) {
 	ILogger::log("--> %d LightMaps\n", nLightMaps);
 
 	m_lmIds.reset(new GLuint[nLightMaps]);
-	glGenTextures(nLightMaps, m_lmIds.get());
+	glGenTextures(nLightMaps, &m_lmIds[0]);
 
 	for (int i = 0; i<nLightMaps; ++i) {
-		glBindTexture(GL_TEXTURE_2D, m_lmIds.get()[i]);
+		glBindTexture(GL_TEXTURE_2D, m_lmIds[i]);
 
 		gluBuild2DMipmaps(GL_TEXTURE_2D, 
 						  GL_RGBA8, 128, 128,
@@ -203,64 +214,39 @@ bool Q3Bsp::_loadLightMaps(FILE * file) {
 
 
 void Q3Bsp::render() {
-	int i, j;
-	SceneNodeList::iterator c = m_children.begin();
-	SceneNodeList::iterator end = m_children.end();
-
-
-//	glFrontFace(GL_CW);
+	int i;
+	SceneNodeList::iterator children = m_children.begin();
+	SceneNodeList::iterator childrenEnd = m_children.end();
 
 	for (i = 0; i < m_nFaces; ++i) {
 		Q3BspFace face = m_faces.get()[i];
+		Q3Shader shader = m_shaders.get()[face.shader];
+		const std::vector<Q3ShaderPass>&  shaderPasses = shader.getShaderPasses();
 
-		
+		std::vector<Q3ShaderPass>::const_iterator shaderPasse = shaderPasses.begin();
+		std::vector<Q3ShaderPass>::const_iterator shaderPassesEnd = shaderPasses.end();
 
 		if (face.type == FACE_MESH || face.type == FACE_POLYGON) {
 
-//			BspVertex * vertex = &m_vertexes.get()[face.vertex];
-//			BspMeshVert * meshVertex = &m_meshVerts.get()[face.meshvert];
-			//glColor3ub(255, 255, 255);
-			glBindTexture(GL_TEXTURE_2D, m_textureIds.get()[face.shader]);
-
 			glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes.get()[face.vertex].position));
-
-			glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes.get()[face.vertex].texcoord));
-
-			glDrawElements(GL_TRIANGLES, face.n_meshverts, GL_UNSIGNED_INT, &(m_meshVerts.get()[face.meshvert]));
-
-
 			
-			//glBegin(GL_TRIANGLES);
-			//for (j = 0; j < face.n_meshverts; ++j) {
+			while (shaderPasse != shaderPassesEnd) {
+				glBindTexture(GL_TEXTURE_2D, m_textureIds[face.shader]);
 
-			//}
+				glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes.get()[face.vertex].texcoord));
 
-			//
-			//for (j = 0; j < face.n_vertexes; ++j) {
-			//	glVertex3f(bsp::vertices[bsp::faces[j].vertexindex + k].position.x, 
-			//			   bsp::vertices[bsp::faces[j].vertexindex + k].position.y, 
-			//		       bsp::vertices[bsp::faces[j].vertexindex + k].position.z);
-			//}
+				glDrawElements(GL_TRIANGLES, face.n_meshverts, GL_UNSIGNED_INT, &(m_meshVerts.get()[face.meshvert]));
 
-			//glEnd();
-
-			//glBindTexture(GL_TEXTURE_2D, texobj);
-
-			//glTexCoordPointer(2, GL_FLOAT, 0, arrays.tex_st);
-
-			//glDrawElements(GL_TRIANGLES, arrays.numelems, GL_UNSIGNED_INT, arrays.elems);
-
-//			glVertexPointer(3, GL_FLOAT, sizeof(BspVertex), &m_vertexes.get()[0].position);
-//			glBindTexture(GL_TEXTURE_2D, m_loadedTextures[m_faces.get()[i].texture].texId);
-//			glDrawArrays(GL_TRIANGLE_FAN, m_faces.get()[i].vertex, m_faces.get()[i].n_vertexes);
+				++shaderPasse;
+			}
 		}
 	}
 
-	while (c != end) {
+	while (children != childrenEnd) {
 		glPushMatrix();
-		(*c)->render();
+		(*children)->render();
 		glPopMatrix();
-		++c;
+		++children;
 	}
 
 

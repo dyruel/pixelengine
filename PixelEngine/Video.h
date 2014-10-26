@@ -35,11 +35,12 @@ private:
 	bool deinit();
         
     Video();
-    ~Video();
 	Video(Video&);
 	void operator =(Video&);
 
 public:
+
+	virtual ~Video();
 
     void beginScene() const;
     void endScene() const;
