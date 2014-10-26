@@ -11,15 +11,7 @@
 #include "Video.h"
 #include "Scene.h"
 #include "Texture.h"
-#include "Bsp.h"
-
-/*
- 
- Windjammers like games
- Graphism like BaraBariBall de Sportsfriends
- 3 classes de personnages : rapide, equilibré, lourd
- 
- */
+#include "Q3Bsp.h"
 
 const GLdouble deltaTime = .01; // 1/100th seconds
 
@@ -62,6 +54,7 @@ int main(int argc, const char * argv[]){
             lastTime += deltaTime;
         }
         
+		// Rendering
         video->beginScene();
 		sceneManager->render();
 		video->endScene();
