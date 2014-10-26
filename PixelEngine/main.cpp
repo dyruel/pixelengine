@@ -31,18 +31,13 @@ int main(int argc, const char * argv[]){
     TextureManager *  textureManager = TextureManager::getInstance();
 	SceneManager * sceneManager = SceneManager::getInstance();
 
-	//GLuint texID = 0;
-	//texID = textureManager->loadTextureFromFile("stone.tga");
-	//if (texID == 0) {
-	//	std::cout << "pas ok" << std::endl;
-	//}
+
 
     std::shared_ptr<DummyNode> dummyNode(new DummyNode());
 	std::shared_ptr<CameraFree> camera(new CameraFree());
 	std::shared_ptr<Bsp> bsp(new Bsp());
 
 	sceneManager->setCamera(camera);
-	//sceneManager->addSceneNode(dummyNode);
 	sceneManager->addSceneNode(bsp);
     
     camera->init();
