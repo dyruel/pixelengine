@@ -15,37 +15,37 @@
 void DummyNode::render() {
     glBegin(GL_QUADS);
     
-    glColor3ub(255,0,0); //face rouge
+    glColor3ub(255,0,0);
     glVertex3d(1,1,1);
     glVertex3d(1,1,-1);
     glVertex3d(-1,1,-1);
     glVertex3d(-1,1,1);
     
-    glColor3ub(0,255,0); //face verte
+    glColor3ub(0,255,0);
     glVertex3d(1,-1,1);
     glVertex3d(1,-1,-1);
     glVertex3d(1,1,-1);
     glVertex3d(1,1,1);
     
-    glColor3ub(0,0,255); //face bleue
+    glColor3ub(0,0,255); 
     glVertex3d(-1,-1,1);
     glVertex3d(-1,-1,-1);
     glVertex3d(1,-1,-1);
     glVertex3d(1,-1,1);
     
-    glColor3ub(255,255,0); //face jaune
+    glColor3ub(255,255,0); 
     glVertex3d(-1,1,1);
     glVertex3d(-1,1,-1);
     glVertex3d(-1,-1,-1);
     glVertex3d(-1,-1,1);
     
-    glColor3ub(0,255,255); //face cyan
+    glColor3ub(0,255,255);
     glVertex3d(1,1,-1);
     glVertex3d(1,-1,-1);
     glVertex3d(-1,-1,-1);
     glVertex3d(-1,1,-1);
     
-    glColor3ub(255,0,255); //face magenta
+    glColor3ub(255,0,255);
     glVertex3d(1,-1,1);
     glVertex3d(1,1,1);
     glVertex3d(-1,1,1);

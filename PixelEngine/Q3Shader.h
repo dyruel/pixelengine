@@ -5,7 +5,8 @@
 //  Created by morgan on 23/10/14.
 //  Copyright (c) 2014 Morgan Chopin. All rights reserved.
 //
-// Source : http://www.heppler.com/shader/
+
+// Doc : http://www.heppler.com/shader/
 
 #ifndef PixelEngine_Q3Shader_h
 #define PixelEngine_Q3Shader_h

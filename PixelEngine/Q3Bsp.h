@@ -7,7 +7,7 @@
 //
 
 
-// Source: http://www.mralligator.com/q3/
+// Doc: http://www.mralligator.com/q3/
 
 #ifndef PixelEngine_Q3Bsp_h
 #define PixelEngine_Q3Bsp_h
