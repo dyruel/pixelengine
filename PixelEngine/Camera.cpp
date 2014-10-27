@@ -32,7 +32,7 @@ Camera::Camera() {
     m_aspect = ((GLdouble) viewport[2] / (GLdouble) viewport[3]);
 
 	m_position[0] = 0.; m_position[1] = 0.; m_position[2] = 0.;
-	m_dir[0] = 0.; m_dir[1] = 0.; m_dir[2] = 0.;
+	m_dir[0] = 1.; m_dir[1] = 0.; m_dir[2] = 0.;
 	m_up[0] = 0.0;  m_up[1] = 0.0;  m_up[2] = 1.;
 }
 
@@ -82,8 +82,8 @@ void Camera::setView() {
 
 void CameraFree::update(GLdouble delta) {
 	GLFWwindow* window = Video::getInstance()->getWindow();
-	GLdouble mx, my;
-	GLint winHalfWidth, winHalfHeight;
+	GLdouble mx = 0., my = 0.;
+	GLint winHalfWidth = 0., winHalfHeight = 0.;
 	Vector3d move;
 	
 	glfwGetCursorPos(window, &mx, &my);
@@ -123,21 +123,21 @@ void CameraFree::update(GLdouble delta) {
 	m_dir.normalize();
 
 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-		move = -m_dir;
+		move += -m_dir;
 	} 
 
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		move = m_dir;
+		move += m_dir;
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-		move[0] = m_dir[1];
-		move[1] = -m_dir[0];
+		move[0] += m_dir[1];
+		move[1] += -m_dir[0];
 	}
 
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		move[0] = -m_dir[1];
-		move[1] = m_dir[0];
+		move[0] += -m_dir[1];
+		move[1] += m_dir[0];
 	}
 
 	m_position += (move * (m_speed * delta));
@@ -189,23 +189,23 @@ void CameraFps::update(GLdouble delta) {
 	m_dir.normalize();
 
 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
-		move[0] = -m_dir[0];
-		move[1] = -m_dir[1];
+		move[0] += -m_dir[0];
+		move[1] += -m_dir[1];
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		move[0] = m_dir[0];
-		move[1] = m_dir[1];
+		move[0] += m_dir[0];
+		move[1] += m_dir[1];
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-		move[0] = m_dir[1];
-		move[1] = -m_dir[0];
+		move[0] += m_dir[1];
+		move[1] += -m_dir[0];
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-		move[0] = -m_dir[1];
-		move[1] = m_dir[0];
+		move[0] += -m_dir[1];
+		move[1] += m_dir[0];
 	}
 
 	m_position += (move * (m_speed * delta));

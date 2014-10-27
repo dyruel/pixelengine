@@ -5,7 +5,7 @@
 //  Created by morgan on 23/10/14.
 //  Copyright (c) 2014 Morgan Chopin. All rights reserved.
 //
-
+// Source : http://www.heppler.com/shader/
 
 #ifndef PixelEngine_Q3Shader_h
 #define PixelEngine_Q3Shader_h
@@ -14,26 +14,24 @@
 #include <vector>
 
 
-enum
-{
-	SHADER_NOCULL = 1 << 0,
-	SHADER_TRANSPARENT = 1 << 1,
-	SHADER_DEPTHWRITE = 1 << 2, 
-	SHADER_SKY = 1 << 3,
-	SHADER_NOMIPMAPS = 1 << 4,
-	SHADER_NEEDCOLOURS = 1 << 5,
-	SHADER_DEFORMVERTS = 1 << 6
+enum {
+	SHADER_NOCULL		= 1 << 0,
+	SHADER_TRANSPARENT	= 1 << 1,
+	SHADER_DEPTHWRITE	= 1 << 2, 
+	SHADER_SKY			= 1 << 3,
+	SHADER_NOMIPMAPS	= 1 << 4,
+	SHADER_NEEDCOLOURS	= 1 << 5,
+	SHADER_DEFORMVERTS	= 1 << 6
 };
 
 
-enum
-{
-	SHADER_LIGHTMAP = 1 << 0,
-	SHADER_BLEND = 1 << 1,
-	SHADER_ALPHAFUNC = 1 << 3,
-	SHADER_TCMOD = 1 << 4,
-	SHADER_ANIMMAP = 1 << 5,
-	SHADER_TCGEN_ENV = 1 << 6
+enum {
+	SHADER_LIGHTMAP		= 1 << 0,
+	SHADER_BLEND		= 1 << 1,
+	SHADER_ALPHAFUNC	= 1 << 3,
+	SHADER_TCMOD		= 1 << 4,
+	SHADER_ANIMMAP		= 1 << 5,
+	SHADER_TCGEN_ENV	= 1 << 6
 };
 
 

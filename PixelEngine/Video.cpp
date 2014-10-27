@@ -72,6 +72,8 @@ bool Video::init() {
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     glViewport(0, 0, m_windowWidth, m_windowHeight);
 
+	glfwSetCursorPos(m_window, m_windowWidth >> 1, m_windowHeight >> 1);
+
 	ILogger::log("done.\n");
     return true;
 }

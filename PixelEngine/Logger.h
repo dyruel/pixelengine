@@ -42,7 +42,7 @@ private:
 
 public:
 	FileLogger(const std::string& filename = "log.txt") : m_file(filename) {};
-	~FileLogger() { /*m_file.close();*/ };
+	~FileLogger() { /*m_file.close(); */};
 };
 
 
