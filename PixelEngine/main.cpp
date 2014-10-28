@@ -15,14 +15,12 @@
 
 const GLdouble deltaTime = .01; // 1/100th seconds
 
-TextureList textureList;
 
 int main(int argc, const char * argv[]){
 
 	std::shared_ptr<Video> video = Video::getInstance();
 	std::shared_ptr<TextureManager>  textureManager = TextureManager::getInstance();
 	std::shared_ptr<SceneManager> sceneManager = SceneManager::getInstance();
-
 
 
 	std::shared_ptr<DummyNode> dummyNode(new DummyNode());
@@ -40,6 +38,9 @@ int main(int argc, const char * argv[]){
 	if (!q3bsp->load("bsp/test.bsp")) {
 		return 0;
 	}
+
+	Q3Shader shader; 
+	shader.loadFromFile("scripts/test2.shader");
     
 	GLdouble lastTime = (GLdouble) glfwGetTime();
 

@@ -35,6 +35,14 @@ enum {
 	SHADER_TCGEN_ENV	= 1 << 6
 };
 
+enum {
+	SHADER_LOAD_NAME = 1 << 0,
+	SHADER_LOAD_START = 1 << 1,
+	SHADER_LOAD_PASS = 1 << 2,
+	SHADER_LOAD_BRACKET_L = 1 << 3,
+	SHADER_LOAD_BRACKET_R = 1 << 4,
+};
+
 
 typedef	struct {
 	int texId;
@@ -47,10 +55,13 @@ typedef	struct {
 
 class Q3Shader {
 
+
 protected:
 
 	unsigned int m_flags;
+	unsigned int m_readingState;
 	std::vector<Q3ShaderPass> m_shaderPasses;
+
 
 public:
 	Q3Shader() { };
@@ -58,6 +69,7 @@ public:
 
 	void addShaderPasse(const Q3ShaderPass& shaderPass) { m_shaderPasses.push_back(shaderPass); };
 	const std::vector<Q3ShaderPass>& getShaderPasses() const { return m_shaderPasses; };
+	bool loadFromFile(const char* filename);
 
 };
 
