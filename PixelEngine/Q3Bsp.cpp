@@ -18,6 +18,9 @@ Q3Bsp::Q3Bsp() {
 
 
 Q3Bsp::~Q3Bsp() {
+	if (m_visData->bits) {
+		delete[] m_visData->bits;
+	}
 }
 
 
@@ -51,6 +54,8 @@ bool Q3Bsp::load(const char* filename) {
 		 || !this->_loadFaces(file)
 		 || !this->_loadLightMaps(file)
 		 || !this->_loadShaders(file)
+		 || !this->_loadBspTree(file)
+		 || !this->_loadVisData(file)
 		)
 	{
 		ILogger::log("-> Error while loading data from bsp file %s.\n", filename);
@@ -219,6 +224,96 @@ bool Q3Bsp::_loadLightMaps(FILE * file) {
 	return true;
 }
 
+
+bool Q3Bsp::_loadBspTree(FILE * file) {
+	if (!file) {
+		return false;
+	}
+
+	int n = m_header.entries[LUMP_NODES].length / sizeof(Q3BspNode);
+
+	m_nodes.reset(new Q3BspNode[n]);
+	fseek(file, m_header.entries[LUMP_NODES].offset, SEEK_SET);
+	fread(m_nodes.get(), m_header.entries[LUMP_NODES].length, 1, file);
+
+	ILogger::log("--> %d nodes loaded.\n", n);
+
+	n = m_header.entries[LUMP_PLANES].length / sizeof(Q3BspPlane);
+
+	m_planes.reset(new Q3BspPlane[n]);
+	fseek(file, m_header.entries[LUMP_PLANES].offset, SEEK_SET);
+	fread(m_planes.get(), m_header.entries[LUMP_PLANES].length, 1, file);
+
+	ILogger::log("--> %d planes loaded.\n", n);
+
+	n = m_header.entries[LUMP_LEAFS].length / sizeof(Q3BspLeaf);
+
+	m_leafs.reset(new Q3BspLeaf[n]);
+	fseek(file, m_header.entries[LUMP_LEAFS].offset, SEEK_SET);
+	fread(m_leafs.get(), m_header.entries[LUMP_LEAFS].length, 1, file);
+
+	ILogger::log("--> %d leafs loaded.\n", n);
+
+
+	n = m_header.entries[LUMP_LEAFFACES].length / sizeof(Q3BspLeafFace);
+
+	m_leafFaces.reset(new Q3BspLeafFace[n]);
+	fseek(file, m_header.entries[LUMP_LEAFFACES].offset, SEEK_SET);
+	fread(m_leafFaces.get(), m_header.entries[LUMP_LEAFFACES].length, 1, file);
+
+	ILogger::log("--> %d leaf faces loaded.\n", n);
+
+	n = m_header.entries[LUMP_LEAFBRUSHES].length / sizeof(Q3BspLeafBrush);
+
+	m_leafBrushes.reset(new Q3BspLeafBrush[n]);
+	fseek(file, m_header.entries[LUMP_LEAFBRUSHES].offset, SEEK_SET);
+	fread(m_leafBrushes.get(), m_header.entries[LUMP_LEAFBRUSHES].length, 1, file);
+
+	ILogger::log("--> %d leaf brushes loaded.\n", n);
+
+	return true;
+}
+
+
+bool Q3Bsp::_loadVisData(FILE * file) {
+	if (!file) {
+		return false;
+	}
+
+	m_visData.reset(new Q3BspVisData);
+
+	fseek(file, m_header.entries[LUMP_VISDATA].offset, SEEK_SET);
+	fread(m_visData.get(), 2, sizeof(int), file);
+
+	int size = m_visData->n_clusters * m_visData->sz_clusters;
+	m_visData->bits = new unsigned char[size];
+	fread(m_visData->bits, 1, size, file);
+
+	ILogger::log("--> vis data loaded.\n", m_nFaces);
+
+	return true;
+}
+
+int Q3Bsp::getLeafIndex(const Vector3d& v) const {
+	int index = 0;
+
+	while (index >= 0) {
+		const Q3BspNode&  node = m_nodes[index];
+		const Q3BspPlane& plane = m_planes[node.plane];
+		const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
+
+		const double distance = planeNormal.dotProduct(v) - plane.dist;
+
+		if (distance >= 0) {
+			index = node.children[0];
+		}
+		else {
+			index = node.children[1];
+		}
+	}
+
+	return -(index + 1);
+}
 
 void Q3Bsp::render() {
 	int i;

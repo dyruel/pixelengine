@@ -172,9 +172,9 @@ typedef	struct {
 
 
 typedef	struct {
-	int n_vecs;
-	int sz_vecs;
-	unsigned char * vecs;
+	int n_clusters;
+	int sz_clusters;
+	unsigned char * bits;
 } Q3BspVisData;
 
 
@@ -194,6 +194,14 @@ class Q3Bsp : public SceneNode {
 	int m_nFaces;
 	std::unique_ptr<Q3BspFace[]> m_faces;
 
+	std::unique_ptr<Q3BspNode[]> m_nodes;
+	std::unique_ptr<Q3BspPlane[]> m_planes;
+	std::unique_ptr<Q3BspLeaf[]> m_leafs;
+	std::unique_ptr<Q3BspLeafFace[]> m_leafFaces;
+	std::unique_ptr<Q3BspLeafBrush[]> m_leafBrushes;
+
+	std::unique_ptr<Q3BspVisData> m_visData;
+
 	// 
 	struct  {
 		std::unique_ptr<Vector4f>  vertices;
@@ -208,10 +216,14 @@ class Q3Bsp : public SceneNode {
 	bool _loadShaders(FILE * file);
 	bool _loadFaces(FILE * file);
 	bool _loadLightMaps(FILE * file);
+	bool _loadBspTree(FILE * file);
+	bool _loadVisData(FILE * file);
 	
 public:
 	Q3Bsp();
 	virtual ~Q3Bsp();
+
+	int getLeafIndex(const Vector3d& v) const;
 
 	void render();
 	void update(GLdouble delta);

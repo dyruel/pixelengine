@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Morgan Chopin. All rights reserved.
 //
 
-#ifndef __Escape__Video__
-#define __Escape__Video__
+#ifndef __PixelEngine__Video__
+#define __PixelEngine__Video__
 
 #include <GLFW/glfw3.h>
 
@@ -50,4 +50,4 @@ public:
     bool windowShouldClose();
 };
 
-#endif /* defined(__Escape__Video__) */
+#endif /* defined(__PixelEngine__Video__) */

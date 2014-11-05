@@ -24,7 +24,7 @@ int main(int argc, const char * argv[]){
 
 
 	std::shared_ptr<DummyNode> dummyNode(new DummyNode());
-	std::shared_ptr<Camera> camera(new CameraFps());
+	std::shared_ptr<Camera> camera(new CameraFree());
 	std::shared_ptr<Q3Bsp> q3bsp(new Q3Bsp());
 
 	sceneManager->setCamera(camera);
@@ -35,12 +35,13 @@ int main(int argc, const char * argv[]){
 	camera->getPosition()[1] = 0.;
 	camera->getPosition()[2] = 50.;
 
-	if (!q3bsp->load("bsp/test.bsp")) {
+	if (!q3bsp->load("maps/q3ctf2.bsp")) {
 		return 0;
 	}
 
 	Q3Shader shader; 
 	shader.loadFromFile("scripts/test2.shader");
+
     
 	GLdouble lastTime = (GLdouble) glfwGetTime();
 

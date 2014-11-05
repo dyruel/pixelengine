@@ -14,6 +14,7 @@
 #include <vector>
 #include <memory>
 
+#include "Physics.h"
 #include "Singleton.h"
 #include "Camera.h"
 
