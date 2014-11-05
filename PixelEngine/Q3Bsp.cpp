@@ -7,6 +7,7 @@
 //
 
 #include <cstdio>
+#include <set>
 
 #include "Texture.h"
 #include "Logger.h"
@@ -330,10 +331,7 @@ bool Q3Bsp::checkClusterVisibility(int from, int to) const {
 
 void Q3Bsp::render() {
 	int i;
-	SceneNodeList::iterator children = m_children.begin();
-	SceneNodeList::iterator childrenEnd = m_children.end();
-
-	std::vector<int> facesToRender;
+	std::set<int> facesToRender;
 
 	// Step 1 : Select the faces to be rendered
 	int cameraCluster = m_leafs[getLeafIndex(m_attachedCamera->getPosition())].cluster;
@@ -343,22 +341,16 @@ void Q3Bsp::render() {
 
 			for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
 				const int f = j + m_leafs[i].leafface;
-
-				facesToRender.push_back(m_leafFaces[f].face);
-	//			if (!alreadyVisible.contains(f)) {
-//					alreadyVisible.insert(f);
-//					visibleFaces.append(f);
-//				}
+				facesToRender.insert(m_leafFaces[f].face);
 			}
-
 		}
 	}
 
 	std::cout << facesToRender.size() << std::endl;
 
 	// Step 2 : Render previously selected faces
-	std::vector<int>::iterator faceToRender = facesToRender.begin();
-	std::vector<int>::iterator faceToRenderEnd = facesToRender.end();
+	std::set<int>::iterator faceToRender = facesToRender.begin();
+	std::set<int>::iterator faceToRenderEnd = facesToRender.end();
 
 	while (faceToRender != faceToRenderEnd) {
 		Q3BspFace face = m_faces[*faceToRender];
@@ -399,6 +391,10 @@ void Q3Bsp::render() {
 		}
 		++faceToRender;
 	}
+
+	// Step 3
+	SceneNodeList::iterator children = m_children.begin();
+	SceneNodeList::iterator childrenEnd = m_children.end();
 
 	while (children != childrenEnd) {
 		glPushMatrix();
