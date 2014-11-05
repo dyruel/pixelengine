@@ -186,6 +186,8 @@ class Q3Bsp : public SceneNode {
 	std::unique_ptr<GLuint[]> m_lmIds;
 	GLuint m_blankTexId;
 
+	std::shared_ptr<Camera> m_attachedCamera;
+
 	// BSP data
 	std::unique_ptr<Q3BspVertex[]> m_vertexes;
 	std::unique_ptr<Q3BspMeshVert[]> m_meshVerts;
@@ -196,6 +198,7 @@ class Q3Bsp : public SceneNode {
 
 	std::unique_ptr<Q3BspNode[]> m_nodes;
 	std::unique_ptr<Q3BspPlane[]> m_planes;
+	int m_nLeafs;
 	std::unique_ptr<Q3BspLeaf[]> m_leafs;
 	std::unique_ptr<Q3BspLeafFace[]> m_leafFaces;
 	std::unique_ptr<Q3BspLeafBrush[]> m_leafBrushes;
@@ -224,6 +227,10 @@ public:
 	virtual ~Q3Bsp();
 
 	int getLeafIndex(const Vector3d& v) const;
+	bool checkClusterVisibility(int from, int to) const;
+
+	void attachCamera(std::shared_ptr<Camera> camera) { m_attachedCamera = camera; };
+
 
 	void render();
 	void update(GLdouble delta);

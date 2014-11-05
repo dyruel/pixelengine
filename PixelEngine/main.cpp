@@ -27,7 +27,7 @@ int main(int argc, const char * argv[]){
 	std::shared_ptr<Camera> camera(new CameraFree());
 	std::shared_ptr<Q3Bsp> q3bsp(new Q3Bsp());
 
-	sceneManager->setCamera(camera);
+	sceneManager->attachCamera(camera);
 	sceneManager->addSceneNode(q3bsp);
     
 	camera->init();
@@ -38,6 +38,8 @@ int main(int argc, const char * argv[]){
 	if (!q3bsp->load("maps/q3ctf2.bsp")) {
 		return 0;
 	}
+
+	q3bsp->attachCamera(camera);
 
 	Q3Shader shader; 
 	shader.loadFromFile("scripts/test2.shader");

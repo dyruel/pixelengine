@@ -90,7 +90,7 @@ public:
 
 	virtual ~SceneManager() {};
 
-    void setCamera(std::shared_ptr<Camera> camera) {
+    void attachCamera(std::shared_ptr<Camera> camera) {
         m_camera = camera;
     }
     

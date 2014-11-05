@@ -246,13 +246,13 @@ bool Q3Bsp::_loadBspTree(FILE * file) {
 
 	ILogger::log("--> %d planes loaded.\n", n);
 
-	n = m_header.entries[LUMP_LEAFS].length / sizeof(Q3BspLeaf);
+	m_nLeafs = m_header.entries[LUMP_LEAFS].length / sizeof(Q3BspLeaf);
 
-	m_leafs.reset(new Q3BspLeaf[n]);
+	m_leafs.reset(new Q3BspLeaf[m_nLeafs]);
 	fseek(file, m_header.entries[LUMP_LEAFS].offset, SEEK_SET);
 	fread(m_leafs.get(), m_header.entries[LUMP_LEAFS].length, 1, file);
 
-	ILogger::log("--> %d leafs loaded.\n", n);
+	ILogger::log("--> %d leafs loaded.\n", m_nLeafs);
 
 
 	n = m_header.entries[LUMP_LEAFFACES].length / sizeof(Q3BspLeafFace);
@@ -315,14 +315,54 @@ int Q3Bsp::getLeafIndex(const Vector3d& v) const {
 	return -(index + 1);
 }
 
+
+bool Q3Bsp::checkClusterVisibility(int from, int to) const {
+	unsigned char bits = 0;
+
+	if (!m_visData->bits || from < 0) {
+		return true;
+	}
+	
+	bits = m_visData->bits[(from * m_visData->sz_clusters) + (to >> 3)];
+
+	return (bits & (1 << (to & 7))) != 0;
+}
+
 void Q3Bsp::render() {
 	int i;
 	SceneNodeList::iterator children = m_children.begin();
 	SceneNodeList::iterator childrenEnd = m_children.end();
 
-	for (i = 0; i < m_nFaces; ++i) {
-		Q3BspFace face = m_faces.get()[i];
-		Q3Shader shader = m_shaders.get()[face.shader];
+	std::vector<int> facesToRender;
+
+	// Step 1 : Select the faces to be rendered
+	int cameraCluster = m_leafs[getLeafIndex(m_attachedCamera->getPosition())].cluster;
+
+	for (i = 0; i < m_nLeafs; ++i) {
+		if (checkClusterVisibility(cameraCluster, m_leafs[i].cluster)) {
+
+			for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
+				const int f = j + m_leafs[i].leafface;
+
+				facesToRender.push_back(m_leafFaces[f].face);
+	//			if (!alreadyVisible.contains(f)) {
+//					alreadyVisible.insert(f);
+//					visibleFaces.append(f);
+//				}
+			}
+
+		}
+	}
+
+	std::cout << facesToRender.size() << std::endl;
+
+	// Step 2 : Render previously selected faces
+	std::vector<int>::iterator faceToRender = facesToRender.begin();
+	std::vector<int>::iterator faceToRenderEnd = facesToRender.end();
+
+	while (faceToRender != faceToRenderEnd) {
+		Q3BspFace face = m_faces[*faceToRender];
+		Q3Shader shader = m_shaders[face.shader];
 		const std::vector<Q3ShaderPass>&  shaderPasses = shader.getShaderPasses();
 
 		std::vector<Q3ShaderPass>::const_iterator shaderPasse = shaderPasses.begin();
@@ -331,9 +371,9 @@ void Q3Bsp::render() {
 		if (face.type == FACE_MESH || face.type == FACE_POLYGON) {
 
 			glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes.get()[face.vertex].position));
-			
+
 			while (shaderPasse != shaderPassesEnd) {
-//				glBindTexture(GL_TEXTURE_2D, m_textureIds[face.shader]);
+				//				glBindTexture(GL_TEXTURE_2D, m_textureIds[face.shader]);
 
 				if ((*shaderPasse).flags & SHADER_LIGHTMAP) {
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[1]));
@@ -347,7 +387,7 @@ void Q3Bsp::render() {
 				if ((*shaderPasse).flags & SHADER_BLEND) {
 					glEnable(GL_BLEND);
 					glBlendFunc((*shaderPasse).blendSrc, (*shaderPasse).blendDst);
-				} 
+				}
 				else {
 					glDisable(GL_BLEND);
 				}
@@ -357,6 +397,7 @@ void Q3Bsp::render() {
 				++shaderPasse;
 			}
 		}
+		++faceToRender;
 	}
 
 	while (children != childrenEnd) {
