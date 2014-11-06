@@ -12,6 +12,8 @@
 #ifndef PixelEngine_Q3Bsp_h
 #define PixelEngine_Q3Bsp_h
 
+#include <set>
+
 #include "Q3Shader.h"
 #include "Scene.h"
 
@@ -76,15 +78,13 @@ typedef	struct {
 typedef	struct {
 	int plane;
 	int children[2];
-	int mins[3];
-	int maxs[3];
+	int bbox[6];
 } Q3BspNode;
 
 typedef	struct {
 	int cluster;
 	int area;
-	int mins[3];
-	int maxs[3];
+	int bbox[6];
 	int leafface;
 	int n_leaffaces;
 	int leafbrush;
@@ -100,8 +100,7 @@ typedef	struct {
 } Q3BspLeafBrush;
 
 typedef	struct {
-	int mins[3];
-	int maxs[3];
+	int bbox[6];
 	int face;
 	int n_faces;
 	int brush;
@@ -178,13 +177,34 @@ typedef	struct {
 } Q3BspVisData;
 
 
+/*
+class BspNode : public SceneNode {
+public:
+
+	BspNode();
+	virtual ~BspNode();
+
+	void render();
+	void update(GLdouble delta);
+};
+
+class BspLeaf : public SceneNode {
+
+};
+*/
+
+
 class Q3Bsp : public SceneNode {
 
 	Q3BspHeader m_header;
 	std::unique_ptr<Q3Shader[]> m_shaders;
 	std::unique_ptr<GLuint[]> m_textureIds;
 	std::unique_ptr<GLuint[]> m_lmIds;
+
 	GLuint m_blankTexId;
+	int m_cameraCluster;
+	std::set<int> m_facesToRender;
+	Matrix4f m_clipMatrix;
 
 	std::shared_ptr<Camera> m_attachedCamera;
 
@@ -205,14 +225,7 @@ class Q3Bsp : public SceneNode {
 
 	std::unique_ptr<Q3BspVisData> m_visData;
 
-	// 
-	struct  {
-		std::unique_ptr<Vector4f>  vertices;
-		int nVertices;
-
-		std::unique_ptr<int[]>  meshes;
-		int nMeshes;
-	} m_toDraw;
+	static int bbox_index[8][3];
 
 	bool _loadVertexes(FILE * file);
 	bool _loadMeshVerts(FILE * file);
@@ -221,6 +234,8 @@ class Q3Bsp : public SceneNode {
 	bool _loadLightMaps(FILE * file);
 	bool _loadBspTree(FILE * file);
 	bool _loadVisData(FILE * file);
+
+	void _selectFaces(int index);
 	
 public:
 	Q3Bsp();
@@ -237,6 +252,7 @@ public:
 
 	bool load(const char* filename);
 };
+
 
 
 

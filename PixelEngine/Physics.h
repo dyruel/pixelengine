@@ -12,9 +12,12 @@
 #include "Scene.h"
 #include "Singleton.h"
 
-class IPhysical {
+class IBBox {
 
 };
+
+
+
 
 
 class PhysicsManager : public Singleton < PhysicsManager > {

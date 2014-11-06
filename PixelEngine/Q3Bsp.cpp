@@ -7,14 +7,20 @@
 //
 
 #include <cstdio>
-#include <set>
 
 #include "Texture.h"
 #include "Logger.h"
 #include "Q3Bsp.h"
 
+int Q3Bsp::bbox_index[8][3] =
+{
+	{ 0, 1, 2 }, { 3, 1, 2 }, { 3, 4, 2 }, { 0, 4, 2 },
+	{ 0, 1, 5 }, { 3, 1, 5 }, { 3, 4, 5 }, { 0, 4, 5 }
+};
 
-Q3Bsp::Q3Bsp() {
+
+Q3Bsp::Q3Bsp()
+	: m_cameraCluster(0), m_blankTexId(0) {
 }
 
 
@@ -70,7 +76,6 @@ bool Q3Bsp::load(const char* filename) {
 
 	}
 
-
 	fclose(file);
 	ILogger::log("done\n");
 	return true;
@@ -81,21 +86,18 @@ bool Q3Bsp::_loadVertexes(FILE * file) {
 		return false;
 	}
 
-	m_toDraw.nVertices = m_header.entries[LUMP_VERTEXES].length / sizeof(Q3BspVertex);
+	int n = m_header.entries[LUMP_VERTEXES].length / sizeof(Q3BspVertex);
 
-	m_vertexes.reset(new Q3BspVertex[m_toDraw.nVertices]);
-
+	m_vertexes.reset(new Q3BspVertex[n]);
 	fseek(file, m_header.entries[LUMP_VERTEXES].offset, SEEK_SET);
 	fread(m_vertexes.get(), m_header.entries[LUMP_VERTEXES].length, 1, file);
 
-	m_toDraw.vertices.reset(new Vector4f[m_toDraw.nVertices]);
-
-	for (int i = 0; i < m_toDraw.nVertices; ++i) {
+	for (int i = 0; i < n; ++i) {
 		m_vertexes[i].texcoord[0][1] = 1.0f - m_vertexes[i].texcoord[0][1];
 //		m_vertexes.get()[i].texcoord[1][0] = 1.0f - m_vertexes.get()[i].texcoord[1][0];
 	}
 
-	ILogger::log("--> %d vertexes loaded.\n", m_toDraw.nVertices);
+	ILogger::log("--> %d vertexes loaded.\n", n);
 
 	return true;
 }
@@ -105,16 +107,16 @@ bool Q3Bsp::_loadMeshVerts(FILE * file) {
 		return false;
 	}
 
-	m_toDraw.nMeshes = m_header.entries[LUMP_MESHVERTS].length / sizeof(Q3BspMeshVert);
+	int n = m_header.entries[LUMP_MESHVERTS].length / sizeof(Q3BspMeshVert);
 
-	m_meshVerts.reset(new Q3BspMeshVert[m_toDraw.nMeshes]);
+	m_meshVerts.reset(new Q3BspMeshVert[n]);
 
 	fseek(file, m_header.entries[LUMP_MESHVERTS].offset, SEEK_SET);
 	fread(m_meshVerts.get(), m_header.entries[LUMP_MESHVERTS].length, 1, file);
 
-	m_toDraw.meshes.reset(new int[m_toDraw.nMeshes]);
+//	m_toDraw.meshes.reset(new int[m_toDraw.nMeshes]);
 
-	ILogger::log("--> %d mesh vertexes loaded.\n", m_toDraw.nMeshes);
+	ILogger::log("--> %d mesh vertexes loaded.\n", n);
 
 	return true;
 }
@@ -329,28 +331,77 @@ bool Q3Bsp::checkClusterVisibility(int from, int to) const {
 	return (bits & (1 << (to & 7))) != 0;
 }
 
+
+
+void Q3Bsp::_selectFaces(int index) {
+	
+	if (index < 0) { // Leaf
+		int i = -(index + 1);
+		Vector4f corners[8];
+
+		// PVS test
+		if (!checkClusterVisibility(m_cameraCluster, m_leafs[i].cluster)) {
+			return;
+		}
+
+		// Clipping test
+		unsigned char nIn = 0;
+		
+		for (int j = 0; j < 8; ++j)
+		{
+			char isIn = 0;
+
+			corners[j].x = m_leafs[j].bbox[bbox_index[j][0]];
+			corners[j].y = m_leafs[j].bbox[bbox_index[j][1]];
+			corners[j].z = m_leafs[j].bbox[bbox_index[j][2]];
+			corners[j].w = 1.0f;
+
+			corners[j] = m_clipMatrix * corners[j];
+
+			if (corners[j].x > -corners[j].w && corners[j].x < corners[j].w &&
+				corners[j].y > -corners[j].w && corners[j].y < corners[j].w &&
+				corners[j].z > -corners[j].w && corners[j].z < corners[j].w)
+				isIn = 1;
+
+			nIn += isIn;
+		}
+		
+		std::cout << nIn << std::endl;
+		if (!nIn)
+			return;
+
+		for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
+			const int f = j + m_leafs[i].leafface;
+			m_facesToRender.insert(m_leafFaces[f].face);
+		}
+
+	} else { // Node
+		const Q3BspNode&  node = m_nodes[index];
+		const Q3BspPlane& plane = m_planes[node.plane];
+		const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
+
+//		const double distance = planeNormal.dotProduct(v) - plane.dist;
+
+//		if (distance >= 0) {
+		_selectFaces(node.children[0]);
+//		}
+//		else {
+		_selectFaces(node.children[1]);
+//		}
+	}
+}
+
 void Q3Bsp::render() {
-	int i;
-	std::set<int> facesToRender;
+//	int i;
 
 	// Step 1 : Select the faces to be rendered
-	int cameraCluster = m_leafs[getLeafIndex(m_attachedCamera->getPosition())].cluster;
+	_selectFaces(0);
 
-	for (i = 0; i < m_nLeafs; ++i) {
-		if (checkClusterVisibility(cameraCluster, m_leafs[i].cluster)) {
-
-			for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
-				const int f = j + m_leafs[i].leafface;
-				facesToRender.insert(m_leafFaces[f].face);
-			}
-		}
-	}
-
-	std::cout << facesToRender.size() << std::endl;
+	std::cout << m_facesToRender.size() << std::endl;
 
 	// Step 2 : Render previously selected faces
-	std::set<int>::iterator faceToRender = facesToRender.begin();
-	std::set<int>::iterator faceToRenderEnd = facesToRender.end();
+	std::set<int>::iterator faceToRender = m_facesToRender.begin();
+	std::set<int>::iterator faceToRenderEnd = m_facesToRender.end();
 
 	while (faceToRender != faceToRenderEnd) {
 		Q3BspFace face = m_faces[*faceToRender];
@@ -410,7 +461,20 @@ void Q3Bsp::update(GLdouble delta) {
 	SceneNodeList::iterator i = m_children.begin();
 	SceneNodeList::iterator end = m_children.end();
 
+	m_facesToRender.clear();
+	m_cameraCluster = m_leafs[getLeafIndex(m_attachedCamera->getPosition())].cluster;
 
+	// Get clip matrix
+	float m[16], p[16], r[16];
+	glGetFloatv(GL_PROJECTION_MATRIX, p);
+	glGetFloatv(GL_MODELVIEW_MATRIX, m);
+	glPushMatrix();
+	glLoadMatrixf(m);
+	glMultMatrixf(p);
+	glGetFloatv(GL_MODELVIEW_MATRIX, r);
+	glPopMatrix();
+
+	m_clipMatrix = r;
 
 	while (i != end) {
 		(*i)->update(delta);
