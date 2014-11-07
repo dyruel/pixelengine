@@ -214,23 +214,24 @@ bool Q3Bsp::_loadLightMaps(FILE * file) {
 
 	for (int i = 0; i<nLightMaps; ++i) {
 		glBindTexture(GL_TEXTURE_2D, m_lmIds[i]);
-/*
+
 		gluBuild2DMipmaps(GL_TEXTURE_2D,
 						  GL_RGBA8, 128, 128,
 						  GL_RGB, GL_UNSIGNED_BYTE,
 						  m_lightMaps.get()[i].map);
-  */
+
+        /*
         glTexImage2D(GL_TEXTURE_2D,
                      0,
                      GL_RGBA8,
                      128, 128, 0,
                      GL_RGB, GL_UNSIGNED_BYTE,
                      m_lightMaps.get()[i].map);
-        
+        */
 
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	}
@@ -238,16 +239,16 @@ bool Q3Bsp::_loadLightMaps(FILE * file) {
 	glGenTextures(1, &m_blankTexId);
 	glBindTexture(GL_TEXTURE_2D, m_blankTexId);
 
-//	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, 1, 1, GL_RGB, GL_FLOAT, white);
-    glTexImage2D(GL_TEXTURE_2D,
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, 1, 1, GL_RGB, GL_FLOAT, white);
+/*    glTexImage2D(GL_TEXTURE_2D,
                  0,
                  GL_RGBA8,
                  1, 1, 0,
                  GL_RGB, GL_FLOAT,
                  white);
-
+*/
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 

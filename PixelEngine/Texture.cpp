@@ -72,7 +72,7 @@ bool TextureManager::loadTextures(const std::vector<std::string>& files, std::un
 			//texture.imageData = ilGetData();
 
 			glBindTexture(GL_TEXTURE_2D, ids[k]);
-            /*
+            
 			gluBuild2DMipmaps(GL_TEXTURE_2D, 
 							  ilGetInteger(IL_IMAGE_BPP), 
 							  ilGetInteger(IL_IMAGE_WIDTH),
@@ -80,19 +80,19 @@ bool TextureManager::loadTextures(const std::vector<std::string>& files, std::un
 							  ilGetInteger(IL_IMAGE_FORMAT),
 							  GL_UNSIGNED_BYTE, 
 							  ilGetData());
-             */
-			glTexImage2D(GL_TEXTURE_2D, 0, ilGetInteger(IL_IMAGE_BPP),
+            
+			/*glTexImage2D(GL_TEXTURE_2D, 0, ilGetInteger(IL_IMAGE_BPP),
 				ilGetInteger(IL_IMAGE_WIDTH),
 				ilGetInteger(IL_IMAGE_HEIGHT),
 				0, ilGetInteger(IL_IMAGE_FORMAT), GL_UNSIGNED_BYTE,
-				ilGetData());
+				ilGetData());*/
 			//glTexImage2D(GL_TEXTURE_2D, 0, texture.bpp,
 			//	texture.width,
 			//	texture.height,
 			//	0, texture.type, GL_UNSIGNED_BYTE,
 			//	texture.imageData);
-//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);

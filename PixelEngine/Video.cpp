@@ -7,6 +7,7 @@
 //
 
 #include "Video.h"
+//#include <GL/glext.h>
 
 
 
@@ -30,6 +31,10 @@ bool Video::init() {
 		ILogger::log("Error during the initialization of GLFW.");
         return false;
     }
+    
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     
     m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), NULL, NULL);
     if (!m_window) {
@@ -73,6 +78,9 @@ bool Video::init() {
     glViewport(0, 0, m_windowWidth, m_windowHeight);
 
 	glfwSetCursorPos(m_window, m_windowWidth >> 1, m_windowHeight >> 1);
+    
+
+//    printf("%s\n", glGetString(GL_VERSION));
 
 	ILogger::log("done.\n");
     return true;
