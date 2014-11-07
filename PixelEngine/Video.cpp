@@ -45,12 +45,12 @@ bool Video::init() {
     
 	// FOG test
 	GLfloat fogColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
-	glFogi(GL_FOG_MODE, GL_LINEAR); 
+	glFogi(GL_FOG_MODE, GL_LINEAR);
 	glFogfv(GL_FOG_COLOR, fogColor);            
 	glFogf(GL_FOG_DENSITY, 0.35f);              
 	glHint(GL_FOG_HINT, GL_DONT_CARE);         
-	glFogf(GL_FOG_START, 1.0f);             
-	glFogf(GL_FOG_END, 1000.0f);               
+	glFogf(GL_FOG_START, 100.0f);             
+	glFogf(GL_FOG_END, 1000.0f);
 	glEnable(GL_FOG);
 	// FOG test
 

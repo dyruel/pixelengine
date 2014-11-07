@@ -456,7 +456,7 @@ void Q3Bsp::render() {
 	// Step 1 : Select the faces to be rendered
 	_selectFaces(0);
 
-	std::cout << m_facesToRender.size() << std::endl;
+//	std::cout << m_facesToRender.size() << std::endl;
 
 	// Step 2 : Render previously selected faces
 	std::set<int>::iterator faceToRender = m_facesToRender.begin();
