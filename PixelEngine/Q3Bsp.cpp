@@ -12,6 +12,17 @@
 #include "Logger.h"
 #include "Q3Bsp.h"
 
+
+enum {
+	CLIP_X_LEFT		= 1 << 0,
+	CLIP_X_RIGHT	= 1 << 1,
+	CLIP_Y_LEFT		= 1 << 2,
+	CLIP_Y_RIGHT	= 1 << 3,
+	CLIP_Z_LEFT		= 1 << 4,
+	CLIP_Z_RIGHT	= 1 << 5,
+};
+
+
 int Q3Bsp::bbox_index[8][3] =
 {
 	{ 0, 1, 2 }, { 3, 1, 2 }, { 3, 4, 2 }, { 0, 4, 2 },
@@ -337,7 +348,6 @@ void Q3Bsp::_selectFaces(int index) {
 	
 	if (index < 0) { // Leaf
 		int i = -(index + 1);
-		Vector4f corners[8];
 
 		// PVS test
 		if (!checkClusterVisibility(m_cameraCluster, m_leafs[i].cluster)) {
@@ -346,28 +356,42 @@ void Q3Bsp::_selectFaces(int index) {
 
 		// Clipping test
 		unsigned char nIn = 0;
+		unsigned int and_clip = ~0;
 		
 		for (int j = 0; j < 8; ++j)
 		{
-			char isIn = 0;
+			Vector4f v, cv;
+			unsigned int flags = 0;
 
-			corners[j].x = m_leafs[j].bbox[bbox_index[j][0]];
-			corners[j].y = m_leafs[j].bbox[bbox_index[j][1]];
-			corners[j].z = m_leafs[j].bbox[bbox_index[j][2]];
-			corners[j].w = 1.0f;
+			v.x = m_leafs[i].bbox[bbox_index[j][0]];
+			v.y = m_leafs[i].bbox[bbox_index[j][1]];
+			v.z = m_leafs[i].bbox[bbox_index[j][2]];
+			v.w = 1.0f;
 
-			corners[j] = m_clipMatrix * corners[j];
+			cv = m_clipMatrix * v;
 
-			if (corners[j].x > -corners[j].w && corners[j].x < corners[j].w &&
-				corners[j].y > -corners[j].w && corners[j].y < corners[j].w &&
-				corners[j].z > -corners[j].w && corners[j].z < corners[j].w)
-				isIn = 1;
+			if (cv.x < -cv.w)
+				flags |= CLIP_X_LEFT;
 
-			nIn += isIn;
+			if (cv.x > cv.w)
+				flags |= CLIP_X_RIGHT;
+
+			if (cv.y > cv.w)
+				flags |= CLIP_Y_LEFT;
+
+			if (cv.y > cv.w)
+				flags |= CLIP_Y_RIGHT;
+
+			if (cv.z > cv.w)
+				flags |= CLIP_Z_LEFT;
+
+			if (cv.z > cv.w)
+				flags |= CLIP_Z_RIGHT;
+
+			and_clip &= flags;
 		}
-		
-		std::cout << nIn << std::endl;
-		if (!nIn)
+
+		if (and_clip)
 			return;
 
 		for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
@@ -380,14 +404,49 @@ void Q3Bsp::_selectFaces(int index) {
 		const Q3BspPlane& plane = m_planes[node.plane];
 		const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
 
-//		const double distance = planeNormal.dotProduct(v) - plane.dist;
+		// Clipping test
+		unsigned char nIn = 0;
+		unsigned int and_clip = ~0;
 
-//		if (distance >= 0) {
+		for (int j = 0; j < 8; ++j)
+		{
+			Vector4f v, cv;
+			unsigned int flags = 0;
+
+			v.x = node.bbox[bbox_index[j][0]];
+			v.y = node.bbox[bbox_index[j][1]];
+			v.z = node.bbox[bbox_index[j][2]];
+			v.w = 1.0f;
+
+			cv = m_clipMatrix * v;
+
+			if (cv.x < -cv.w)
+				flags |= CLIP_X_LEFT;
+
+			if (cv.x > cv.w)
+				flags |= CLIP_X_RIGHT;
+
+			if (cv.y > cv.w)
+				flags |= CLIP_Y_LEFT;
+
+			if (cv.y > cv.w)
+				flags |= CLIP_Y_RIGHT;
+
+			if (cv.z > cv.w)
+				flags |= CLIP_Z_LEFT;
+
+			if (cv.z > cv.w)
+				flags |= CLIP_Z_RIGHT;
+
+			and_clip &= flags;
+		}
+
+		if (and_clip)
+			return;
+
 		_selectFaces(node.children[0]);
-//		}
-//		else {
 		_selectFaces(node.children[1]);
-//		}
+
 	}
 }
 
@@ -469,8 +528,8 @@ void Q3Bsp::update(GLdouble delta) {
 	glGetFloatv(GL_PROJECTION_MATRIX, p);
 	glGetFloatv(GL_MODELVIEW_MATRIX, m);
 	glPushMatrix();
-	glLoadMatrixf(m);
-	glMultMatrixf(p);
+	glLoadMatrixf(p);
+	glMultMatrixf(m);
 	glGetFloatv(GL_MODELVIEW_MATRIX, r);
 	glPopMatrix();
 
