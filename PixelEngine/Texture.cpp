@@ -72,6 +72,7 @@ bool TextureManager::loadTextures(const std::vector<std::string>& files, std::un
 			//texture.imageData = ilGetData();
 
 			glBindTexture(GL_TEXTURE_2D, ids[k]);
+            /*
 			gluBuild2DMipmaps(GL_TEXTURE_2D, 
 							  ilGetInteger(IL_IMAGE_BPP), 
 							  ilGetInteger(IL_IMAGE_WIDTH),
@@ -79,11 +80,12 @@ bool TextureManager::loadTextures(const std::vector<std::string>& files, std::un
 							  ilGetInteger(IL_IMAGE_FORMAT),
 							  GL_UNSIGNED_BYTE, 
 							  ilGetData());
-			//glTexImage2D(GL_TEXTURE_2D, 0, ilGetInteger(IL_IMAGE_BPP),
-			//	ilGetInteger(IL_IMAGE_WIDTH),
-			//	ilGetInteger(IL_IMAGE_HEIGHT),
-			//	0, ilGetInteger(IL_IMAGE_FORMAT), GL_UNSIGNED_BYTE,
-			//	ilGetData());
+             */
+			glTexImage2D(GL_TEXTURE_2D, 0, ilGetInteger(IL_IMAGE_BPP),
+				ilGetInteger(IL_IMAGE_WIDTH),
+				ilGetInteger(IL_IMAGE_HEIGHT),
+				0, ilGetInteger(IL_IMAGE_FORMAT), GL_UNSIGNED_BYTE,
+				ilGetData());
 			//glTexImage2D(GL_TEXTURE_2D, 0, texture.bpp,
 			//	texture.width,
 			//	texture.height,
