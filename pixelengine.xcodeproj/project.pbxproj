@@ -21,8 +21,7 @@
 		90A00CE01A0D0C2F00555EE8 /* Video.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CD31A0D0C2F00555EE8 /* Video.cpp */; };
 		90A00CE21A0D0E0A00555EE8 /* libglfw.3.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A00CE11A0D0E0A00555EE8 /* libglfw.3.1.dylib */; };
 		90A00CE41A0D0E4400555EE8 /* libIL.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A00CE31A0D0E4400555EE8 /* libIL.a */; };
-		90A00CE61A0D0F2A00555EE8 /* libGLU.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A00CE51A0D0F2A00555EE8 /* libGLU.1.dylib */; };
-		90A00CE81A0D0F4400555EE8 /* libGL.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A00CE71A0D0F4400555EE8 /* libGL.1.dylib */; };
+		90CE54881A0D60DF00C234CF /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 90CE54871A0D60DF00C234CF /* OpenGL.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -66,8 +65,7 @@
 		90A00CD41A0D0C2F00555EE8 /* Video.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Video.h; path = PixelEngine/Video.h; sourceTree = SOURCE_ROOT; };
 		90A00CE11A0D0E0A00555EE8 /* libglfw.3.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.1.dylib; path = ../../../opt/local/lib/libglfw.3.1.dylib; sourceTree = "<group>"; };
 		90A00CE31A0D0E4400555EE8 /* libIL.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libIL.a; path = ../../../opt/local/lib/libIL.a; sourceTree = "<group>"; };
-		90A00CE51A0D0F2A00555EE8 /* libGLU.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGLU.1.dylib; path = ../../../opt/local/lib/libGLU.1.dylib; sourceTree = "<group>"; };
-		90A00CE71A0D0F4400555EE8 /* libGL.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGL.1.dylib; path = ../../../opt/local/lib/libGL.1.dylib; sourceTree = "<group>"; };
+		90CE54871A0D60DF00C234CF /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		90D546981A0309DA00A5C159 /* pixelengine */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pixelengine; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -76,8 +74,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				90A00CE81A0D0F4400555EE8 /* libGL.1.dylib in Frameworks */,
-				90A00CE61A0D0F2A00555EE8 /* libGLU.1.dylib in Frameworks */,
+				90CE54881A0D60DF00C234CF /* OpenGL.framework in Frameworks */,
 				90A00CE41A0D0E4400555EE8 /* libIL.a in Frameworks */,
 				90A00CE21A0D0E0A00555EE8 /* libglfw.3.1.dylib in Frameworks */,
 			);
@@ -89,8 +86,7 @@
 		90D5468F1A0309DA00A5C159 = {
 			isa = PBXGroup;
 			children = (
-				90A00CE71A0D0F4400555EE8 /* libGL.1.dylib */,
-				90A00CE51A0D0F2A00555EE8 /* libGLU.1.dylib */,
+				90CE54871A0D60DF00C234CF /* OpenGL.framework */,
 				90A00CE31A0D0E4400555EE8 /* libIL.a */,
 				90A00CE11A0D0E0A00555EE8 /* libglfw.3.1.dylib */,
 				90D5469A1A0309DA00A5C159 /* pixelengine */,
