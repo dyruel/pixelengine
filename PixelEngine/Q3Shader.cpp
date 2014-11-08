@@ -14,9 +14,10 @@
 
 
 
-bool Q3Shader::loadFromFile(const char* filename) {
+bool Q3ShaderManager::loadFromFile(const char* filename) {
 	std::ifstream file(filename, std::ios::in);
 	std::stringstream sstream;
+    Q3Shader shader;
 
 	ILogger::log("Q3Shader:: Loading %s ...\n", filename);
 
@@ -29,27 +30,101 @@ bool Q3Shader::loadFromFile(const char* filename) {
 	std::string buffer(sstream.str());
 	std::string::iterator bufferEnd = buffer.end();
 
-	m_readingState = SHADER_LOAD_NAME;
+	m_readingState = SP_FIND_NAME;
+    
+    shader.name = "";
+    shader.m_flags = 0;
+    shader.m_shaderPasses.clear();
 
 	for (std::string::iterator i = buffer.begin(); i != bufferEnd; ++i) {
 		char c = *i;
 
-		// Skip white spaces
-		if (c == ' ' || c == '\t' || c == '\n' || c == '\r')
-			continue;
+        // Check for comments
+        if (c == '/' && (i + 1) != bufferEnd && *(i + 1) == '/') {
+            ++i;
+            m_readingState = SP_READ_COMMENT;
+            continue;
+        }
+        
+        switch (m_readingState) {
+            case SP_FIND_NAME:
+                if(c == '\n' || c == ' ' || c == '\t' || c == '\r') {
+                    continue;
+                }
+                
+                m_readingState = SP_READ_NAME;
+                
+                break;
+                
+            case SP_READ_NAME:
+                
+                break;
+                
+            case SP_FIND_VALUE:
+                
+                break;
+                
+            case SP_READ_VALUE:
+                
+                break;
+                
+            case SP_READ_COMMENT:
+                if(c == '\n')
+                    m_readingState = SP_FIND_NAME;
+                continue;
+                break;
+                
+            default:
+                break;
+        }
+        
 
-		// Skip comments
-		if (c == '/' && (i + 1) != bufferEnd && *(i + 1) == '/') {
-			for (; (*i) != '\n' && i != bufferEnd; ++i);
-			continue;
-		}
-
-		switch (m_readingState) {
-		case SHADER_LOAD_NAME:
+		switch (c) {
+        case '\n':
+        case ' ':
+        case '\t':
+        case '\r':
+                if(m_readingState == SP_FIND_NAME || m_readingState == SP_FIND_VALUE) {
+                    continue;
+                }
+                
+                if(m_readingState == SP_READ_NAME)
+                    m_readingState = SP_FIND_VALUE;
 			break;
-		case SHADER_LOAD_START:
-			break;
-		case SHADER_LOAD_PASS:
+                
+        case '{':
+                ++m_depth;
+                
+                break;
+        case '}':
+                if(m_depth > 0)
+                    --m_depth;
+                else {
+                    ILogger::log("Q3Shader:: Syntax error in %s \n", filename);
+                    return false;
+                }
+                
+                if(m_depth == 0) {
+                    m_shaders[shader.name] = shader;
+                    
+                    shader.name = "";
+                    shader.m_flags = 0;
+                    shader.m_shaderPasses.clear();
+                }
+                    
+                break;
+		default:
+                if (m_readingState == SP_FIND_NAME)
+                    m_readingState = SP_READ_NAME;
+                else if (m_readingState == SP_FIND_VALUE)
+                    m_readingState = SP_READ_VALUE;
+                
+                
+                if(m_readingState == SP_READ_NAME) {
+                    if(shader.name.empty()) {
+                        
+                    }
+                }
 			break;
 		}
 

@@ -146,7 +146,7 @@ GLuint TextureManager::loadTextureFromFile(std::string filename) {
 	return id;
 }
 
-void TextureManager::bind(GLuint id) {
-    glBindTexture(GL_TEXTURE_2D, id);
-}
+//void TextureManager::bind(GLuint id) {
+//    glBindTexture(GL_TEXTURE_2D, id);
+//}
 

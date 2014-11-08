@@ -22,6 +22,7 @@
 		90A00CE21A0D0E0A00555EE8 /* libglfw.3.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A00CE11A0D0E0A00555EE8 /* libglfw.3.1.dylib */; };
 		90A00CE41A0D0E4400555EE8 /* libIL.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 90A00CE31A0D0E4400555EE8 /* libIL.a */; };
 		90CE54881A0D60DF00C234CF /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 90CE54871A0D60DF00C234CF /* OpenGL.framework */; };
+		90CE548B1A0E17B300C234CF /* Sprite.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90CE54891A0E17B300C234CF /* Sprite.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -66,6 +67,8 @@
 		90A00CE11A0D0E0A00555EE8 /* libglfw.3.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw.3.1.dylib; path = ../../../opt/local/lib/libglfw.3.1.dylib; sourceTree = "<group>"; };
 		90A00CE31A0D0E4400555EE8 /* libIL.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libIL.a; path = ../../../opt/local/lib/libIL.a; sourceTree = "<group>"; };
 		90CE54871A0D60DF00C234CF /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		90CE54891A0E17B300C234CF /* Sprite.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Sprite.cpp; path = PixelEngine/Sprite.cpp; sourceTree = SOURCE_ROOT; };
+		90CE548A1A0E17B300C234CF /* Sprite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Sprite.h; path = PixelEngine/Sprite.h; sourceTree = SOURCE_ROOT; };
 		90D546981A0309DA00A5C159 /* pixelengine */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = pixelengine; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -131,6 +134,8 @@
 				90A00CD21A0D0C2F00555EE8 /* Vector.h */,
 				90A00CD31A0D0C2F00555EE8 /* Video.cpp */,
 				90A00CD41A0D0C2F00555EE8 /* Video.h */,
+				90CE54891A0E17B300C234CF /* Sprite.cpp */,
+				90CE548A1A0E17B300C234CF /* Sprite.h */,
 			);
 			path = pixelengine;
 			sourceTree = "<group>";
@@ -195,6 +200,7 @@
 				90A00CD71A0D0C2F00555EE8 /* Input.cpp in Sources */,
 				90A00CD51A0D0C2F00555EE8 /* Camera.cpp in Sources */,
 				90A00CD61A0D0C2F00555EE8 /* File.cpp in Sources */,
+				90CE548B1A0E17B300C234CF /* Sprite.cpp in Sources */,
 				90A00CDA1A0D0C2F00555EE8 /* Physics.cpp in Sources */,
 				90A00CE01A0D0C2F00555EE8 /* Video.cpp in Sources */,
 				90A00CDF1A0D0C2F00555EE8 /* Vector.cpp in Sources */,

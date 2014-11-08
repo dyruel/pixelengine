@@ -29,7 +29,7 @@ typedef	struct {
     GLuint	type;											// Image Type (GL_RGB, GL_RGBA)
 } Texture;
 
-typedef std::vector<Texture> TextureList;
+//typedef std::vector<Texture> TextureList;
 
 
 class TextureManager : public Singleton<TextureManager> {
@@ -52,7 +52,7 @@ public:
 
 	GLuint loadTextureFromFile(std::string filename);
     
-    void bind(GLuint id);
+//    void bind(GLuint id);
 };
 
 #endif /* defined(__PixelEngine__Texture__) */

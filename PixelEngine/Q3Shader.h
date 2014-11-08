@@ -13,6 +13,9 @@
 
 #include <GLFW/glfw3.h>
 #include <vector>
+#include <map>
+
+#include "Singleton.h"
 
 
 enum {
@@ -36,11 +39,13 @@ enum {
 };
 
 enum {
-	SHADER_LOAD_NAME = 1 << 0,
-	SHADER_LOAD_START = 1 << 1,
-	SHADER_LOAD_PASS = 1 << 2,
-	SHADER_LOAD_BRACKET_L = 1 << 3,
-	SHADER_LOAD_BRACKET_R = 1 << 4,
+	SP_READ_NAME        = 1 << 0,
+	SP_BEGIN_NODE       = 1 << 1,
+	SP_END_NODE         = 1 << 2,
+    SP_READ_COMMENT     = 1 << 3,
+    SP_FIND_NAME        = 1 << 4,
+    SP_FIND_VALUE       = 1 << 5,
+    SP_READ_VALUE       = 1 << 6,
 };
 
 
@@ -54,14 +59,14 @@ typedef	struct {
 
 
 class Q3Shader {
+    friend class Q3ShaderManager;
 
 
 protected:
 
+    std::string name;
 	unsigned int m_flags;
-	unsigned int m_readingState;
-	std::vector<Q3ShaderPass> m_shaderPasses;
-
+    std::vector<Q3ShaderPass> m_shaderPasses;
 
 public:
 	Q3Shader() { };
@@ -69,7 +74,7 @@ public:
 
 	void addShaderPasse(const Q3ShaderPass& shaderPass) { m_shaderPasses.push_back(shaderPass); };
 	const std::vector<Q3ShaderPass>& getShaderPasses() const { return m_shaderPasses; };
-	bool loadFromFile(const char* filename);
+	
 
 };
 
@@ -96,6 +101,33 @@ public:
 
 	};
 	virtual ~Q3ShaderDefault() {};
+};
+
+
+
+class Q3ShaderManager : public Singleton<Q3ShaderManager> {
+    friend class Singleton<Q3ShaderManager>;
+    
+private:
+    
+    std::map<std::string, Q3Shader> m_shaders;
+    
+    bool init();
+    bool deinit();
+    
+    // Variables used in the parser
+    unsigned int m_readingState;
+    unsigned int m_depth;
+    
+    Q3ShaderManager() {};
+    Q3ShaderManager(Q3ShaderManager&);
+    void operator =(Q3ShaderManager&);
+    
+public:
+    
+    virtual ~Q3ShaderManager() {};
+    
+    bool loadFromFile(const char* filename);
 };
 
 #endif
