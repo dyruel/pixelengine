@@ -7,7 +7,6 @@
 //
 
 #include "Video.h"
-//#include <GL/glext.h>
 
 
 
@@ -31,10 +30,6 @@ bool Video::init() {
 		ILogger::log("Error during the initialization of GLFW.");
         return false;
     }
-    
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    //glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
     
     m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), NULL, NULL);
     if (!m_window) {
@@ -75,12 +70,15 @@ bool Video::init() {
 
     
 	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-    glViewport(0, 0, m_windowWidth, m_windowHeight);
+    
+    GLint frameWidth = 0, frameHeight = 0;
+    glfwGetFramebufferSize(m_window, &frameWidth, &frameHeight);
+    glViewport(0, 0, frameWidth, frameHeight);
 
 	glfwSetCursorPos(m_window, m_windowWidth >> 1, m_windowHeight >> 1);
     
 
-//    printf("%s\n", glGetString(GL_VERSION));
+    //printf("%s\n", glGetString(GL_VERSION));
 
 	ILogger::log("done.\n");
     return true;

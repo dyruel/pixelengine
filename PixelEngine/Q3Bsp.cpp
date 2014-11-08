@@ -372,7 +372,7 @@ void Q3Bsp::_selectFaces(int index) {
 		}
 
 		// Clipping test
-		unsigned char nIn = 0;
+//		unsigned char nIn = 0;
 		unsigned int and_clip = ~0;
 		
 		for (int j = 0; j < 8; ++j)
@@ -422,7 +422,7 @@ void Q3Bsp::_selectFaces(int index) {
 		const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
 
 		// Clipping test
-		unsigned char nIn = 0;
+//		unsigned char nIn = 0;
 		unsigned int and_clip = ~0;
 
 		for (int j = 0; j < 8; ++j)

@@ -76,5 +76,19 @@ public:
 	void update(GLdouble delta);
 };
 
+// CameraOrtho
+class CameraOrtho : public Camera {
+    
+public:
+    
+    bool init();
+    void setView();
+    void update(GLdouble delta);
+    
+    CameraOrtho() {}
+    virtual ~CameraOrtho() {};
+    
+};
+
 
 #endif

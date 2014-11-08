@@ -85,6 +85,12 @@ void CameraFree::update(GLdouble delta) {
 	GLdouble mx = 0., my = 0.;
 	GLint winHalfWidth = 0., winHalfHeight = 0.;
 	Vector3d move;
+    
+    //GLint winWidth = 0., winHeight = 0.;
+    //glfwGetWindowSize(Video::getInstance()->getWindow(), &winWidth, &winHeight);
+    //glViewport(0, 0, winWidth, winHeight);
+    
+    //printf("%d %d\n", winWidth, winHeight);
 	
 	glfwGetCursorPos(window, &mx, &my);
 	glfwGetWindowSize(window, &winHalfWidth, &winHalfHeight);
@@ -212,3 +218,30 @@ void CameraFps::update(GLdouble delta) {
 
 	glfwSetCursorPos(window, winHalfWidth, winHalfHeight);
 }
+
+
+bool CameraOrtho::init() {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-5, 5, -5, 5, -1, 1);
+    
+    return true;
+}
+
+void CameraOrtho::setView() {
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glTranslatef(-m_position.x, m_position.y, 0.0f);
+}
+
+
+void CameraOrtho::update(GLdouble delta) {
+    
+}
+
+
+
+
+
+
+
