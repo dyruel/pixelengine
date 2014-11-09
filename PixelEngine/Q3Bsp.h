@@ -197,6 +197,7 @@ class BspLeaf : public SceneNode {
 class Q3Bsp : public SceneNode {
 
 	Q3BspHeader m_header;
+	std::shared_ptr<Q3ShaderManager> m_shaderManager;
 	std::unique_ptr<Q3Shader[]> m_shaders;
 	std::unique_ptr<GLuint[]> m_textureIds;
 	std::unique_ptr<GLuint[]> m_lmIds;

@@ -12,7 +12,7 @@
 
 bool TextureManager::init() {
 	ilInit();
-
+	/*
 	ilEnable(IL_ORIGIN_SET);
 	ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
 
@@ -21,7 +21,7 @@ bool TextureManager::init() {
 
 	ilEnable(IL_FORMAT_SET);
 	ilFormatFunc(IL_RGB);
-
+	*/
 	return true;
 }
 
@@ -30,7 +30,8 @@ bool TextureManager::deinit() {
 	return true;
 }
 
-bool TextureManager::loadTextures(const std::vector<std::string>& files, std::unique_ptr<GLuint[]>& ids) {
+# if 0
+bool TextureManager::_loadTextures(const std::vector<std::string>& files, std::unique_ptr<GLuint[]>& ids) {
 
 	GLsizei n = (GLsizei) files.size();
 	std::vector<std::string>::const_iterator i = files.begin();
@@ -114,39 +115,55 @@ bool TextureManager::loadTextures(const std::vector<std::string>& files, std::un
     
     return true;
 }
+#endif
 
-
-GLuint TextureManager::loadTextureFromFile(std::string filename) {
-	ILuint ImgId = 0;
+GLuint TextureManager::_loadTextureFromFile(const std::string& filename) {
+	ILuint imgId = 0;
 	GLuint id;
-	
-	ilGenImages(1, &ImgId);
-	ilBindImage(ImgId);
+	bool isLoaded = false;
 
-	if (!ilLoadImage(filename.c_str())) {
-		ilDeleteImage(ImgId);
-		return 0;
+	std::string tga(filename);
+	tga.append(".tga");
+
+	std::string jpg(filename);
+	jpg.append(".jpg");
+	
+	ilGenImages(1, &imgId);
+	ilBindImage(imgId);
+
+	if (!ilLoadImage(tga.c_str())) {
+		if (ilLoadImage(jpg.c_str()))
+			isLoaded = true;
+	}
+	else {
+		isLoaded = true;
 	}
 
-	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+	if (isLoaded) {
+		glGenTextures(1, &id);
+		glBindTexture(GL_TEXTURE_2D, id);
 
-	glGenTextures(1, &id);
-	glBindTexture(GL_TEXTURE_2D, id);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
-				ilGetInteger(IL_IMAGE_WIDTH),
-				ilGetInteger(IL_IMAGE_HEIGHT),
-				0, GL_RGBA, GL_UNSIGNED_BYTE,
-				ilGetData());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		gluBuild2DMipmaps(GL_TEXTURE_2D,
+			ilGetInteger(IL_IMAGE_BPP),
+			ilGetInteger(IL_IMAGE_WIDTH),
+			ilGetInteger(IL_IMAGE_HEIGHT),
+			ilGetInteger(IL_IMAGE_FORMAT),
+			GL_UNSIGNED_BYTE,
+			ilGetData());
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	}
 
 	ilBindImage(0);
-	ilDeleteImage(ImgId);
+	ilDeleteImage(imgId);
 
+	m_textures[filename] = id;
+	
 	return id;
 }
+ 
 
-//void TextureManager::bind(GLuint id) {
-//    glBindTexture(GL_TEXTURE_2D, id);
-//}
 

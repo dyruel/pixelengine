@@ -103,10 +103,10 @@ bool Q3Bsp::_loadVertexes(FILE * file) {
 	fseek(file, m_header.entries[LUMP_VERTEXES].offset, SEEK_SET);
 	fread(m_vertexes.get(), m_header.entries[LUMP_VERTEXES].length, 1, file);
 
-	for (int i = 0; i < n; ++i) {
-		m_vertexes[i].texcoord[0][1] = 1.0f - m_vertexes[i].texcoord[0][1];
+//	for (int i = 0; i < n; ++i) {
+//		m_vertexes[i].texcoord[0][1] = 1.0f - m_vertexes[i].texcoord[0][1];
 //		m_vertexes.get()[i].texcoord[1][0] = 1.0f - m_vertexes.get()[i].texcoord[1][0];
-	}
+//	}
 
 	ILogger::log("--> %d vertexes loaded.\n", n);
 
@@ -151,7 +151,7 @@ bool Q3Bsp::_loadFaces(FILE * file) {
 
 bool Q3Bsp::_loadShaders(FILE * file) {
 	std::shared_ptr<TextureManager> textureManager = TextureManager::getInstance();
-	std::vector<std::string> files;
+//	std::vector<std::string> files;
 	int nShaders = 0;
 
 	if (!file) {
@@ -167,9 +167,9 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 
 	ILogger::log("--> %d Shaders\n", nShaders);
 
-
+	/*
 	for (int i = 0; i < nShaders; ++i) {
-		std::string name(m_bspShaders.get()[i].name);
+		std::string name(m_bspShaders[i].name);
 
 		ILogger::log("--->  %s\n", name.c_str());
 
@@ -179,14 +179,24 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 	if (!textureManager->loadTextures(files, m_textureIds)) {
 		return false;
 	}
+	*/
 
+	m_shaderManager = Q3ShaderManager::getInstance();
 
+	
 	for (int i = 0; i < nShaders; ++i) {
-		Q3ShaderDefault shaderDefault(m_textureIds[i]);
+		if (m_shaderManager->exists(m_bspShaders[i].name)) {
+			m_shaders[i] = m_shaderManager->getShader(m_bspShaders[i].name);
+			ILogger::log("--->  %s\n", m_bspShaders[i].name);
+		}
+		else {
+			Q3ShaderDefault shaderDefault(textureManager->getTexture(m_bspShaders[i].name));
+			m_shaders[i] = shaderDefault;
+			ILogger::log("--->  %s (No shader file, default loaded)\n", m_bspShaders[i].name);
+		}
 
-		m_shaders[i] = shaderDefault;
 	}
-
+	
 
 	return true;
 }
@@ -480,9 +490,21 @@ void Q3Bsp::render() {
 	std::set<int>::iterator faceToRenderEnd = m_facesToRender.end();
 
 	while (faceToRender != faceToRenderEnd) {
-		Q3BspFace face = m_faces[*faceToRender];
-		Q3Shader shader = m_shaders[face.shader];
-		const std::vector<Q3ShaderPass>&  shaderPasses = shader.getShaderPasses();
+		const Q3BspFace& face = m_faces[*faceToRender];
+		const Q3Shader& shader = m_shaders[face.shader];
+		/*
+		if (m_shaderManager->exists(m_bspShaders[face.shader].name)) {
+			shader = Q3ShaderManager::getInstance()->getShader(m_bspShaders[face.shader].name);
+		}
+		else {
+			
+		}
+		*/
+		const std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
+
+		if (shader.getFlags() & SHADER_NOCULL) {
+			glDisable(GL_CULL_FACE);
+		}
 
 		std::vector<Q3ShaderPass>::const_iterator shaderPasse = shaderPasses.begin();
 		std::vector<Q3ShaderPass>::const_iterator shaderPassesEnd = shaderPasses.end();
@@ -494,18 +516,18 @@ void Q3Bsp::render() {
 			while (shaderPasse != shaderPassesEnd) {
 				//				glBindTexture(GL_TEXTURE_2D, m_textureIds[face.shader]);
 
-				if ((*shaderPasse).flags & SHADER_LIGHTMAP) {
+				if ((*shaderPasse).m_flags & SHADER_LIGHTMAP) {
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[1]));
 					glBindTexture(GL_TEXTURE_2D, face.lm_index);
 				}
 				else {
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[0]));
-					glBindTexture(GL_TEXTURE_2D, (*shaderPasse).texId);
+					glBindTexture(GL_TEXTURE_2D, (*shaderPasse).m_texId);
 				}
 
-				if ((*shaderPasse).flags & SHADER_BLEND) {
+				if ((*shaderPasse).m_flags & SHADER_BLEND) {
 					glEnable(GL_BLEND);
-					glBlendFunc((*shaderPasse).blendSrc, (*shaderPasse).blendDst);
+					glBlendFunc((*shaderPasse).m_blendSrc, (*shaderPasse).m_blendDst);
 				}
 				else {
 					glDisable(GL_BLEND);
@@ -516,6 +538,11 @@ void Q3Bsp::render() {
 				++shaderPasse;
 			}
 		}
+
+		if (shader.getFlags() & SHADER_NOCULL) {
+			glEnable(GL_CULL_FACE);
+		}
+
 		++faceToRender;
 	}
 

@@ -18,6 +18,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 	std::ifstream file(filename, std::ios::in);
 	std::stringstream sstream;
     Q3Shader shader;
+	Q3ShaderPass shaderPass;
     std::string token = "";
     
     std::vector<std::string> args;
@@ -38,6 +39,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
     m_depth = 0;
     
     shader.clear();
+	shaderPass.clear();
     args.clear();
 
 
@@ -89,7 +91,6 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
                     ++i;
                 }
                 else {
-//                    token.clear();
                     m_readingState = SP_READ_NAME;
                 }
                 
@@ -167,8 +168,9 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
                     m_shaders[shader.name] = shader;
                     shader.clear();
                 }
-                else {
-                    // end of a shader pass
+                else { // end of a shader pass
+					shader.addShaderPass(shaderPass);
+					shaderPass.clear();
                 }
                 
               
@@ -190,10 +192,49 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
                 }
                 
                 if(!args.empty()) {
-                    if(m_depth == 0) {
+
+                    if(m_depth == 0) { // We've read the shader's name
                         shader.name = args[0];
                     }
-                    
+					else if (m_depth == 1){ // Global command
+						if (!args[0].compare("cull")) {
+
+							if (args.size() > 1) {
+								if (!args[1].compare("none") || !args[1].compare("disable")) {
+									shader.m_flags |= SHADER_NOCULL;
+								}
+								else if (!args[1].compare("front")){
+									
+								}
+								else if (!args[1].compare("back")){
+
+								}
+							}
+
+						}
+						else if (!args[0].compare("surfaceparm")) {
+
+						}
+						else if (!args[0].compare("skyparms")) {
+
+						}
+					}
+					else { // Shader pass command
+						if (!args[0].compare("animMap")) {
+							shaderPass.m_flags |= SHADER_ANIMMAP;
+							shaderPass.m_animSpeed = atof(args[1].c_str());
+
+							std::vector<std::string>::iterator j = args.begin() + 2;
+
+							unsigned int k = 0;
+							while (j != args.end() && k < SHADER_MAX_FRAMES){
+//								shaderPass.m_animFrames[k] = 
+								++j;
+								++k;
+							}
+						}
+					}
+					/*
                     std::cout << "# ";
                     std::vector<std::string>::iterator m = args.begin();
                     std::vector<std::string>::iterator end = args.end();
@@ -204,7 +245,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
                     }
                     
                     std::cout << std::endl;
-
+					*/
                 }
                 
                 args.clear();

@@ -16,6 +16,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <map>
 
 #include "Singleton.h"
 
@@ -40,19 +41,33 @@ private:
 	bool init();
 	bool deinit();
 
+	std::map<std::string, GLuint> m_textures;
+
 	TextureManager() {};
 	TextureManager(TextureManager&);
 	void operator =(TextureManager&);
+
+
+	GLuint _loadTextureFromFile(const std::string& filename);
+
 
 public:
 
 	virtual ~TextureManager() {};
 
-	bool loadTextures(const std::vector<std::string>& files, std::unique_ptr<GLuint[]>& ids);
+# if 0
+	bool _loadTextures(const std::vector<std::string>& files, std::unique_ptr<GLuint[]>& ids);
+#endif
 
-	GLuint loadTextureFromFile(std::string filename);
+	GLuint getTexture(const std::string& filename) {
+		if (m_textures.find(filename) != m_textures.end()) {
+			return m_textures[filename];
+		}
+		else {
+			return _loadTextureFromFile(filename);
+		}
+	}
     
-//    void bind(GLuint id);
 };
 
 #endif /* defined(__PixelEngine__Texture__) */

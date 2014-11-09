@@ -38,16 +38,44 @@ int main(int argc, const char * argv[]){
 	camera->getPosition()[1] = 0.;
 	camera->getPosition()[2] = 50.;
 
-	if (!q3bsp->load("maps/q3ctf2.bsp")) {
+
+	shaderManager->loadFromFile("scripts/base.shader");
+	shaderManager->loadFromFile("scripts/base_button.shader");
+	shaderManager->loadFromFile("scripts/base_floor.shader");
+	shaderManager->loadFromFile("scripts/base_light.shader");
+	shaderManager->loadFromFile("scripts/base_object.shader");
+	shaderManager->loadFromFile("scripts/base_support.shader");
+	shaderManager->loadFromFile("scripts/base_trim.shader");
+	shaderManager->loadFromFile("scripts/base_wall.shader");
+	shaderManager->loadFromFile("scripts/common.shader");
+	shaderManager->loadFromFile("scripts/ctf.shader");
+	shaderManager->loadFromFile("scripts/eerie.shader");
+	shaderManager->loadFromFile("scripts/gfx.shader");
+	shaderManager->loadFromFile("scripts/gothic_block.shader");
+	shaderManager->loadFromFile("scripts/gothic_floor.shader");
+	shaderManager->loadFromFile("scripts/gothic_light.shader");
+	shaderManager->loadFromFile("scripts/gothic_trim.shader");
+	shaderManager->loadFromFile("scripts/gothic_wall.shader");
+	shaderManager->loadFromFile("scripts/hell.shader");
+	shaderManager->loadFromFile("scripts/liquid.shader");
+	shaderManager->loadFromFile("scripts/menu.shader");
+	shaderManager->loadFromFile("scripts/models.shader");
+	shaderManager->loadFromFile("scripts/organics.shader");
+	shaderManager->loadFromFile("scripts/sfx.shader");
+	shaderManager->loadFromFile("scripts/shrine.shader");
+	shaderManager->loadFromFile("scripts/skin.shader");
+	shaderManager->loadFromFile("scripts/sky.shader");
+
+	if (!q3bsp->load("bsp/q3dm1.bsp")) {
 		return 0;
 	}
 
 	q3bsp->attachCamera(camera);
 
 //	Q3Shader shader;
-	shaderManager->loadFromFile("scripts/common.shader");
+
+	/*
     const std::map<std::string, Q3Shader>& shaders = shaderManager->getShaders();
-    
     
     std::map<std::string, Q3Shader>::const_iterator i = shaders.begin();
     std::map<std::string, Q3Shader>::const_iterator end = shaders.end();
@@ -56,7 +84,7 @@ int main(int argc, const char * argv[]){
         std::cout <<  (*i).first << " : "  << std::endl;
         ++i;
     }
-    
+    */
 
     
 	GLdouble lastTime = (GLdouble) glfwGetTime();

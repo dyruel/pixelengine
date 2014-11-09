@@ -23,8 +23,6 @@ protected:
 	Vector3d m_dir;
     Vector3d m_up;
 
-
-    
 public:
     Camera();
     Camera(GLdouble fov, GLdouble aspect, GLdouble near, GLdouble far);

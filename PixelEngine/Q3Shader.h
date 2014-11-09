@@ -18,6 +18,9 @@
 #include "Singleton.h"
 
 
+#define SHADER_MAX_FRAMES 10
+
+
 enum {
 	SHADER_NOCULL		= 1 << 0,
 	SHADER_TRANSPARENT	= 1 << 1,
@@ -52,10 +55,22 @@ enum {
 
 
 typedef	struct {
-	int texId;
-	unsigned int flags;
+	GLuint m_texId;
+	unsigned int m_flags;
 
-	GLenum blendSrc, blendDst;
+	GLenum m_blendSrc, m_blendDst;
+
+	float m_animSpeed;
+	int m_animNumframes;
+	GLuint m_animFrames[SHADER_MAX_FRAMES];
+
+	void clear() {
+		m_texId = 0;
+		m_flags = 0;
+		m_blendSrc = GL_DST_COLOR;
+		m_blendDst = GL_ZERO;
+		m_animNumframes = 0;
+	}
 
 } Q3ShaderPass;
 
@@ -70,17 +85,21 @@ protected:
 	unsigned int m_flags;
     std::vector<Q3ShaderPass> m_shaderPasses;
 
+
+
 public:
 	Q3Shader() { };
 	virtual ~Q3Shader() {};
 
-	void addShaderPasse(const Q3ShaderPass& shaderPass) { m_shaderPasses.push_back(shaderPass); };
+	void addShaderPass(const Q3ShaderPass& shaderPass) { m_shaderPasses.push_back(shaderPass); };
 	const std::vector<Q3ShaderPass>& getShaderPasses() const { return m_shaderPasses; };
     virtual void clear() {
         name.clear();
         m_flags = 0;
         m_shaderPasses.clear();
     }
+
+	const unsigned int getFlags() const { return m_flags; }
 
 };
 
@@ -94,14 +113,14 @@ public:
 		m_flags = 0;
 
 //		shaderPass.flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
-		shaderPass.flags = 0;
-		shaderPass.texId = -1;
+		shaderPass.m_flags = 0;
+		shaderPass.m_texId = -1;
 		m_shaderPasses.push_back(shaderPass);
 
-		shaderPass.flags = SHADER_BLEND;
-		shaderPass.texId = texId;
-		shaderPass.blendSrc = GL_DST_COLOR;
-		shaderPass.blendDst = GL_ZERO;
+		shaderPass.m_flags = SHADER_BLEND;
+		shaderPass.m_texId = texId;
+		shaderPass.m_blendSrc = GL_DST_COLOR;
+		shaderPass.m_blendDst = GL_ZERO;
 
 		m_shaderPasses.push_back(shaderPass);
 
@@ -138,7 +157,13 @@ public:
     bool loadFromFile(const char* filename);
     
     const std::map<std::string, Q3Shader>& getShaders() const { return m_shaders; };
-    const Q3Shader& getShader(const std::string& name) const { return m_shaders.at(name); };
+    const Q3Shader& getShader(const std::string& name) const {
+			return m_shaders.at(name); 
+	};
+
+	bool exists(const std::string& name) {
+		return m_shaders.find(name) != m_shaders.end();
+	}
 };
 
 #endif
