@@ -6,12 +6,15 @@
 //  Copyright (c) 2014 Morgan Chopin. All rights reserved.
 //
 
+#include <iostream>
+
 #include "main.h"
 
 #include "Video.h"
 #include "Scene.h"
 #include "Texture.h"
 #include "Q3Bsp.h"
+#include "Q3Shader.h"
 
 const GLdouble deltaTime = .01; // 1/100th seconds
 
@@ -21,6 +24,7 @@ int main(int argc, const char * argv[]){
 	std::shared_ptr<Video> video = Video::getInstance();
 	std::shared_ptr<TextureManager>  textureManager = TextureManager::getInstance();
 	std::shared_ptr<SceneManager> sceneManager = SceneManager::getInstance();
+    std::shared_ptr<Q3ShaderManager> shaderManager = Q3ShaderManager::getInstance();
 
 	std::shared_ptr<DummyNode> dummyNode(new DummyNode());
 	std::shared_ptr<Camera> camera(new CameraFree());
@@ -41,7 +45,18 @@ int main(int argc, const char * argv[]){
 	q3bsp->attachCamera(camera);
 
 //	Q3Shader shader;
-//	shader.loadFromFile("scripts/test2.shader");
+	shaderManager->loadFromFile("scripts/common.shader");
+    const std::map<std::string, Q3Shader>& shaders = shaderManager->getShaders();
+    
+    
+    std::map<std::string, Q3Shader>::const_iterator i = shaders.begin();
+    std::map<std::string, Q3Shader>::const_iterator end = shaders.end();
+    
+    while (i != end) {
+        std::cout <<  (*i).first << " : "  << std::endl;
+        ++i;
+    }
+    
 
     
 	GLdouble lastTime = (GLdouble) glfwGetTime();

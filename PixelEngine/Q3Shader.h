@@ -112,8 +112,8 @@ private:
     
     std::map<std::string, Q3Shader> m_shaders;
     
-    bool init();
-    bool deinit();
+    bool init() { return true; };
+    bool deinit() { return true; };
     
     // Variables used in the parser
     unsigned int m_readingState;
@@ -128,6 +128,9 @@ public:
     virtual ~Q3ShaderManager() {};
     
     bool loadFromFile(const char* filename);
+    
+    const std::map<std::string, Q3Shader>& getShaders() const { return m_shaders; };
+    const Q3Shader& getShader(const std::string& name) const { return m_shaders.at(name); };
 };
 
 #endif
