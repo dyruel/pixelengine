@@ -46,6 +46,8 @@ enum {
     SP_FIND_NAME        = 1 << 4,
     SP_FIND_VALUE       = 1 << 5,
     SP_READ_VALUE       = 1 << 6,
+    SP_END_COM          = 1 << 7,
+    SP_BEGIN_COM        = 1 << 8,
 };
 
 
@@ -74,7 +76,11 @@ public:
 
 	void addShaderPasse(const Q3ShaderPass& shaderPass) { m_shaderPasses.push_back(shaderPass); };
 	const std::vector<Q3ShaderPass>& getShaderPasses() const { return m_shaderPasses; };
-	
+    virtual void clear() {
+        name.clear();
+        m_flags = 0;
+        m_shaderPasses.clear();
+    }
 
 };
 
@@ -111,6 +117,8 @@ class Q3ShaderManager : public Singleton<Q3ShaderManager> {
 private:
     
     std::map<std::string, Q3Shader> m_shaders;
+    
+    void _loadCommand();
     
     bool init() { return true; };
     bool deinit() { return true; };
