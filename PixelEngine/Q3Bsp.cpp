@@ -167,20 +167,6 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 
 	ILogger::log("--> %d Shaders\n", nShaders);
 
-	/*
-	for (int i = 0; i < nShaders; ++i) {
-		std::string name(m_bspShaders[i].name);
-
-		ILogger::log("--->  %s\n", name.c_str());
-
-		files.push_back(name);
-	}
-
-	if (!textureManager->loadTextures(files, m_textureIds)) {
-		return false;
-	}
-	*/
-
 	m_shaderManager = Q3ShaderManager::getInstance();
 
 	
@@ -194,7 +180,6 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 			m_shaders[i] = shaderDefault;
 			ILogger::log("--->  %s (No shader file, default loaded)\n", m_bspShaders[i].name);
 		}
-
 	}
 	
 
@@ -421,69 +406,70 @@ void Q3Bsp::_selectFaces(int index) {
 		if (and_clip)
 			return;
 
-		for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
-			const int f = j + m_leafs[i].leafface;
-			m_facesToRender.insert(m_leafFaces[f].face);
-		}
-
-	} else { // Node
-		const Q3BspNode&  node = m_nodes[index];
-		const Q3BspPlane& plane = m_planes[node.plane];
-		const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
-
-		// Clipping test
-//		unsigned char nIn = 0;
-		unsigned int and_clip = ~0;
-
-		for (int j = 0; j < 8; ++j)
-		{
-			Vector4f v, cv;
-			unsigned int flags = 0;
-
-			v.x = node.bbox[bbox_index[j][0]];
-			v.y = node.bbox[bbox_index[j][1]];
-			v.z = node.bbox[bbox_index[j][2]];
-			v.w = 1.0f;
-
-			cv = m_clipMatrix * v;
-
-			if (cv.x < -cv.w)
-				flags |= CLIP_X_LEFT;
-
-			if (cv.x > cv.w)
-				flags |= CLIP_X_RIGHT;
-
-			if (cv.y > cv.w)
-				flags |= CLIP_Y_LEFT;
-
-			if (cv.y > cv.w)
-				flags |= CLIP_Y_RIGHT;
-
-			if (cv.z > cv.w)
-				flags |= CLIP_Z_LEFT;
-
-			if (cv.z > cv.w)
-				flags |= CLIP_Z_RIGHT;
-
-			and_clip &= flags;
-		}
-
-		if (and_clip)
-			return;
-
-		_selectFaces(node.children[0]);
-		_selectFaces(node.children[1]);
+for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
+	const int f = j + m_leafs[i].leafface;
+	m_facesToRender.insert(m_leafFaces[f].face);
+}
 
 	}
+ else { // Node
+	 const Q3BspNode&  node = m_nodes[index];
+	 const Q3BspPlane& plane = m_planes[node.plane];
+	 const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
+
+	 // Clipping test
+	 //		unsigned char nIn = 0;
+	 unsigned int and_clip = ~0;
+
+	 for (int j = 0; j < 8; ++j)
+	 {
+		 Vector4f v, cv;
+		 unsigned int flags = 0;
+
+		 v.x = node.bbox[bbox_index[j][0]];
+		 v.y = node.bbox[bbox_index[j][1]];
+		 v.z = node.bbox[bbox_index[j][2]];
+		 v.w = 1.0f;
+
+		 cv = m_clipMatrix * v;
+
+		 if (cv.x < -cv.w)
+			 flags |= CLIP_X_LEFT;
+
+		 if (cv.x > cv.w)
+			 flags |= CLIP_X_RIGHT;
+
+		 if (cv.y > cv.w)
+			 flags |= CLIP_Y_LEFT;
+
+		 if (cv.y > cv.w)
+			 flags |= CLIP_Y_RIGHT;
+
+		 if (cv.z > cv.w)
+			 flags |= CLIP_Z_LEFT;
+
+		 if (cv.z > cv.w)
+			 flags |= CLIP_Z_RIGHT;
+
+		 and_clip &= flags;
+	 }
+
+	 if (and_clip)
+		 return;
+
+	 _selectFaces(node.children[0]);
+	 _selectFaces(node.children[1]);
+
+ }
 }
 
 void Q3Bsp::render() {
-//	int i;
+	//	int i;
 
 	// Step 1 : Select the faces to be rendered
 	_selectFaces(0);
 
-//	std::cout << m_facesToRender.size() << std::endl;
+	//	std::cout << m_facesToRender.size() << std::endl;
 
 	// Step 2 : Render previously selected faces
 	std::set<int>::iterator faceToRender = m_facesToRender.begin();
@@ -491,23 +477,23 @@ void Q3Bsp::render() {
 
 	while (faceToRender != faceToRenderEnd) {
 		const Q3BspFace& face = m_faces[*faceToRender];
-		const Q3Shader& shader = m_shaders[face.shader];
+		Q3Shader& shader = m_shaders[face.shader];
 		/*
 		if (m_shaderManager->exists(m_bspShaders[face.shader].name)) {
-			shader = Q3ShaderManager::getInstance()->getShader(m_bspShaders[face.shader].name);
+		shader = Q3ShaderManager::getInstance()->getShader(m_bspShaders[face.shader].name);
 		}
 		else {
-			
+
 		}
 		*/
-		const std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
+		std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
 
 		if (shader.getFlags() & SHADER_NOCULL) {
 			glDisable(GL_CULL_FACE);
 		}
 
-		std::vector<Q3ShaderPass>::const_iterator shaderPasse = shaderPasses.begin();
-		std::vector<Q3ShaderPass>::const_iterator shaderPassesEnd = shaderPasses.end();
+		std::vector<Q3ShaderPass>::iterator shaderPasse = shaderPasses.begin();
+		std::vector<Q3ShaderPass>::iterator shaderPassesEnd = shaderPasses.end();
 
 		if (face.type == FACE_MESH || face.type == FACE_POLYGON) {
 
@@ -519,6 +505,18 @@ void Q3Bsp::render() {
 				if ((*shaderPasse).m_flags & SHADER_LIGHTMAP) {
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[1]));
 					glBindTexture(GL_TEXTURE_2D, face.lm_index);
+				}
+				else if ((*shaderPasse).m_flags & SHADER_ANIMMAP) {
+
+					int frame = 0;
+
+					(*shaderPasse).m_frame += .01 * (*shaderPasse).m_animSpeed;
+
+					frame = ((int)(*shaderPasse).m_frame) % (*shaderPasse).m_animNumframes;
+
+					std::cout << (*shaderPasse).m_animFrames[frame] << std::endl;
+					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[0]));
+					glBindTexture(GL_TEXTURE_2D, (*shaderPasse).m_animFrames[frame]);
 				}
 				else {
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[0]));

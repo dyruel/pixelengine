@@ -9,10 +9,10 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
 #include "Q3Shader.h"
 #include "Logger.h"
-
-
+#include "Texture.h"
 
 bool Q3ShaderManager::loadFromFile(const char* filename) {
 	std::ifstream file(filename, std::ios::in);
@@ -228,10 +228,15 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 
 							unsigned int k = 0;
 							while (j != args.end() && k < SHADER_MAX_FRAMES){
-//								shaderPass.m_animFrames[k] = 
+
+								
+								shaderPass.m_animFrames[k] = TextureManager::getInstance()->getTexture(*j);
+//								std::cout << *j << " " << shaderPass.m_animFrames[k] << std::endl;
 								++j;
 								++k;
 							}
+							shaderPass.m_animNumframes = k;
+
 						}
 					}
 					/*

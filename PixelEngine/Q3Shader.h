@@ -63,6 +63,7 @@ typedef	struct {
 	float m_animSpeed;
 	int m_animNumframes;
 	GLuint m_animFrames[SHADER_MAX_FRAMES];
+	float m_frame;
 
 	void clear() {
 		m_texId = 0;
@@ -70,6 +71,7 @@ typedef	struct {
 		m_blendSrc = GL_DST_COLOR;
 		m_blendDst = GL_ZERO;
 		m_animNumframes = 0;
+		m_frame = 0;
 	}
 
 } Q3ShaderPass;
@@ -92,7 +94,7 @@ public:
 	virtual ~Q3Shader() {};
 
 	void addShaderPass(const Q3ShaderPass& shaderPass) { m_shaderPasses.push_back(shaderPass); };
-	const std::vector<Q3ShaderPass>& getShaderPasses() const { return m_shaderPasses; };
+	std::vector<Q3ShaderPass>& getShaderPasses() { return m_shaderPasses; };
     virtual void clear() {
         name.clear();
         m_flags = 0;
@@ -157,7 +159,8 @@ public:
     bool loadFromFile(const char* filename);
     
     const std::map<std::string, Q3Shader>& getShaders() const { return m_shaders; };
-    const Q3Shader& getShader(const std::string& name) const {
+
+    Q3Shader& getShader(const std::string& name)  {
 			return m_shaders.at(name); 
 	};
 

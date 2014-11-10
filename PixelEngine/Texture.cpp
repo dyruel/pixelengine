@@ -12,10 +12,12 @@
 
 bool TextureManager::init() {
 	ilInit();
+	iluInit();
 	/*
 	ilEnable(IL_ORIGIN_SET);
 	ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
-
+	*/
+	/*
 	ilEnable(IL_TYPE_SET);
 	ilTypeFunc(IL_UNSIGNED_BYTE);
 
@@ -119,29 +121,43 @@ bool TextureManager::_loadTextures(const std::vector<std::string>& files, std::u
 
 GLuint TextureManager::_loadTextureFromFile(const std::string& filename) {
 	ILuint imgId = 0;
-	GLuint id;
+	GLuint id = 0;
 	bool isLoaded = false;
 
-	std::string tga(filename);
-	tga.append(".tga");
-
-	std::string jpg(filename);
-	jpg.append(".jpg");
-	
 	ilGenImages(1, &imgId);
 	ilBindImage(imgId);
 
-	if (!ilLoadImage(tga.c_str())) {
-		if (ilLoadImage(jpg.c_str()))
+	std::string rawName = filename.substr(0, filename.find_last_of("."));
+
+	std::string tga(rawName);
+	tga.append(".tga");
+
+	std::string jpg(rawName);
+	jpg.append(".jpg");
+	
+	if (!ilLoad(IL_TGA, filename.c_str()) && !ilLoad(IL_JPG, filename.c_str())) {
+//		ILenum err = ilGetError();
+//		iluErrorString(err);
+//		ILogger::log("Error  %s\n", iluErrorString(err));
+
+		if (!ilLoad(IL_TGA, tga.c_str()) && !ilLoad(IL_JPG, tga.c_str())) {
+			if (ilLoad(IL_JPG, jpg.c_str()) || ilLoad(IL_TGA, jpg.c_str()))
+				isLoaded = true;
+		}
+		else {
 			isLoaded = true;
+		}
 	}
 	else {
+		
 		isLoaded = true;
 	}
+
 
 	if (isLoaded) {
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
+//		std::cout << id << std::endl;
 
 		gluBuild2DMipmaps(GL_TEXTURE_2D,
 			ilGetInteger(IL_IMAGE_BPP),
@@ -155,13 +171,17 @@ GLuint TextureManager::_loadTextureFromFile(const std::string& filename) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		
+		m_textures[filename] = id;
 	}
 
 	ilBindImage(0);
 	ilDeleteImage(imgId);
 
-	m_textures[filename] = id;
-	
+//	ILogger::log("no hit for %s %u\n", filename, m_textures[filename]);
+//	std::cout << filename.c_str() << " " << id << std::endl;
+
 	return id;
 }
  

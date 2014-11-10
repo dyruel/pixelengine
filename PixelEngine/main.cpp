@@ -65,13 +65,13 @@ int main(int argc, const char * argv[]){
 	shaderManager->loadFromFile("scripts/shrine.shader");
 	shaderManager->loadFromFile("scripts/skin.shader");
 	shaderManager->loadFromFile("scripts/sky.shader");
-
+	
 	if (!q3bsp->load("bsp/q3dm1.bsp")) {
 		return 0;
 	}
 
 	q3bsp->attachCamera(camera);
-
+	
 //	Q3Shader shader;
 
 	/*
