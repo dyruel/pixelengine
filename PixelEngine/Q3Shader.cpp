@@ -242,9 +242,82 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 						else if (!args[0].compare("blendfunc")) {
 							shaderPass.m_flags |= SHADER_BLENDFUNC;
 
-							// shaderPass.m_blendSrc = GL_ONE;
-							// shaderPass.m_blendDst = GL_ONE;
+							if (args.size() == 2)
+							{
+								if (!args[1].compare("blend"))
+								{
+									shaderPass.m_blendSrc = GL_SRC_ALPHA;
+									shaderPass.m_blendDst = GL_ONE_MINUS_SRC_ALPHA;
+								}
+								else if (!args[1].compare("filter"))
+								{
+									shaderPass.m_blendSrc = GL_DST_COLOR;
+									shaderPass.m_blendDst = GL_ZERO;
+								}
+								else if (!args[1].compare("add"))
+								{
+									shaderPass.m_blendSrc = shaderPass.m_blendDst = GL_ONE;
+								}
+								else {
+									ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with blendfunc\n", shader.name.c_str(), args[1].c_str());
+								}
+							}
+							else
+							{						
+								for (int j = 1; j < 3; ++j)
+								{
+									GLenum& blend = j == 1 ? shaderPass.m_blendSrc : shaderPass.m_blendDst;
+
+									if (!args[j].compare("gl_zero"))
+										blend = GL_ZERO;
+									else if (!args[j].compare("gl_one"))
+										blend = GL_ONE;
+									else if (!args[j].compare("gl_dst_color"))
+										blend = GL_DST_COLOR;
+									else if (!args[j].compare("gl_one_minus_src_alpha"))
+										blend = GL_ONE_MINUS_SRC_ALPHA;
+									else if (!args[j].compare("gl_src_alpha"))
+										blend = GL_SRC_ALPHA;
+									else if (!args[j].compare("gl_src_color"))
+										blend = GL_SRC_COLOR;
+									else if (!args[j].compare("gl_one_minus_dst_color"))
+										blend = GL_ONE_MINUS_DST_COLOR;
+									else if (!args[j].compare("gl_one_minus_src_color"))
+										blend = GL_ONE_MINUS_SRC_COLOR;
+									else if (!args[j].compare("gl_dst_alpha"))
+										blend = GL_DST_ALPHA;
+									else if (!args[j].compare("gl_one_minus_dst_alpha"))
+										blend = GL_ONE_MINUS_DST_ALPHA;
+									else {
+										ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with blendfunc\n", shader.name.c_str(), args[0].c_str());
+									}
+										
+								}
+							}
 						}
+						else if (!args[0].compare("map")) {
+							if (!args[1].compare("$lightmap")) {
+								shaderPass.m_flags |= SHADER_LIGHTMAP;
+							}
+							else {
+								shaderPass.m_texId = TextureManager::getInstance()->getTexture(args[1]);
+							}
+
+						}
+						else if (!args[0].compare("rgbgen")) {
+
+						}
+						else if (!args[0].compare("tcgen")) {
+
+						}
+						else if (!args[0].compare("tcmod")) {
+
+						}
+						else {
+							ILogger::log("Q3Shader::Syntax error in %s: The keyword %s does not exist\n", shader.name.c_str(), args[0].c_str());
+						}
+
+
 					}
 					/*
                     std::cout << "# ";

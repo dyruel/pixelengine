@@ -140,8 +140,8 @@ GLuint TextureManager::_loadTextureFromFile(const std::string& filename) {
 //		iluErrorString(err);
 //		ILogger::log("Error  %s\n", iluErrorString(err));
 
-		if (!ilLoad(IL_TGA, tga.c_str()) && !ilLoad(IL_JPG, tga.c_str())) {
-			if (ilLoad(IL_JPG, jpg.c_str()) || ilLoad(IL_TGA, jpg.c_str()))
+		if (!ilLoad(IL_TGA, tga.c_str())) {
+			if (ilLoad(IL_JPG, jpg.c_str()))
 				isLoaded = true;
 		}
 		else {

@@ -44,6 +44,7 @@ bool Video::init() {
 
     
 	// FOG test
+	/*
 	GLfloat fogColor[4] = { 0.5f, 0.5f, 0.5f, 1.0f };
 	glFogi(GL_FOG_MODE, GL_LINEAR);
 	glFogfv(GL_FOG_COLOR, fogColor);            
@@ -52,6 +53,7 @@ bool Video::init() {
 	glFogf(GL_FOG_START, 100.0f);             
 	glFogf(GL_FOG_END, 1000.0f);
 	glEnable(GL_FOG);
+	*/
 	// FOG test
 
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
@@ -109,6 +111,6 @@ void Video::endScene() const {
 
 
 bool Video::windowShouldClose() {
-    return glfwWindowShouldClose(m_window);
+    return glfwWindowShouldClose(m_window) != 0;
 }
 

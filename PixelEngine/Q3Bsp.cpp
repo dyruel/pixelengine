@@ -169,7 +169,33 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 
 	m_shaderManager = Q3ShaderManager::getInstance();
 
-	
+	m_shaderManager->loadFromFile("scripts/base.shader");
+	m_shaderManager->loadFromFile("scripts/base_button.shader");
+	m_shaderManager->loadFromFile("scripts/base_floor.shader");
+	m_shaderManager->loadFromFile("scripts/base_light.shader");
+	m_shaderManager->loadFromFile("scripts/base_object.shader");
+	m_shaderManager->loadFromFile("scripts/base_support.shader");
+	m_shaderManager->loadFromFile("scripts/base_trim.shader");
+	m_shaderManager->loadFromFile("scripts/base_wall.shader");
+	m_shaderManager->loadFromFile("scripts/common.shader");
+	m_shaderManager->loadFromFile("scripts/ctf.shader");
+	m_shaderManager->loadFromFile("scripts/eerie.shader");
+	m_shaderManager->loadFromFile("scripts/gfx.shader");
+	m_shaderManager->loadFromFile("scripts/gothic_block.shader");
+	m_shaderManager->loadFromFile("scripts/gothic_floor.shader");
+	m_shaderManager->loadFromFile("scripts/gothic_light.shader");
+	m_shaderManager->loadFromFile("scripts/gothic_trim.shader");
+	m_shaderManager->loadFromFile("scripts/gothic_wall.shader");
+	m_shaderManager->loadFromFile("scripts/hell.shader");
+	m_shaderManager->loadFromFile("scripts/liquid.shader");
+	m_shaderManager->loadFromFile("scripts/menu.shader");
+	m_shaderManager->loadFromFile("scripts/models.shader");
+	m_shaderManager->loadFromFile("scripts/organics.shader");
+	m_shaderManager->loadFromFile("scripts/sfx.shader");
+	m_shaderManager->loadFromFile("scripts/shrine.shader");
+	m_shaderManager->loadFromFile("scripts/skin.shader");
+	m_shaderManager->loadFromFile("scripts/sky.shader");
+
 	for (int i = 0; i < nShaders; ++i) {
 		if (m_shaderManager->exists(m_bspShaders[i].name)) {
 			m_shaders[i] = m_shaderManager->getShader(m_bspShaders[i].name);
@@ -375,9 +401,9 @@ void Q3Bsp::_selectFaces(int index) {
 			Vector4f v, cv;
 			unsigned int flags = 0;
 
-			v.x = m_leafs[i].bbox[bbox_index[j][0]];
-			v.y = m_leafs[i].bbox[bbox_index[j][1]];
-			v.z = m_leafs[i].bbox[bbox_index[j][2]];
+			v.x = (GLfloat) m_leafs[i].bbox[bbox_index[j][0]];
+			v.y = (GLfloat) m_leafs[i].bbox[bbox_index[j][1]];
+			v.z = (GLfloat) m_leafs[i].bbox[bbox_index[j][2]];
 			v.w = 1.0f;
 
 			cv = m_clipMatrix * v;
@@ -426,9 +452,9 @@ for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
 		 Vector4f v, cv;
 		 unsigned int flags = 0;
 
-		 v.x = node.bbox[bbox_index[j][0]];
-		 v.y = node.bbox[bbox_index[j][1]];
-		 v.z = node.bbox[bbox_index[j][2]];
+		 v.x = (GLfloat) node.bbox[bbox_index[j][0]];
+		 v.y = (GLfloat) node.bbox[bbox_index[j][1]];
+		 v.z = (GLfloat) node.bbox[bbox_index[j][2]];
 		 v.w = 1.0f;
 
 		 cv = m_clipMatrix * v;

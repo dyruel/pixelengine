@@ -83,7 +83,7 @@ void Camera::setView() {
 void CameraFree::update(GLdouble delta) {
 	GLFWwindow* window = Video::getInstance()->getWindow();
 	GLdouble mx = 0., my = 0.;
-	GLint winHalfWidth = 0., winHalfHeight = 0.;
+	GLint winHalfWidth = 0, winHalfHeight = 0;
 	Vector3d move;
     
     //GLint winWidth = 0., winHeight = 0.;
@@ -231,7 +231,7 @@ bool CameraOrtho::init() {
 void CameraOrtho::setView() {
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef(-m_position.x, m_position.y, 0.0f);
+    glTranslated(-m_position.x, m_position.y, 0.0f);
 }
 
 

@@ -24,7 +24,6 @@ int main(int argc, const char * argv[]){
 	std::shared_ptr<Video> video = Video::getInstance();
 	std::shared_ptr<TextureManager>  textureManager = TextureManager::getInstance();
 	std::shared_ptr<SceneManager> sceneManager = SceneManager::getInstance();
-    std::shared_ptr<Q3ShaderManager> shaderManager = Q3ShaderManager::getInstance();
 
 	std::shared_ptr<DummyNode> dummyNode(new DummyNode());
 	std::shared_ptr<Camera> camera(new CameraFree());
@@ -38,35 +37,6 @@ int main(int argc, const char * argv[]){
 	camera->getPosition()[1] = 0.;
 	camera->getPosition()[2] = 50.;
 
-	
-	shaderManager->loadFromFile("scripts/base.shader");
-	shaderManager->loadFromFile("scripts/base_button.shader");
-	shaderManager->loadFromFile("scripts/base_floor.shader");
-	shaderManager->loadFromFile("scripts/base_light.shader");
-	shaderManager->loadFromFile("scripts/base_object.shader");
-	shaderManager->loadFromFile("scripts/base_support.shader");
-	shaderManager->loadFromFile("scripts/base_trim.shader");
-	shaderManager->loadFromFile("scripts/base_wall.shader");
-	shaderManager->loadFromFile("scripts/common.shader");
-	
-	shaderManager->loadFromFile("scripts/ctf.shader");
-	shaderManager->loadFromFile("scripts/eerie.shader");
-	shaderManager->loadFromFile("scripts/gfx.shader");
-	shaderManager->loadFromFile("scripts/gothic_block.shader");
-	shaderManager->loadFromFile("scripts/gothic_floor.shader");
-	shaderManager->loadFromFile("scripts/gothic_light.shader");
-	shaderManager->loadFromFile("scripts/gothic_trim.shader");
-	shaderManager->loadFromFile("scripts/gothic_wall.shader");
-	shaderManager->loadFromFile("scripts/hell.shader");
-	shaderManager->loadFromFile("scripts/liquid.shader");
-	shaderManager->loadFromFile("scripts/menu.shader");
-	shaderManager->loadFromFile("scripts/models.shader");
-	shaderManager->loadFromFile("scripts/organics.shader");
-	shaderManager->loadFromFile("scripts/sfx.shader");
-	shaderManager->loadFromFile("scripts/shrine.shader");
-	shaderManager->loadFromFile("scripts/skin.shader");
-	shaderManager->loadFromFile("scripts/sky.shader");
-	
 	if (!q3bsp->load("bsp/q3dm1.bsp")) {
 		return 0;
 	}
