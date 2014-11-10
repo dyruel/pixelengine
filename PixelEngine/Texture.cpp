@@ -119,7 +119,7 @@ bool TextureManager::_loadTextures(const std::vector<std::string>& files, std::u
 }
 #endif
 
-GLuint TextureManager::_loadTextureFromFile(const std::string& filename) {
+GLuint TextureManager::_loadTextureFromFile(const std::string& filename, int flags) {
 	ILuint imgId = 0;
 	GLuint id = 0;
 	bool isLoaded = false;
@@ -159,20 +159,41 @@ GLuint TextureManager::_loadTextureFromFile(const std::string& filename) {
 		glBindTexture(GL_TEXTURE_2D, id);
 //		std::cout << id << std::endl;
 
-		gluBuild2DMipmaps(GL_TEXTURE_2D,
-			ilGetInteger(IL_IMAGE_BPP),
-			ilGetInteger(IL_IMAGE_WIDTH),
-			ilGetInteger(IL_IMAGE_HEIGHT),
-			ilGetInteger(IL_IMAGE_FORMAT),
-			GL_UNSIGNED_BYTE,
-			ilGetData());
+		if (flags & TEXTURE_CLAMP) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		}
+		else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		}
 
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		if (flags & TEXTURE_NOMIPMAP) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-		
+			glTexImage2D(GL_TEXTURE_2D, 0, 
+						ilGetInteger(IL_IMAGE_BPP),
+						ilGetInteger(IL_IMAGE_WIDTH),
+						ilGetInteger(IL_IMAGE_HEIGHT),
+						0, 
+						ilGetInteger(IL_IMAGE_FORMAT), 
+						GL_UNSIGNED_BYTE,
+						ilGetData());
+		}
+		else {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			gluBuild2DMipmaps(GL_TEXTURE_2D,
+				ilGetInteger(IL_IMAGE_BPP),
+				ilGetInteger(IL_IMAGE_WIDTH),
+				ilGetInteger(IL_IMAGE_HEIGHT),
+				ilGetInteger(IL_IMAGE_FORMAT),
+				GL_UNSIGNED_BYTE,
+				ilGetData());
+		}
+
 		m_textures[filename] = id;
 	}
 

@@ -202,7 +202,7 @@ class Q3Bsp : public SceneNode {
 	std::unique_ptr<GLuint[]> m_textureIds;
 	std::unique_ptr<GLuint[]> m_lmIds;
 
-	GLuint m_blankTexId;
+	GLdouble m_Delta;
 	int m_cameraCluster;
 	std::set<int> m_facesToRender;
 	Matrix4f m_clipMatrix;

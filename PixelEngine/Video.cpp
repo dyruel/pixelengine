@@ -58,14 +58,25 @@ bool Video::init() {
 
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
+	glDisable(GL_DITHER);
+	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glCullFace(GL_FRONT);
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
-    glFrontFace(GL_CW);
+//	glEnable(GL_DEPTH_TEST);
+//    glEnable(GL_TEXTURE_2D);
+//	glEnableClientState(GL_VERTEX_ARRAY);
+//	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+//	glEnable(GL_CULL_FACE);
+ //   glCullFace(GL_BACK);
+//    glFrontFace(GL_CW);
 
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
@@ -97,7 +108,7 @@ bool Video::deinit() {
 
 
 void Video::beginScene() const {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 

@@ -32,6 +32,12 @@ typedef	struct {
     GLuint	type;											// Image Type (GL_RGB, GL_RGBA)
 } Texture;
 
+
+enum {
+	TEXTURE_NOMIPMAP = 1 << 0,
+	TEXTURE_CLAMP	 = 1 << 1,
+};
+
 //typedef std::vector<Texture> TextureList;
 
 
@@ -50,7 +56,7 @@ private:
 	void operator =(TextureManager&);
 
 
-	GLuint _loadTextureFromFile(const std::string& filename);
+	GLuint _loadTextureFromFile(const std::string& filename, int flags);
 
 
 public:
@@ -61,14 +67,14 @@ public:
 	bool _loadTextures(const std::vector<std::string>& files, std::unique_ptr<GLuint[]>& ids);
 #endif
 
-	GLuint getTexture(const std::string& filename) {
+	GLuint getTexture(const std::string& filename, int flags = 0) {
 		if (m_textures.find(filename) != m_textures.end()) {
 //			ILogger::log("hit for %s %d\n", filename.c_str(), m_textures[filename]);
 			return m_textures[filename];
 		}
 		else {
 //			ILogger::log("no hit for %s %d\n", filename.c_str(), _loadTextureFromFile(filename));
-			return _loadTextureFromFile(filename);
+			return _loadTextureFromFile(filename, flags);
 		}
 	}
     

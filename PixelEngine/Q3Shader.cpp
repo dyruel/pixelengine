@@ -313,6 +313,38 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 						else if (!args[0].compare("tcmod")) {
 
 						}
+						else if (!args[0].compare("clampmap")) {
+							shaderPass.m_texId = TextureManager::getInstance()->getTexture(args[1], TEXTURE_CLAMP);
+						}
+						else if (!args[0].compare("alphafunc")) {
+							shaderPass.m_flags |= SHADER_ALPHAFUNC;
+
+							if (!args[1].compare("gt0"))
+							{
+								shaderPass.m_alphaFunc = GL_GREATER;
+								shaderPass.m_alphaFuncRef = 0.0f;
+							}
+							else if (!args[1].compare("ge128"))
+							{
+								shaderPass.m_alphaFunc = GL_GEQUAL;
+								shaderPass.m_alphaFuncRef = 0.5f;
+							}
+							else {
+								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with alphafunc\n", shader.name.c_str(), args[1].c_str());
+							}
+
+						}
+						else if (!args[0].compare("depthfunc")) {
+							if (!args[1].compare("equal")) {
+								shaderPass.m_depthFunc = GL_EQUAL;
+							}
+							else {
+								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with depthfunc\n", shader.name.c_str(), args[1].c_str());
+							}
+						}
+						else if (!args[0].compare("depthwrite")) {
+							shaderPass.m_flags |= SHADER_DEPTHWRITE;
+						}
 						else {
 							ILogger::log("Q3Shader::Syntax error in %s: The keyword %s does not exist\n", shader.name.c_str(), args[0].c_str());
 						}

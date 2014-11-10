@@ -54,12 +54,21 @@ typedef	struct {
 	GLuint m_texId;
 	unsigned int m_flags;
 
+	// Blending
 	GLenum m_blendSrc, m_blendDst;
 
+	// Animmap
 	float m_animSpeed;
 	int m_animNumframes;
 	GLuint m_animFrames[SHADER_MAX_FRAMES];
 	float m_frame;
+
+	// Alpha func
+	GLenum m_alphaFunc;
+	GLclampf m_alphaFuncRef;
+
+	// Depth func
+	GLenum m_depthFunc;
 
 	void clear() {
 		m_texId = 0;
@@ -68,6 +77,8 @@ typedef	struct {
 		m_blendDst = GL_ZERO;
 		m_animNumframes = 0;
 		m_frame = 0;
+		m_alphaFunc = 0;
+		m_alphaFuncRef = 0.0f;
 	}
 
 } Q3ShaderPass;
@@ -110,15 +121,16 @@ public:
 
 		m_flags = 0;
 
-//		shaderPass.flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
-		shaderPass.m_flags = 0;
+		shaderPass.m_flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
 		shaderPass.m_texId = -1;
+		shaderPass.m_depthFunc = GL_LEQUAL;
 		m_shaderPasses.push_back(shaderPass);
 
 		shaderPass.m_flags = SHADER_BLENDFUNC;
 		shaderPass.m_texId = texId;
 		shaderPass.m_blendSrc = GL_DST_COLOR;
 		shaderPass.m_blendDst = GL_ZERO;
+		shaderPass.m_depthFunc = GL_LEQUAL;
 
 		m_shaderPasses.push_back(shaderPass);
 

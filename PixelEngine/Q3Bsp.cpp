@@ -31,7 +31,7 @@ int Q3Bsp::bbox_index[8][3] =
 
 
 Q3Bsp::Q3Bsp()
-	: m_cameraCluster(0), m_blankTexId(0) {
+	: m_cameraCluster(0), m_Delta(0.){
 }
 
 
@@ -215,7 +215,6 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 
 bool Q3Bsp::_loadLightMaps(FILE * file) {
 	int nLightMaps = 0;
-	GLfloat white[4] = { 1.f, 1.f, 1.f, 1.0f };
 
 	if (!file) {
 		return false;
@@ -235,43 +234,12 @@ bool Q3Bsp::_loadLightMaps(FILE * file) {
 
 	for (int i = 0; i<nLightMaps; ++i) {
 		glBindTexture(GL_TEXTURE_2D, m_lmIds[i]);
-
-		gluBuild2DMipmaps(GL_TEXTURE_2D,
-						  GL_RGBA8, 128, 128,
-						  GL_RGB, GL_UNSIGNED_BYTE,
-						  m_lightMaps.get()[i].map);
-
-        /*
-        glTexImage2D(GL_TEXTURE_2D,
-                     0,
-                     GL_RGBA8,
-                     128, 128, 0,
-                     GL_RGB, GL_UNSIGNED_BYTE,
-                     m_lightMaps.get()[i].map);
-        */
-
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-//		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, m_lightMaps[i].map);
 	}
-
-	glGenTextures(1, &m_blankTexId);
-	glBindTexture(GL_TEXTURE_2D, m_blankTexId);
-
-	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, 1, 1, GL_RGB, GL_FLOAT, white);
-/*    glTexImage2D(GL_TEXTURE_2D,
-                 0,
-                 GL_RGBA8,
-                 1, 1, 0,
-                 GL_RGB, GL_FLOAT,
-                 white);
-*/
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	return true;
 }
@@ -393,7 +361,6 @@ void Q3Bsp::_selectFaces(int index) {
 		}
 
 		// Clipping test
-//		unsigned char nIn = 0;
 		unsigned int and_clip = ~0;
 		
 		for (int j = 0; j < 8; ++j)
@@ -432,69 +399,63 @@ void Q3Bsp::_selectFaces(int index) {
 		if (and_clip)
 			return;
 
-for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
-	const int f = j + m_leafs[i].leafface;
-	m_facesToRender.insert(m_leafFaces[f].face);
-}
+		for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
+			const int f = j + m_leafs[i].leafface;
+			m_facesToRender.insert(m_leafFaces[f].face);
+		}
 
 	}
- else { // Node
-	 const Q3BspNode&  node = m_nodes[index];
-	 const Q3BspPlane& plane = m_planes[node.plane];
-	 const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
+	 else { // Node
+		 const Q3BspNode&  node = m_nodes[index];
+		 const Q3BspPlane& plane = m_planes[node.plane];
+		 const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
 
-	 // Clipping test
-	 //		unsigned char nIn = 0;
-	 unsigned int and_clip = ~0;
+		 // Clipping test
+		 unsigned int and_clip = ~0;
 
-	 for (int j = 0; j < 8; ++j)
-	 {
-		 Vector4f v, cv;
-		 unsigned int flags = 0;
+		 for (int j = 0; j < 8; ++j)
+		 {
+			 Vector4f v, cv;
+			 unsigned int flags = 0;
 
-		 v.x = (GLfloat) node.bbox[bbox_index[j][0]];
-		 v.y = (GLfloat) node.bbox[bbox_index[j][1]];
-		 v.z = (GLfloat) node.bbox[bbox_index[j][2]];
-		 v.w = 1.0f;
+			 v.x = (GLfloat) node.bbox[bbox_index[j][0]];
+			 v.y = (GLfloat) node.bbox[bbox_index[j][1]];
+			 v.z = (GLfloat) node.bbox[bbox_index[j][2]];
+			 v.w = 1.0f;
 
-		 cv = m_clipMatrix * v;
+			 cv = m_clipMatrix * v;
 
-		 if (cv.x < -cv.w)
-			 flags |= CLIP_X_LEFT;
+			 if (cv.x < -cv.w)
+				 flags |= CLIP_X_LEFT;
 
-		 if (cv.x > cv.w)
-			 flags |= CLIP_X_RIGHT;
+			 if (cv.x > cv.w)
+				 flags |= CLIP_X_RIGHT;
 
-		 if (cv.y > cv.w)
-			 flags |= CLIP_Y_LEFT;
+			 if (cv.y > cv.w)
+				 flags |= CLIP_Y_LEFT;
 
-		 if (cv.y > cv.w)
-			 flags |= CLIP_Y_RIGHT;
+			 if (cv.y > cv.w)
+				 flags |= CLIP_Y_RIGHT;
 
-		 if (cv.z > cv.w)
-			 flags |= CLIP_Z_LEFT;
+			 if (cv.z > cv.w)
+				 flags |= CLIP_Z_LEFT;
 
-		 if (cv.z > cv.w)
-			 flags |= CLIP_Z_RIGHT;
+			 if (cv.z > cv.w)
+				 flags |= CLIP_Z_RIGHT;
 
-		 and_clip &= flags;
+			 and_clip &= flags;
+		 }
+
+		 if (and_clip)
+			 return;
+
+		 _selectFaces(node.children[0]);
+		 _selectFaces(node.children[1]);
+
 	 }
-
-	 if (and_clip)
-		 return;
-
-	 _selectFaces(node.children[0]);
-	 _selectFaces(node.children[1]);
-
- }
 }
 
 void Q3Bsp::render() {
-	//	int i;
-
-	// Step 1 : Select the faces to be rendered
-	_selectFaces(0);
-
 	//	std::cout << m_facesToRender.size() << std::endl;
 
 	// Step 2 : Render previously selected faces
@@ -504,14 +465,7 @@ void Q3Bsp::render() {
 	while (faceToRender != faceToRenderEnd) {
 		const Q3BspFace& face = m_faces[*faceToRender];
 		Q3Shader& shader = m_shaders[face.shader];
-		/*
-		if (m_shaderManager->exists(m_bspShaders[face.shader].name)) {
-		shader = Q3ShaderManager::getInstance()->getShader(m_bspShaders[face.shader].name);
-		}
-		else {
 
-		}
-		*/
 		std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
 
 		if (shader.getFlags() & SHADER_NOCULL) {
@@ -526,17 +480,26 @@ void Q3Bsp::render() {
 			glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes.get()[face.vertex].position));
 
 			while (shaderPasse != shaderPassesEnd) {
-				//				glBindTexture(GL_TEXTURE_2D, m_textureIds[face.shader]);
+
+				GLboolean ogl_env_blend = glIsEnabled(GL_BLEND);
+				GLboolean ogl_env_alpha = glIsEnabled(GL_ALPHA_TEST);
+				GLboolean ogl_env_depthmask;
+				glGetBooleanv(GL_DEPTH_WRITEMASK, &ogl_env_depthmask);
+				GLboolean ogl_env_colorarray = glIsEnabled(GL_COLOR_ARRAY);
+
 
 				if ((*shaderPasse).m_flags & SHADER_LIGHTMAP) {
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[1]));
-					glBindTexture(GL_TEXTURE_2D, face.lm_index);
+					glBindTexture(GL_TEXTURE_2D, m_lmIds[face.lm_index]);
+		//			std::cout << face.lm_index << std::endl;
+	//				m_lmIds
+					
 				}
 				else if ((*shaderPasse).m_flags & SHADER_ANIMMAP) {
 
 					int frame = 0;
 
-					(*shaderPasse).m_frame += .01 * (*shaderPasse).m_animSpeed;
+					(*shaderPasse).m_frame += m_Delta * (*shaderPasse).m_animSpeed;
 
 					frame = ((int)(*shaderPasse).m_frame) % (*shaderPasse).m_animNumframes;
 
@@ -557,7 +520,55 @@ void Q3Bsp::render() {
 					glDisable(GL_BLEND);
 				}
 
+				if ((*shaderPasse).m_flags & SHADER_ALPHAFUNC) {
+					glEnable(GL_ALPHA_TEST);
+					glAlphaFunc((*shaderPasse).m_alphaFunc, (*shaderPasse).m_alphaFuncRef);
+				}
+				else {
+					glDisable(GL_ALPHA_TEST);
+				}
+
+				
+				if ((*shaderPasse).m_flags & SHADER_DEPTHWRITE) {
+					glDepthFunc((*shaderPasse).m_depthFunc);
+					glDepthMask(GL_TRUE);
+				}
+				else {
+					glDepthMask(GL_FALSE);
+				}
+
 				glDrawElements(GL_TRIANGLES, face.n_meshverts, GL_UNSIGNED_INT, &(m_meshVerts.get()[face.meshvert]));
+
+
+				if (ogl_env_blend) {
+					glEnable(GL_BLEND);
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				}
+				else if ((*shaderPasse).m_flags & SHADER_BLENDFUNC) {
+					glDisable(GL_BLEND);
+				}
+
+				if (ogl_env_alpha) {
+					glEnable(GL_ALPHA_TEST);
+				}
+				else if ((*shaderPasse).m_flags & SHADER_ALPHAFUNC) {
+					glDisable(GL_ALPHA_TEST);
+				}
+
+				if (ogl_env_depthmask) {
+					glDepthMask(GL_TRUE);
+				}
+				else {
+					glDepthMask(GL_FALSE);
+				}
+
+				if (ogl_env_colorarray) {
+					glEnableClientState(GL_COLOR_ARRAY);
+				}
+				else {
+					glDisableClientState(GL_COLOR_ARRAY);
+				}
+
 
 				++shaderPasse;
 			}
@@ -590,6 +601,9 @@ void Q3Bsp::update(GLdouble delta) {
 
 	m_facesToRender.clear();
 	m_cameraCluster = m_leafs[getLeafIndex(m_attachedCamera->getPosition())].cluster;
+	m_Delta = delta;
+
+//	std::cout << delta << std::endl;
 
 	// Get clip matrix
 	float m[16], p[16], r[16];
@@ -602,6 +616,8 @@ void Q3Bsp::update(GLdouble delta) {
 	glPopMatrix();
 
 	m_clipMatrix = r;
+
+	_selectFaces(0);
 
 	while (i != end) {
 		(*i)->update(delta);
