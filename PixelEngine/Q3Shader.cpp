@@ -100,12 +100,13 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
             case SP_READ_NAME:
                 
                 if(c == ' ' || c == '\t') {
+//					std::transform(token.begin(), token.end(), token.begin(), ::tolower);
                     args.push_back(token);
                     token.clear();
                     m_readingState = SP_FIND_VALUE;
                 }
                 else {
-                    token.push_back(c);
+                    token.push_back(tolower(c));
                     ++i;
                 }
                 
@@ -133,7 +134,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
                     ++i;
                 }
                 else {
-                    token.push_back(c);
+					token.push_back(tolower(c));
                     ++i;
                 }
                 
@@ -220,7 +221,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 						}
 					}
 					else { // Shader pass command
-						if (!args[0].compare("animMap")) {
+						if (!args[0].compare("animmap")) {
 							shaderPass.m_flags |= SHADER_ANIMMAP;
 							shaderPass.m_animSpeed = atof(args[1].c_str());
 
@@ -237,6 +238,12 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 							}
 							shaderPass.m_animNumframes = k;
 
+						}
+						else if (!args[0].compare("blendfunc")) {
+							shaderPass.m_flags |= SHADER_BLENDFUNC;
+
+							// shaderPass.m_blendSrc = GL_ONE;
+							// shaderPass.m_blendDst = GL_ONE;
 						}
 					}
 					/*

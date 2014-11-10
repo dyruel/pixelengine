@@ -34,7 +34,7 @@ enum {
 
 enum {
 	SHADER_LIGHTMAP		= 1 << 0,
-	SHADER_BLEND		= 1 << 1,
+	SHADER_BLENDFUNC		= 1 << 1,
 	SHADER_ALPHAFUNC	= 1 << 3,
 	SHADER_TCMOD		= 1 << 4,
 	SHADER_ANIMMAP		= 1 << 5,
@@ -119,7 +119,7 @@ public:
 		shaderPass.m_texId = -1;
 		m_shaderPasses.push_back(shaderPass);
 
-		shaderPass.m_flags = SHADER_BLEND;
+		shaderPass.m_flags = SHADER_BLENDFUNC;
 		shaderPass.m_texId = texId;
 		shaderPass.m_blendSrc = GL_DST_COLOR;
 		shaderPass.m_blendDst = GL_ZERO;

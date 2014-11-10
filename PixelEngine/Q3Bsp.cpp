@@ -514,7 +514,7 @@ void Q3Bsp::render() {
 
 					frame = ((int)(*shaderPasse).m_frame) % (*shaderPasse).m_animNumframes;
 
-					std::cout << (*shaderPasse).m_animFrames[frame] << std::endl;
+//					std::cout << (*shaderPasse).m_animFrames[frame] << std::endl;
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[0]));
 					glBindTexture(GL_TEXTURE_2D, (*shaderPasse).m_animFrames[frame]);
 				}
@@ -523,7 +523,7 @@ void Q3Bsp::render() {
 					glBindTexture(GL_TEXTURE_2D, (*shaderPasse).m_texId);
 				}
 
-				if ((*shaderPasse).m_flags & SHADER_BLEND) {
+				if ((*shaderPasse).m_flags & SHADER_BLENDFUNC) {
 					glEnable(GL_BLEND);
 					glBlendFunc((*shaderPasse).m_blendSrc, (*shaderPasse).m_blendDst);
 				}

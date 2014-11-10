@@ -38,7 +38,7 @@ int main(int argc, const char * argv[]){
 	camera->getPosition()[1] = 0.;
 	camera->getPosition()[2] = 50.;
 
-
+	
 	shaderManager->loadFromFile("scripts/base.shader");
 	shaderManager->loadFromFile("scripts/base_button.shader");
 	shaderManager->loadFromFile("scripts/base_floor.shader");
@@ -48,6 +48,7 @@ int main(int argc, const char * argv[]){
 	shaderManager->loadFromFile("scripts/base_trim.shader");
 	shaderManager->loadFromFile("scripts/base_wall.shader");
 	shaderManager->loadFromFile("scripts/common.shader");
+	
 	shaderManager->loadFromFile("scripts/ctf.shader");
 	shaderManager->loadFromFile("scripts/eerie.shader");
 	shaderManager->loadFromFile("scripts/gfx.shader");
