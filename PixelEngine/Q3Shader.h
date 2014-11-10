@@ -34,7 +34,9 @@ enum {
 	SHADER_ALPHAFUNC	= 1 << 9,
 	SHADER_TCMOD		= 1 << 10,
 	SHADER_ANIMMAP		= 1 << 11,
-	SHADER_TCGEN_ENV	= 1 << 12
+	SHADER_TCGEN_ENV	= 1 << 12,
+	SHADER_FRONTCULL	= 1 << 13,
+	SHADER_BACKCULL		= 1 << 14,
 };
 
 enum {
@@ -79,6 +81,7 @@ typedef	struct {
 		m_frame = 0;
 		m_alphaFunc = 0;
 		m_alphaFuncRef = 0.0f;
+		m_depthFunc = GL_LEQUAL;
 	}
 
 } Q3ShaderPass;
@@ -109,6 +112,8 @@ public:
     }
 
 	const unsigned int getFlags() const { return m_flags; }
+
+	const std::string& getName() const { return name;  }
 
 };
 

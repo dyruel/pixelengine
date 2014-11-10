@@ -166,6 +166,15 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
                 }
                 
                 if(m_depth == 0) {
+					
+					if (shader.m_shaderPasses.size() > 0 &&
+						!(shader.m_flags & SHADER_DEPTHWRITE) &&
+						!(shader.m_flags & SHADER_TRANSPARENT) &&
+						!(shader.m_flags & SHADER_SKY)) 
+					{
+						shader.m_shaderPasses[0].m_flags |= SHADER_DEPTHWRITE;
+					}
+					
                     m_shaders[shader.name] = shader;
                     shader.clear();
                 }
@@ -205,19 +214,30 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 									shader.m_flags |= SHADER_NOCULL;
 								}
 								else if (!args[1].compare("front")){
-									
+									shader.m_flags |= SHADER_FRONTCULL;
 								}
 								else if (!args[1].compare("back")){
-
+									shader.m_flags |= SHADER_BACKCULL;
 								}
 							}
 
 						}
 						else if (!args[0].compare("surfaceparm")) {
-
+							if (!args[1].compare("trans")) {
+								shader.m_flags |= SHADER_TRANSPARENT;
+							}
+							else if (!args[1].compare("sky")) {
+								shader.m_flags |= SHADER_SKY;
+							}
+							else {
+								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with surfaceparm\n", shader.name.c_str(), args[1].c_str());
+							}
 						}
 						else if (!args[0].compare("skyparms")) {
 
+						}
+						else {
+							ILogger::log("Q3Shader::Syntax error in %s: The keyword %s does not exist.\n", shader.name.c_str(), args[0].c_str());
 						}
 					}
 					else { // Shader pass command
@@ -289,7 +309,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 									else if (!args[j].compare("gl_one_minus_dst_alpha"))
 										blend = GL_ONE_MINUS_DST_ALPHA;
 									else {
-										ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with blendfunc\n", shader.name.c_str(), args[0].c_str());
+										ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with blendfunc\n", shader.name.c_str(), args[j].c_str());
 									}
 										
 								}

@@ -225,6 +225,7 @@ class Q3Bsp : public SceneNode {
 	std::unique_ptr<Q3BspLeafBrush[]> m_leafBrushes;
 
 	std::unique_ptr<Q3BspVisData> m_visData;
+	std::string m_entities;
 
 	static int bbox_index[8][3];
 
@@ -235,6 +236,7 @@ class Q3Bsp : public SceneNode {
 	bool _loadLightMaps(FILE * file);
 	bool _loadBspTree(FILE * file);
 	bool _loadVisData(FILE * file);
+	bool _loadEntities(FILE * file);
 
 	void _selectFaces(int index);
 	

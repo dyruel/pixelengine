@@ -13,6 +13,9 @@
 bool TextureManager::init() {
 	ilInit();
 	iluInit();
+
+	ilEnable(IL_ORIGIN_SET);
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 	/*
 	ilEnable(IL_ORIGIN_SET);
 	ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
@@ -119,6 +122,10 @@ bool TextureManager::_loadTextures(const std::vector<std::string>& files, std::u
 }
 #endif
 
+//		ILenum err = ilGetError();
+//		iluErrorString(err);
+//		ILogger::log("Error  %s\n", iluErrorString(err));
+
 GLuint TextureManager::_loadTextureFromFile(const std::string& filename, int flags) {
 	ILuint imgId = 0;
 	GLuint id = 0;
@@ -134,30 +141,25 @@ GLuint TextureManager::_loadTextureFromFile(const std::string& filename, int fla
 
 	std::string jpg(rawName);
 	jpg.append(".jpg");
-	
-	if (!ilLoad(IL_TGA, filename.c_str()) && !ilLoad(IL_JPG, filename.c_str())) {
-//		ILenum err = ilGetError();
-//		iluErrorString(err);
-//		ILogger::log("Error  %s\n", iluErrorString(err));
 
-		if (!ilLoad(IL_TGA, tga.c_str())) {
-			if (ilLoad(IL_JPG, jpg.c_str()))
-				isLoaded = true;
-		}
-		else {
-			isLoaded = true;
-		}
-	}
-	else {
-		
+	if (ilLoad(IL_TGA, filename.c_str())) {
+//		ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
 		isLoaded = true;
 	}
-
+	else if (ilLoad(IL_JPG, filename.c_str())) {
+		isLoaded = true;
+	}
+	else if (ilLoad(IL_TGA, tga.c_str())) {
+//		ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+		isLoaded = true;
+	}
+	else if (ilLoad(IL_JPG, jpg.c_str())) {
+		isLoaded = true;
+	}
 
 	if (isLoaded) {
 		glGenTextures(1, &id);
 		glBindTexture(GL_TEXTURE_2D, id);
-//		std::cout << id << std::endl;
 
 		if (flags & TEXTURE_CLAMP) {
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);

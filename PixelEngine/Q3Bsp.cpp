@@ -74,6 +74,7 @@ bool Q3Bsp::load(const char* filename) {
 		 || !this->_loadShaders(file)
 		 || !this->_loadBspTree(file)
 		 || !this->_loadVisData(file)
+		 || !this->_loadEntities(file)
 		)
 	{
 		ILogger::log("-> Error while loading data from bsp file %s.\n", filename);
@@ -309,7 +310,31 @@ bool Q3Bsp::_loadVisData(FILE * file) {
 	m_visData->bits = new unsigned char[size];
 	fread(m_visData->bits, 1, size, file);
 
-	ILogger::log("--> vis data loaded.\n", m_nFaces);
+	ILogger::log("--> vis data loaded.\n");
+
+	return true;
+}
+
+
+bool Q3Bsp::_loadEntities(FILE * file) {
+	if (!file) {
+		return false;
+	}
+
+
+	char * entities = new char[m_header.entries[LUMP_ENTITIES].length];
+	fseek(file, m_header.entries[LUMP_ENTITIES].offset, SEEK_SET);
+	fread(entities, 1, m_header.entries[LUMP_ENTITIES].length, file);
+
+	m_entities = entities;
+
+	if (entities)
+		delete[] entities;
+
+
+//	std::cout << m_entities << std::endl;
+
+	ILogger::log("--> entities loaded.\n");
 
 	return true;
 }
@@ -468,8 +493,13 @@ void Q3Bsp::render() {
 
 		std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
 
+		GLboolean ogl_env_cullface = glIsEnabled(GL_CULL_FACE);
+
 		if (shader.getFlags() & SHADER_NOCULL) {
 			glDisable(GL_CULL_FACE);
+		}
+		else {
+			glEnable(GL_CULL_FACE);
 		}
 
 		std::vector<Q3ShaderPass>::iterator shaderPasse = shaderPasses.begin();
@@ -530,8 +560,10 @@ void Q3Bsp::render() {
 
 				
 				if ((*shaderPasse).m_flags & SHADER_DEPTHWRITE) {
-					glDepthFunc((*shaderPasse).m_depthFunc);
 					glDepthMask(GL_TRUE);
+					glDepthFunc((*shaderPasse).m_depthFunc);
+					//std::cout << shader.getName() << std::endl;
+					//return;
 				}
 				else {
 					glDepthMask(GL_FALSE);
@@ -574,8 +606,11 @@ void Q3Bsp::render() {
 			}
 		}
 
-		if (shader.getFlags() & SHADER_NOCULL) {
+		if (ogl_env_cullface) {
 			glEnable(GL_CULL_FACE);
+		}
+		else {
+			glDisable(GL_CULL_FACE);
 		}
 
 		++faceToRender;

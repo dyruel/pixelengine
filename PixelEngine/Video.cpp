@@ -31,7 +31,8 @@ bool Video::init() {
         return false;
     }
     
-    m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), NULL, NULL);
+//	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), glfwGetPrimaryMonitor(), NULL);
+	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), NULL, NULL);
     if (!m_window) {
         glfwTerminate();
 		ILogger::log("Error during the creation of the window.");
@@ -58,6 +59,7 @@ bool Video::init() {
 
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
+	glEnable(GL_CULL_FACE);
 	glDisable(GL_DITHER);
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
@@ -74,16 +76,16 @@ bool Video::init() {
 //	glEnableClientState(GL_VERTEX_ARRAY);
 //	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-//	glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
  //   glCullFace(GL_BACK);
 //    glFrontFace(GL_CW);
 
-	glClearDepth(1.0f);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LEQUAL);
+//	glClearDepth(1.0f);
+//	glEnable(GL_DEPTH_TEST);
+//	glDepthFunc(GL_LEQUAL);
 
     
-	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+//	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
     
     GLint frameWidth = 0, frameHeight = 0;
     glfwGetFramebufferSize(m_window, &frameWidth, &frameHeight);
@@ -108,7 +110,7 @@ bool Video::deinit() {
 
 
 void Video::beginScene() const {
-    glClear(GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 
