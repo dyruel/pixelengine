@@ -31,8 +31,8 @@ bool Video::init() {
         return false;
     }
     
-//	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), glfwGetPrimaryMonitor(), NULL);
-	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), NULL, NULL);
+	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), glfwGetPrimaryMonitor(), NULL);
+//	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), NULL, NULL);
     if (!m_window) {
         glfwTerminate();
 		ILogger::log("Error during the creation of the window.");

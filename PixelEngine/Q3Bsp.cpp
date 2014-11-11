@@ -491,6 +491,11 @@ void Q3Bsp::render() {
 		const Q3BspFace& face = m_faces[*faceToRender];
 		Q3Shader& shader = m_shaders[face.shader];
 
+		if (face.type == FACE_PATCH || face.type == FACE_BAD || face.type == FACE_BILLBOARD) {
+			++faceToRender;
+			continue;
+		}
+
 		std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
 
 		GLboolean ogl_env_cullface = glIsEnabled(GL_CULL_FACE);
@@ -505,9 +510,9 @@ void Q3Bsp::render() {
 		std::vector<Q3ShaderPass>::iterator shaderPasse = shaderPasses.begin();
 		std::vector<Q3ShaderPass>::iterator shaderPassesEnd = shaderPasses.end();
 
-		if (face.type == FACE_MESH || face.type == FACE_POLYGON) {
+//		if (face.type == FACE_MESH || face.type == FACE_POLYGON) {
 
-			glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes.get()[face.vertex].position));
+			glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].position));
 
 			while (shaderPasse != shaderPassesEnd) {
 
@@ -604,7 +609,7 @@ void Q3Bsp::render() {
 
 				++shaderPasse;
 			}
-		}
+		//}
 
 		if (ogl_env_cullface) {
 			glEnable(GL_CULL_FACE);
