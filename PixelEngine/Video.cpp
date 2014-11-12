@@ -31,8 +31,8 @@ bool Video::init() {
         return false;
     }
     
-	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), glfwGetPrimaryMonitor(), NULL);
-//	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), NULL, NULL);
+//	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), glfwGetPrimaryMonitor(), NULL);
+	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), NULL, NULL);
     if (!m_window) {
         glfwTerminate();
 		ILogger::log("Error during the creation of the window.");
@@ -57,35 +57,20 @@ bool Video::init() {
 	*/
 	// FOG test
 
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
+	/*
 	glEnable(GL_CULL_FACE);
 	glDisable(GL_DITHER);
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 	glCullFace(GL_FRONT);
 	glEnable(GL_TEXTURE_2D);
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	*/
 
-//	glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_TEXTURE_2D);
-//	glEnableClientState(GL_VERTEX_ARRAY);
-//	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
-	glEnable(GL_CULL_FACE);
- //   glCullFace(GL_BACK);
-//    glFrontFace(GL_CW);
-
-//	glClearDepth(1.0f);
-//	glEnable(GL_DEPTH_TEST);
-//	glDepthFunc(GL_LEQUAL);
-
-    
-//	glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+	this->setOglDefaultState();
     
     GLint frameWidth = 0, frameHeight = 0;
     glfwGetFramebufferSize(m_window, &frameWidth, &frameHeight);
@@ -98,6 +83,31 @@ bool Video::init() {
 
 	ILogger::log("done.\n");
     return true;
+}
+
+
+
+void Video::setOglDefaultState() {
+	glClearDepth(1.0f);
+	glCullFace(GL_FRONT);
+	glColor4f(1.f, 1.f, 1.f, 1.f);
+	glEnable(GL_TEXTURE_2D);
+
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	glShadeModel(GL_SMOOTH);
+	glDepthFunc(GL_LEQUAL);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_SCISSOR_TEST);
+	glEnable(GL_CULL_FACE);
+	glDisable(GL_BLEND);
+
+	
 }
 
 bool Video::deinit() {

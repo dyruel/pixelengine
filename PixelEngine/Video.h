@@ -14,10 +14,9 @@
 #include <iostream>
 #include <string>
 
-//#include "glext.h"
 #include "Singleton.h"
 #include "Logger.h"
-#include "Scene.h"
+
 
 class Video : public Singleton<Video> {
 	friend class Singleton <Video>;
@@ -41,6 +40,8 @@ private:
 public:
 
 	virtual ~Video();
+
+	void setOglDefaultState();
 
     void beginScene() const;
     void endScene() const;

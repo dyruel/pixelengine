@@ -166,7 +166,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
                 }
                 
                 if(m_depth == 0) {
-					
+					/*
 					if (shader.m_shaderPasses.size() > 0 &&
 						!(shader.m_flags & SHADER_DEPTHWRITE) &&
 						!(shader.m_flags & SHADER_TRANSPARENT) &&
@@ -174,7 +174,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 					{
 						shader.m_shaderPasses[0].m_flags |= SHADER_DEPTHWRITE;
 					}
-					
+					*/
                     m_shaders[shader.name] = shader;
                     shader.clear();
                 }

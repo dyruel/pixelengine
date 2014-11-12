@@ -193,21 +193,50 @@ class BspLeaf : public SceneNode {
 };
 */
 
+class Q3BezierPatch {
+
+public:
+
+	GLint m_lod;
+	Vector3f m_anchors[9];
+	std::unique_ptr<Q3BspVertex[]> m_vertices;
+	std::unique_ptr<GLuint[]> m_indices;
+
+	Q3BezierPatch()
+		:m_lod(0) {}
+
+	bool tesselate();
+	void render();
+};
+
+class Q3Patch {
+public:
+	int m_numPatches;
+	std::unique_ptr<Q3BezierPatch[]> m_bezierPatches;
+
+	Q3Patch()
+		:m_numPatches(0) {}
+
+	void render();
+};
+
+
+
 
 class Q3Bsp : public SceneNode {
 
 	Q3BspHeader m_header;
 	std::shared_ptr<Q3ShaderManager> m_shaderManager;
 	std::unique_ptr<Q3Shader[]> m_shaders;
-	std::unique_ptr<GLuint[]> m_textureIds;
 	std::unique_ptr<GLuint[]> m_lmIds;
 
 	GLdouble m_Delta;
 	int m_cameraCluster;
 	std::set<int> m_facesToRender;
 	Matrix4f m_clipMatrix;
-
 	std::shared_ptr<Camera> m_attachedCamera;
+	Q3ShaderPass* m_currentShaderPass;
+	std::map<int, Q3Patch> m_patches;
 
 	// BSP data
 	std::unique_ptr<Q3BspVertex[]> m_vertexes;
@@ -239,6 +268,10 @@ class Q3Bsp : public SceneNode {
 	bool _loadEntities(FILE * file);
 
 	void _selectFaces(int index);
+
+	void _setCurrentShaderPass(Q3ShaderPass* currentShaderPass) { m_currentShaderPass = currentShaderPass; };
+	void _beginShaderPass();
+	void _endShaderPass();
 	
 public:
 	Q3Bsp();

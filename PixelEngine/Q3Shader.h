@@ -74,9 +74,10 @@ typedef	struct {
 
 	void clear() {
 		m_texId = 0;
-		m_flags = 0;
+		m_flags = SHADER_DEPTHWRITE;
 		m_blendSrc = GL_DST_COLOR;
 		m_blendDst = GL_ZERO;
+		m_animSpeed = 0.0f;
 		m_animNumframes = 0;
 		m_frame = 0;
 		m_alphaFunc = 0;
@@ -124,19 +125,22 @@ public:
 	Q3ShaderDefault(int texId) {
 		Q3ShaderPass shaderPass;
 
+		name = "default";
+
 		m_flags = 0;
 
+		shaderPass.clear();
 		shaderPass.m_flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
 		shaderPass.m_texId = -1;
 		shaderPass.m_depthFunc = GL_LEQUAL;
 		m_shaderPasses.push_back(shaderPass);
 
-		shaderPass.m_flags = SHADER_BLENDFUNC;
+		shaderPass.clear();
+		shaderPass.m_flags = SHADER_BLENDFUNC | SHADER_DEPTHWRITE;
 		shaderPass.m_texId = texId;
 		shaderPass.m_blendSrc = GL_DST_COLOR;
 		shaderPass.m_blendDst = GL_ZERO;
 		shaderPass.m_depthFunc = GL_LEQUAL;
-
 		m_shaderPasses.push_back(shaderPass);
 
 	};

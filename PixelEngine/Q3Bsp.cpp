@@ -8,9 +8,11 @@
 
 #include <cstdio>
 
+#include "Video.h"
+#include "Q3Bsp.h"
 #include "Texture.h"
 #include "Logger.h"
-#include "Q3Bsp.h"
+
 
 
 enum {
@@ -31,7 +33,7 @@ int Q3Bsp::bbox_index[8][3] =
 
 
 Q3Bsp::Q3Bsp()
-	: m_cameraCluster(0), m_Delta(0.){
+	: m_cameraCluster(0), m_Delta(0.), m_currentShaderPass(0) {
 }
 
 
@@ -145,6 +147,37 @@ bool Q3Bsp::_loadFaces(FILE * file) {
 	fread(m_faces.get(), m_header.entries[LUMP_FACES].length, 1, file);
 
 	ILogger::log("--> %d faces loaded.\n", m_nFaces);
+
+	// Load and tesselate patches
+	for (int i = 0; i < m_nFaces; ++i) {
+		if (m_faces[i].type != FACE_PATCH)
+			continue;
+
+		int maxPatchesX = (m_faces[i].size[0] - 1) >> 1;
+		int maxPatchesY = (m_faces[i].size[1] - 1) >> 1;
+
+		m_patches[i].m_numPatches = maxPatchesX * maxPatchesY;
+		m_patches[i].m_bezierPatches.reset(new Q3BezierPatch[m_patches[i].m_numPatches]);
+		
+		for (int y = 0; y < maxPatchesY; ++y)
+		{
+			for (int x = 0; x < maxPatchesX; ++x)
+			{
+				for (int a = 0; a < 3; ++a)
+				{
+					for (int b = 0; b < 3; ++b)
+					{
+						m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b].x = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)].position[0];
+						m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b].y = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)].position[1];
+						m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b].z = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)].position[2];
+					}
+				}
+
+				m_patches[i].m_bezierPatches[y*maxPatchesX + x].tesselate();
+			}
+		}
+
+	}
 
 	return true;
 }
@@ -480,6 +513,22 @@ void Q3Bsp::_selectFaces(int index) {
 	 }
 }
 
+
+
+void Q3Bsp::_beginShaderPass() {
+	if (!m_currentShaderPass)
+		return;
+
+}
+
+
+void Q3Bsp::_endShaderPass() {
+	if (!m_currentShaderPass)
+		return;
+
+
+}
+
 void Q3Bsp::render() {
 	//	std::cout << m_facesToRender.size() << std::endl;
 
@@ -491,28 +540,30 @@ void Q3Bsp::render() {
 		const Q3BspFace& face = m_faces[*faceToRender];
 		Q3Shader& shader = m_shaders[face.shader];
 
-		if (face.type == FACE_PATCH || face.type == FACE_BAD || face.type == FACE_BILLBOARD) {
-			++faceToRender;
-			continue;
+		if (face.type == FACE_BAD || face.type == FACE_BILLBOARD) {
+			
 		}
-
-		std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
-
-		GLboolean ogl_env_cullface = glIsEnabled(GL_CULL_FACE);
-
-		if (shader.getFlags() & SHADER_NOCULL) {
-			glDisable(GL_CULL_FACE);
+		else if (face.type == FACE_PATCH) {
+			m_patches[*faceToRender].render();
 		}
 		else {
-			glEnable(GL_CULL_FACE);
-		}
+			std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
 
-		std::vector<Q3ShaderPass>::iterator shaderPasse = shaderPasses.begin();
-		std::vector<Q3ShaderPass>::iterator shaderPassesEnd = shaderPasses.end();
+			GLboolean ogl_env_cullface = glIsEnabled(GL_CULL_FACE);
 
-//		if (face.type == FACE_MESH || face.type == FACE_POLYGON) {
+			if (shader.getFlags() & SHADER_NOCULL) {
+				glDisable(GL_CULL_FACE);
+			}
+			else {
+				glEnable(GL_CULL_FACE);
+			}
 
-			glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].position));
+			std::vector<Q3ShaderPass>::iterator shaderPasse = shaderPasses.begin();
+			std::vector<Q3ShaderPass>::iterator shaderPassesEnd = shaderPasses.end();
+
+			//		if (face.type == FACE_MESH || face.type == FACE_POLYGON) {
+
+			glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), m_vertexes[face.vertex].position);
 
 			while (shaderPasse != shaderPassesEnd) {
 
@@ -526,9 +577,9 @@ void Q3Bsp::render() {
 				if ((*shaderPasse).m_flags & SHADER_LIGHTMAP) {
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[1]));
 					glBindTexture(GL_TEXTURE_2D, m_lmIds[face.lm_index]);
-		//			std::cout << face.lm_index << std::endl;
-	//				m_lmIds
-					
+					//			std::cout << face.lm_index << std::endl;
+					//				m_lmIds
+
 				}
 				else if ((*shaderPasse).m_flags & SHADER_ANIMMAP) {
 
@@ -538,7 +589,7 @@ void Q3Bsp::render() {
 
 					frame = ((int)(*shaderPasse).m_frame) % (*shaderPasse).m_animNumframes;
 
-//					std::cout << (*shaderPasse).m_animFrames[frame] << std::endl;
+					//					std::cout << (*shaderPasse).m_animFrames[frame] << std::endl;
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[0]));
 					glBindTexture(GL_TEXTURE_2D, (*shaderPasse).m_animFrames[frame]);
 				}
@@ -563,59 +614,66 @@ void Q3Bsp::render() {
 					glDisable(GL_ALPHA_TEST);
 				}
 
-				
+
+				glDepthFunc((*shaderPasse).m_depthFunc);
 				if ((*shaderPasse).m_flags & SHADER_DEPTHWRITE) {
 					glDepthMask(GL_TRUE);
-					glDepthFunc((*shaderPasse).m_depthFunc);
 					//std::cout << shader.getName() << std::endl;
 					//return;
+					//std::cout << "aze" << std::endl;
 				}
 				else {
+					//std::cout << "cvvc " << shader.getName() << std::endl;
 					glDepthMask(GL_FALSE);
 				}
 
 				glDrawElements(GL_TRIANGLES, face.n_meshverts, GL_UNSIGNED_INT, &(m_meshVerts.get()[face.meshvert]));
 
-
+				/*
 				if (ogl_env_blend) {
-					glEnable(GL_BLEND);
-					glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 				}
 				else if ((*shaderPasse).m_flags & SHADER_BLENDFUNC) {
-					glDisable(GL_BLEND);
+				glDisable(GL_BLEND);
 				}
 
 				if (ogl_env_alpha) {
-					glEnable(GL_ALPHA_TEST);
+				glEnable(GL_ALPHA_TEST);
 				}
 				else if ((*shaderPasse).m_flags & SHADER_ALPHAFUNC) {
-					glDisable(GL_ALPHA_TEST);
+				glDisable(GL_ALPHA_TEST);
 				}
-
+				*/
+				//				glDepthMask(GL_TRUE);
+				/*
 				if (ogl_env_depthmask) {
-					glDepthMask(GL_TRUE);
+				glDepthMask(GL_TRUE);
 				}
 				else {
-					glDepthMask(GL_FALSE);
+				glDepthMask(GL_FALSE);
 				}
-
+				*/
+				/*
 				if (ogl_env_colorarray) {
-					glEnableClientState(GL_COLOR_ARRAY);
+				glEnableClientState(GL_COLOR_ARRAY);
 				}
 				else {
-					glDisableClientState(GL_COLOR_ARRAY);
+				glDisableClientState(GL_COLOR_ARRAY);
 				}
-
+				*/
 
 				++shaderPasse;
 			}
-		//}
+			//}
 
-		if (ogl_env_cullface) {
-			glEnable(GL_CULL_FACE);
-		}
-		else {
-			glDisable(GL_CULL_FACE);
+			if (ogl_env_cullface) {
+				glEnable(GL_CULL_FACE);
+			}
+			else {
+				glDisable(GL_CULL_FACE);
+			}
+
 		}
 
 		++faceToRender;
@@ -639,7 +697,6 @@ void Q3Bsp::update(GLdouble delta) {
 	SceneNodeList::iterator i = m_children.begin();
 	SceneNodeList::iterator end = m_children.end();
 
-	m_facesToRender.clear();
 	m_cameraCluster = m_leafs[getLeafIndex(m_attachedCamera->getPosition())].cluster;
 	m_Delta = delta;
 
@@ -657,10 +714,111 @@ void Q3Bsp::update(GLdouble delta) {
 
 	m_clipMatrix = r;
 
-	_selectFaces(0);
+//	if (glfwGetKey(Video::getInstance()->getWindow(), GLFW_KEY_A) == GLFW_PRESS) {
+		m_facesToRender.clear();
+		_selectFaces(0);
+//	}
 
 	while (i != end) {
 		(*i)->update(delta);
 		++i;
+	}
+}
+
+
+bool Q3BezierPatch::tesselate() {
+	float px = 0.f, py = 0.f;
+	Vector3f temp[3];
+	Vector3f aux;
+
+	if (!m_lod) {
+		m_lod = 8;
+	}
+
+	m_vertices.reset(new Q3BspVertex[(m_lod + 1)*(m_lod + 1)]);
+
+	for (int a = 0; a <= m_lod; ++a)
+	{
+		px = (float)a / m_lod;
+
+		aux = m_anchors[0] * ((1.f - px)*(1.f - px)) +
+					m_anchors[3] * ((1.f - px)*px * 2) +
+					m_anchors[6] * (px*px);
+
+		m_vertices[a].position[0] = aux.x;
+		m_vertices[a].position[1] = aux.y;
+		m_vertices[a].position[2] = aux.z;
+	}
+
+
+	for (int a = 1; a <= m_lod; ++a)
+	{
+		py = (float)a / m_lod;
+
+		temp[0] =	m_anchors[0] * ((1.0f - py)*(1.0f - py)) +
+					m_anchors[1] * ((1.0f - py)*py * 2) +
+					m_anchors[2] * (py*py);
+
+		temp[1] =	m_anchors[3] * ((1.0f - py)*(1.0f - py)) +
+					m_anchors[4] * ((1.0f - py)*py * 2) +
+					m_anchors[5] * (py*py);
+
+		temp[2] =	m_anchors[6] * ((1.0f - py)*(1.0f - py)) +
+					m_anchors[7] * ((1.0f - py)*py * 2) +
+					m_anchors[8] * (py*py);
+
+		for (int b = 0; b <= m_lod; ++b)
+		{
+			px = (float)b / m_lod;
+
+			aux = temp[0] * ((1.0f - px)*(1.0f - px)) +
+				temp[1] * ((1.0f - px)*px * 2) +
+				temp[2] * (px*px);
+
+			m_vertices[a*(m_lod + 1) + b].position[0] = aux.x;
+			m_vertices[a*(m_lod + 1) + b].position[1] = aux.y;
+			m_vertices[a*(m_lod + 1) + b].position[2] = aux.z;
+		}
+	}
+
+
+	m_indices.reset(new GLuint[m_lod*(m_lod + 1) * 2]);
+
+	for (int a = 0; a<m_lod; ++a)
+	{
+		for (int b = 0; b <= m_lod; ++b)
+		{
+			m_indices[(a*(m_lod + 1) + b) * 2 + 1] = a*(m_lod + 1) + b;
+			m_indices[(a*(m_lod + 1) + b) * 2] = (a + 1)*(m_lod + 1) + b;
+		}
+	}
+	
+
+	return true;
+}
+
+void Q3BezierPatch::render() {
+
+	// FIXME : Use Vertex Array
+	glBegin(GL_TRIANGLE_STRIP);
+	for (int a = 0; a < m_lod; ++a)
+	{
+		for (int b = 0; b < 2 * (m_lod + 1); ++b)
+		{
+			glVertex3f(m_vertices[m_indices[a * 2 * (m_lod + 1) + b]].position[0], m_vertices[m_indices[a * 2 * (m_lod + 1) + b]].position[1], m_vertices[m_indices[a * 2 * (m_lod + 1) + b]].position[2]);
+		}
+	}
+	glEnd();
+
+	// glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), m_vertices[0].position);
+	//for (int a = 0; a < m_lod; ++a) {
+		//glDrawElements(GL_TRIANGLE_STRIP, 2 * (m_lod + 1), GL_UNSIGNED_INT, &m_indices[a * 2 * (m_lod + 1)]);
+	//}
+}
+
+
+void Q3Patch::render() {
+	for (int i = 0; i < m_numPatches; ++i) {
+		m_bezierPatches[i].render();
 	}
 }
