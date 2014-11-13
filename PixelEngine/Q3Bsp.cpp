@@ -167,9 +167,7 @@ bool Q3Bsp::_loadFaces(FILE * file) {
 				{
 					for (int b = 0; b < 3; ++b)
 					{
-						m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b].x = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)].position[0];
-						m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b].y = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)].position[1];
-						m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b].z = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)].position[2];
+						m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b] = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)];
 					}
 				}
 
@@ -541,9 +539,14 @@ void Q3Bsp::render() {
 	std::set<int>::iterator faceToRender = m_facesToRender.begin();
 	std::set<int>::iterator faceToRenderEnd = m_facesToRender.end();
 
+	std::string noshader("noshader");
+
 	while (faceToRender != faceToRenderEnd) {
 		const Q3BspFace& face = m_faces[*faceToRender];
 		Q3Shader& shader = m_shaders[face.shader];
+
+//		if (!noshader.compare(m_bspShaders[face.shader].name))
+//			std::cout << "dd" << std::endl;
         
 		if (face.type == FACE_BAD || face.type == FACE_BILLBOARD) {
 			
@@ -733,8 +736,9 @@ void Q3Bsp::update(GLdouble delta) {
 
 bool Q3BezierPatch::tesselate() {
 	float px = 0.f, py = 0.f;
-	Vector3f temp[3];
-	Vector3f aux;
+	float temp[3][3];
+	float tex[3][2];
+	//Vector3f aux;
 
 	if (!m_lod) {
 		m_lod = 8;
@@ -746,16 +750,22 @@ bool Q3BezierPatch::tesselate() {
 	{
 		px = (float)a / m_lod;
 
-		aux = m_anchors[0] * ((1.f - px)*(1.f - px)) +
-					m_anchors[3] * ((1.f - px)*px * 2) +
-					m_anchors[6] * (px*px);
-
-		m_vertices[a].position[0] = aux.x;
-		m_vertices[a].position[1] = aux.y;
-		m_vertices[a].position[2] = aux.z;
-        
-        m_vertices[a].texcoord[0][0] = 1.f - px;
-        m_vertices[a].texcoord[0][1] = 1.f;
+		m_vertices[a].position[0] = m_anchors[0].position[0] * ((1.f - px)*(1.f - px)) +
+									m_anchors[3].position[0] * ((1.f - px)*px * 2) +
+									m_anchors[6].position[0] * (px*px);
+		m_vertices[a].position[1] = m_anchors[0].position[1] * ((1.f - px)*(1.f - px)) +
+									m_anchors[3].position[1] * ((1.f - px)*px * 2) +
+									m_anchors[6].position[1] * (px*px);
+		m_vertices[a].position[2] = m_anchors[0].position[2] * ((1.f - px)*(1.f - px)) +
+									m_anchors[3].position[2] * ((1.f - px)*px * 2) +
+									m_anchors[6].position[2] * (px*px);
+    
+		m_vertices[a].texcoord[0][0] = m_anchors[0].texcoord[0][0] * ((1.f - px)*(1.f - px)) +
+										m_anchors[3].texcoord[0][0] * ((1.f - px)*px * 2) +
+										m_anchors[6].texcoord[0][0] * (px*px);
+		m_vertices[a].texcoord[0][1] = m_anchors[0].texcoord[0][1] * ((1.f - px)*(1.f - px)) +
+										m_anchors[3].texcoord[0][1] * ((1.f - px)*px * 2) +
+										m_anchors[6].texcoord[0][1] * (px*px);
 	}
 
 
@@ -763,32 +773,82 @@ bool Q3BezierPatch::tesselate() {
 	{
 		py = (float)a / m_lod;
 
-		temp[0] =	m_anchors[0] * ((1.0f - py)*(1.0f - py)) +
-					m_anchors[1] * ((1.0f - py)*py * 2) +
-					m_anchors[2] * (py*py);
+		temp[0][0] = m_anchors[0].position[0] * ((1.0f - py)*(1.0f - py)) +
+					 m_anchors[1].position[0] * ((1.0f - py)*py * 2) +
+					 m_anchors[2].position[0] * (py*py);
+		temp[0][1] = m_anchors[0].position[1] * ((1.0f - py)*(1.0f - py)) +
+					 m_anchors[1].position[1] * ((1.0f - py)*py * 2) +
+				     m_anchors[2].position[1] * (py*py);
+		temp[0][2] = m_anchors[0].position[2] * ((1.0f - py)*(1.0f - py)) +
+					 m_anchors[1].position[2] * ((1.0f - py)*py * 2) +
+					 m_anchors[2].position[2] * (py*py);
 
-		temp[1] =	m_anchors[3] * ((1.0f - py)*(1.0f - py)) +
-					m_anchors[4] * ((1.0f - py)*py * 2) +
-					m_anchors[5] * (py*py);
+		tex[0][0] = m_anchors[0].texcoord[0][0] * ((1.0f - py)*(1.0f - py)) +
+					m_anchors[1].texcoord[0][0] * ((1.0f - py)*py * 2) +
+					m_anchors[2].texcoord[0][0] * (py*py);
+		tex[0][1] = m_anchors[0].texcoord[0][1] * ((1.0f - py)*(1.0f - py)) +
+					m_anchors[1].texcoord[0][1] * ((1.0f - py)*py * 2) +
+					m_anchors[2].texcoord[0][1] * (py*py);
 
-		temp[2] =	m_anchors[6] * ((1.0f - py)*(1.0f - py)) +
-					m_anchors[7] * ((1.0f - py)*py * 2) +
-					m_anchors[8] * (py*py);
+
+		temp[1][0] = m_anchors[3].position[0] * ((1.0f - py)*(1.0f - py)) +
+					 m_anchors[4].position[0] * ((1.0f - py)*py * 2) +
+					 m_anchors[5].position[0] * (py*py);
+		temp[1][1] = m_anchors[3].position[1] * ((1.0f - py)*(1.0f - py)) +
+					 m_anchors[4].position[1] * ((1.0f - py)*py * 2) +
+				     m_anchors[5].position[1] * (py*py);
+		temp[1][2] = m_anchors[3].position[2] * ((1.0f - py)*(1.0f - py)) +
+					 m_anchors[4].position[2] * ((1.0f - py)*py * 2) +
+					 m_anchors[5].position[2] * (py*py);
+
+		tex[1][0] = m_anchors[3].texcoord[0][0] * ((1.0f - py)*(1.0f - py)) +
+					m_anchors[4].texcoord[0][0] * ((1.0f - py)*py * 2) +
+					m_anchors[5].texcoord[0][0] * (py*py);
+		tex[1][1] = m_anchors[3].texcoord[0][1] * ((1.0f - py)*(1.0f - py)) +
+					m_anchors[4].texcoord[0][1] * ((1.0f - py)*py * 2) +
+					m_anchors[5].texcoord[0][1] * (py*py);
+
+		
+		temp[2][0] = m_anchors[6].position[0] * ((1.0f - py)*(1.0f - py)) +
+					 m_anchors[7].position[0] * ((1.0f - py)*py * 2) +
+					 m_anchors[8].position[0] * (py*py);
+		temp[2][1] = m_anchors[6].position[1] * ((1.0f - py)*(1.0f - py)) +
+					 m_anchors[7].position[1] * ((1.0f - py)*py * 2) +
+				     m_anchors[8].position[1] * (py*py);
+		temp[2][2] = m_anchors[6].position[2] * ((1.0f - py)*(1.0f - py)) +
+					 m_anchors[7].position[2] * ((1.0f - py)*py * 2) +
+					 m_anchors[8].position[2] * (py*py);
+
+		tex[2][0] = m_anchors[6].texcoord[0][0] * ((1.0f - py)*(1.0f - py)) +
+					m_anchors[7].texcoord[0][0] * ((1.0f - py)*py * 2) +
+					m_anchors[8].texcoord[0][0] * (py*py);
+		tex[2][1] = m_anchors[6].texcoord[0][1] * ((1.0f - py)*(1.0f - py)) +
+					m_anchors[7].texcoord[0][1] * ((1.0f - py)*py * 2) +
+					m_anchors[8].texcoord[0][1] * (py*py);
 
 		for (int b = 0; b <= m_lod; ++b)
 		{
 			px = (float)b / m_lod;
 
-			aux = temp[0] * ((1.0f - px)*(1.0f - px)) +
-				temp[1] * ((1.0f - px)*px * 2) +
-				temp[2] * (px*px);
+			m_vertices[a*(m_lod + 1) + b].position[0] = temp[0][0] * ((1.0f - px)*(1.0f - px)) +
+														temp[1][0] * ((1.0f - px)*px * 2) +
+														temp[2][0] *(px*px);
+			m_vertices[a*(m_lod + 1) + b].position[1] = temp[0][1] * ((1.0f - px)*(1.0f - px)) +
+														temp[1][1] * ((1.0f - px)*px * 2) +
+														temp[2][1] *(px*px);
+			m_vertices[a*(m_lod + 1) + b].position[2] = temp[0][2] * ((1.0f - px)*(1.0f - px)) +
+														temp[1][2] * ((1.0f - px)*px * 2) +
+														temp[2][2] *(px*px);
 
-			m_vertices[a*(m_lod + 1) + b].position[0] = aux.x;
-			m_vertices[a*(m_lod + 1) + b].position[1] = aux.y;
-			m_vertices[a*(m_lod + 1) + b].position[2] = aux.z;
-            
-            m_vertices[a*(m_lod + 1) + b].texcoord[0][0] = 1.f - px;
-            m_vertices[a*(m_lod + 1) + b].texcoord[0][1] = 1.f - py;
+			m_vertices[a*(m_lod + 1) + b].texcoord[0][0] = tex[0][0] * ((1.0f - px)*(1.0f - px)) +
+														   tex[1][0] * ((1.0f - px)*px * 2) +
+														   tex[2][0] * (px*px);
+			m_vertices[a*(m_lod + 1) + b].texcoord[0][1] = tex[0][1] * ((1.0f - px)*(1.0f - px)) +
+														   tex[1][1] * ((1.0f - px)*px * 2) +
+														   tex[2][1] * (px*px);
+
+            //m_vertices[a*(m_lod + 1) + b].texcoord[0][0] = 1.f - py;
+            //m_vertices[a*(m_lod + 1) + b].texcoord[0][1] = 1.f - px;
 		}
 	}
 

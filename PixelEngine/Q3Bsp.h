@@ -198,7 +198,7 @@ class Q3BezierPatch {
 public:
 
 	GLint m_lod;
-	Vector3f m_anchors[9];
+	Q3BspVertex m_anchors[9];
 	std::unique_ptr<Q3BspVertex[]> m_vertices;
 	std::unique_ptr<GLuint[]> m_indices;
 

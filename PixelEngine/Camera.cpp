@@ -27,8 +27,8 @@ Camera::Camera() {
     glGetIntegerv(GL_VIEWPORT, viewport);
     
     m_fov = 60.;
-    m_near = 1.;
-    m_far = 1500.;
+    m_near = 10.;
+    m_far = 3000.;
     m_aspect = ((GLdouble) viewport[2] / (GLdouble) viewport[3]);
 
 	m_position[0] = 0.; m_position[1] = 0.; m_position[2] = 0.;
