@@ -12,7 +12,7 @@
 
 bool TextureManager::init() {
 	ilInit();
-	iluInit();
+//	iluInit();
 
 	ilEnable(IL_ORIGIN_SET);
 	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
@@ -198,6 +198,9 @@ GLuint TextureManager::_loadTextureFromFile(const std::string& filename, int fla
 
 		m_textures[filename] = id;
 	}
+    else {
+       ILogger::log("Texture %s not found.\n", filename.c_str());
+    }
 
 	ilBindImage(0);
 	ilDeleteImage(imgId);

@@ -234,7 +234,7 @@ class Q3Bsp : public SceneNode {
 	int m_cameraCluster;
 	std::set<int> m_facesToRender;
 	Matrix4f m_clipMatrix;
-	std::shared_ptr<Camera> m_attachedCamera;
+//	std::shared_ptr<Camera> m_attachedCamera;
 	Q3ShaderPass* m_currentShaderPass;
 	std::map<int, Q3Patch> m_patches;
 
@@ -280,7 +280,7 @@ public:
 	int getLeafIndex(const Vector3d& v) const;
 	bool checkClusterVisibility(int from, int to) const;
 
-	void attachCamera(std::shared_ptr<Camera> camera) { m_attachedCamera = camera; };
+//	void attachCamera(std::shared_ptr<Camera> camera) { m_attachedCamera = camera; };
 
 
 	void render();

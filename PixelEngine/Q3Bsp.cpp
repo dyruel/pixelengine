@@ -185,7 +185,7 @@ bool Q3Bsp::_loadFaces(FILE * file) {
 
 bool Q3Bsp::_loadShaders(FILE * file) {
 	std::shared_ptr<TextureManager> textureManager = TextureManager::getInstance();
-//	std::vector<std::string> files;
+	std::string noshader("noshader");
 	int nShaders = 0;
 
 	if (!file) {
@@ -231,6 +231,11 @@ bool Q3Bsp::_loadShaders(FILE * file) {
 	m_shaderManager->loadFromFile("scripts/sky.shader");
 
 	for (int i = 0; i < nShaders; ++i) {
+        
+        if(!noshader.compare(m_bspShaders[i].name)) {
+            //std::cout << i << std::endl;
+        }
+        
 		if (m_shaderManager->exists(m_bspShaders[i].name)) {
 			m_shaders[i] = m_shaderManager->getShader(m_bspShaders[i].name);
 			ILogger::log("--->  %s\n", m_bspShaders[i].name);
@@ -539,12 +544,9 @@ void Q3Bsp::render() {
 	while (faceToRender != faceToRenderEnd) {
 		const Q3BspFace& face = m_faces[*faceToRender];
 		Q3Shader& shader = m_shaders[face.shader];
-
+        
 		if (face.type == FACE_BAD || face.type == FACE_BILLBOARD) {
 			
-		}
-		else if (face.type == FACE_PATCH) {
-			m_patches[*faceToRender].render();
 		}
 		else {
 			std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
@@ -571,8 +573,7 @@ void Q3Bsp::render() {
 				GLboolean ogl_env_alpha = glIsEnabled(GL_ALPHA_TEST);
 				GLboolean ogl_env_depthmask;
 				glGetBooleanv(GL_DEPTH_WRITEMASK, &ogl_env_depthmask);
-				GLboolean ogl_env_colorarray = glIsEnabled(GL_COLOR_ARRAY);
-
+//				GLboolean ogl_env_colorarray = glIsEnabled(GL_COLOR_ARRAY);
 
 				if ((*shaderPasse).m_flags & SHADER_LIGHTMAP) {
 					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[1]));
@@ -627,33 +628,37 @@ void Q3Bsp::render() {
 					glDepthMask(GL_FALSE);
 				}
 
-				glDrawElements(GL_TRIANGLES, face.n_meshverts, GL_UNSIGNED_INT, &(m_meshVerts.get()[face.meshvert]));
+                if (face.type == FACE_PATCH) {
+                    m_patches[*faceToRender].render();
+                }
+                else
+                    glDrawElements(GL_TRIANGLES, face.n_meshverts, GL_UNSIGNED_INT, &(m_meshVerts.get()[face.meshvert]));
 
-				/*
+				
 				if (ogl_env_blend) {
-				glEnable(GL_BLEND);
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+                    glEnable(GL_BLEND);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 				}
-				else if ((*shaderPasse).m_flags & SHADER_BLENDFUNC) {
-				glDisable(GL_BLEND);
+				else {
+                    glDisable(GL_BLEND);
 				}
 
 				if (ogl_env_alpha) {
-				glEnable(GL_ALPHA_TEST);
-				}
-				else if ((*shaderPasse).m_flags & SHADER_ALPHAFUNC) {
-				glDisable(GL_ALPHA_TEST);
-				}
-				*/
-				//				glDepthMask(GL_TRUE);
-				/*
-				if (ogl_env_depthmask) {
-				glDepthMask(GL_TRUE);
+                    glEnable(GL_ALPHA_TEST);
 				}
 				else {
-				glDepthMask(GL_FALSE);
+                    glDisable(GL_ALPHA_TEST);
 				}
-				*/
+				
+				//				glDepthMask(GL_TRUE);
+				
+				if (ogl_env_depthmask) {
+                    glDepthMask(GL_TRUE);
+				}
+				else {
+                    glDepthMask(GL_FALSE);
+				}
+				
 				/*
 				if (ogl_env_colorarray) {
 				glEnableClientState(GL_COLOR_ARRAY);
@@ -696,8 +701,8 @@ void Q3Bsp::render() {
 void Q3Bsp::update(GLdouble delta) {
 	SceneNodeList::iterator i = m_children.begin();
 	SceneNodeList::iterator end = m_children.end();
-
-	m_cameraCluster = m_leafs[getLeafIndex(m_attachedCamera->getPosition())].cluster;
+    
+	m_cameraCluster = m_leafs[getLeafIndex(SceneManager::getInstance()->getCamera()->getPosition())].cluster;
 	m_Delta = delta;
 
 //	std::cout << delta << std::endl;
@@ -748,6 +753,9 @@ bool Q3BezierPatch::tesselate() {
 		m_vertices[a].position[0] = aux.x;
 		m_vertices[a].position[1] = aux.y;
 		m_vertices[a].position[2] = aux.z;
+        
+        m_vertices[a].texcoord[0][0] = 1.f - px;
+        m_vertices[a].texcoord[0][1] = 1.f;
 	}
 
 
@@ -778,6 +786,9 @@ bool Q3BezierPatch::tesselate() {
 			m_vertices[a*(m_lod + 1) + b].position[0] = aux.x;
 			m_vertices[a*(m_lod + 1) + b].position[1] = aux.y;
 			m_vertices[a*(m_lod + 1) + b].position[2] = aux.z;
+            
+            m_vertices[a*(m_lod + 1) + b].texcoord[0][0] = 1.f - px;
+            m_vertices[a*(m_lod + 1) + b].texcoord[0][1] = 1.f - py;
 		}
 	}
 
@@ -805,6 +816,7 @@ void Q3BezierPatch::render() {
 	{
 		for (int b = 0; b < 2 * (m_lod + 1); ++b)
 		{
+            glTexCoord2f(m_vertices[m_indices[a * 2 * (m_lod + 1) + b]].texcoord[0][0], m_vertices[m_indices[a * 2 * (m_lod + 1) + b]].texcoord[0][1]);
 			glVertex3f(m_vertices[m_indices[a * 2 * (m_lod + 1) + b]].position[0], m_vertices[m_indices[a * 2 * (m_lod + 1) + b]].position[1], m_vertices[m_indices[a * 2 * (m_lod + 1) + b]].position[2]);
 		}
 	}

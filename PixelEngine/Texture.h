@@ -13,7 +13,7 @@
 
 #include <GLFW/glfw3.h>
 #include <IL/il.h>
-#include <IL/ilu.h>
+//#include <IL/ilu.h>
 #include <iostream>
 #include <vector>
 #include <memory>

@@ -94,6 +94,10 @@ public:
         m_camera = camera;
     }
     
+    const std::shared_ptr<Camera>& getCamera() const {
+        return m_camera;
+    }
+    
     void addSceneNode(std::shared_ptr<ISceneNode> node) {
         m_root->addChild(node);
     }
