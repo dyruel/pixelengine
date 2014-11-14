@@ -37,7 +37,7 @@ int main(int argc, const char * argv[]){
 	camera->getPosition()[1] = 0.;
 	camera->getPosition()[2] = 50.;
 
-	if (!q3bsp->load("bsp/q3dm1.bsp")) {
+	if (!q3bsp->load("maps/q3dm1.bsp")) {
 		return 0;
 	}
 
@@ -61,7 +61,7 @@ int main(int argc, const char * argv[]){
 	GLdouble lastTime = (GLdouble) glfwGetTime();
 
 	while (!video->windowShouldClose()) {
-        
+  /*
 		GLdouble presentTime = (GLdouble) glfwGetTime();
         
 		while (lastTime + deltaTime <= presentTime) {
@@ -77,7 +77,7 @@ int main(int argc, const char * argv[]){
 		video->beginScene();
 		sceneManager->render();
 		video->endScene();
-
+*/
 		if (glfwGetKey(Video::getInstance()->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(Video::getInstance()->getWindow(), GL_TRUE);
 		}

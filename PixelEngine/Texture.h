@@ -69,11 +69,9 @@ public:
 
 	GLuint getTexture(const std::string& filename, int flags = 0) {
 		if (m_textures.find(filename) != m_textures.end()) {
-//			ILogger::log("hit for %s %d\n", filename.c_str(), m_textures[filename]);
 			return m_textures[filename];
 		}
 		else {
-//			ILogger::log("no hit for %s %d\n", filename.c_str(), _loadTextureFromFile(filename));
 			return _loadTextureFromFile(filename, flags);
 		}
 	}

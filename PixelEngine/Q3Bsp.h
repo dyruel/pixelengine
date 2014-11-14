@@ -30,8 +30,8 @@ enum {
 	LUMP_MODELS,
 	LUMP_BRUSHES,
 	LUMP_BRUSHSIDES,
-	LUMP_VERTEXES,
-	LUMP_MESHVERTS,
+	LUMP_VERTICES,
+	LUMP_INDEXES,
 	LUMP_EFFECTS,
 	LUMP_FACES,
 	LUMP_LIGHTMAPS,
@@ -43,33 +43,35 @@ enum {
 
 enum {
 	FACE_BAD = 0,
-	FACE_POLYGON,
+	FACE_PLANAR,
 	FACE_PATCH,
-	FACE_MESH,
-	FACE_BILLBOARD
+	FACE_TRIANGLE_SOUP,
+	FACE_FLARE
 };
 
+/*
 typedef	struct {
 	int offset;
 	int length;
 } Q3BspLumpEntry;
+
 
 typedef	struct {
 	char magic[4];
 	int version;
 	Q3BspLumpEntry entries[LUMP_TOTAL];
 } Q3BspHeader;
-
+*/
 typedef	struct {
 	char * ents;
 } Q3BspEntity;
-
+/*
 typedef	struct {
 	char name[64];
 	int flags;
 	int contents;
 } Q3BspShader;
-
+*/
 typedef	struct {
 	float normal[3];
 	float dist;
@@ -117,24 +119,26 @@ typedef	struct {
 	int plane;
 	int shader;
 } Q3BspBrushSide;
-
+/*
 typedef	struct {
 	float position[3];
 	float texcoord[2][2];
 	float normal[3];
 	unsigned char color[4];
 } Q3BspVertex;
-
+*/
+/*
 typedef	struct {
 	int offset;
 } Q3BspMeshVert;
-
+*/
 typedef	struct {
 	char * name[64];
 	int brush;
 	int unknown;
 } Q3BspEffect;
 
+/*
 typedef	struct {
 	int shader;
 	int effect;
@@ -156,7 +160,7 @@ typedef	struct {
 
 	int size[2];
 } Q3BspFace;
-
+*/
 
 typedef	struct {
 	unsigned char  map[128][128][3];
@@ -177,57 +181,153 @@ typedef	struct {
 } Q3BspVisData;
 
 
-/*
-class BspNode : public SceneNode {
+class Q3Vertex {
 public:
-
-	BspNode();
-	virtual ~BspNode();
-
-	void render();
-	void update(GLdouble delta);
+    Vector3f position;
+    Vector2f texcoord;
+    Vector2f lmcoord;
+    Vector3f normal;
+    Vector4<unsigned char> color;
+    
+    Q3Vertex operator + (const Q3Vertex& patchVertex) {
+        Q3Vertex r;
+        
+        r.position += patchVertex.position;
+        r.texcoord += patchVertex.texcoord;
+        r.lmcoord += patchVertex.lmcoord;
+        
+        return r;
+    }
+    
+    Q3Vertex operator * (float rhs) {
+        Q3Vertex r;
+        
+        r.position *= rhs;
+        r.texcoord *= rhs;
+        r.lmcoord *= rhs;
+        
+        return r;
+    }
 };
 
-class BspLeaf : public SceneNode {
+typedef std::vector<Q3Vertex> Q3VerticesList;
+typedef std::vector<int> Q3IndexesList;
 
+
+class Q3Face {
+    Q3Shader& m_shader;
+    const Q3VerticesList& m_worldVertices;
+    const Q3IndexesList& m_worldIndexes;
+    
+//    int m_effectIndex;
+//    int m_lightmapIndex;
+    
+    int m_firstVertex;
+    int n_numVertices;
+    
+    int m_firstIndex;
+    int m_numIndexes;
+    
+    
+//    int lightmapX, lightmapY;
+//    int lightmapWidth, lightmapHeight;
+//    Vector3f lightmapOrigin;
+//    Vector3f lightmapVecs[3];
+    
+public:
+    Q3Face(const Q3VerticesList& worldVertices, const Q3IndexesList& worldIndexes, Q3Shader& shader)
+    :m_shader(shader), m_worldVertices(worldVertices), m_worldIndexes(worldIndexes){}
+    virtual ~Q3Face() {}
+    
+    
+    virtual void render() = 0;
 };
+
+
+class Q3FacesList : public std::vector<Q3Face> {
+    
+//    std::vector<Q3Face> m_faces;
+    
+public:
+/*
+    typedef std::vector<Q3Face>::iterator iterator;
+    typedef std::vector<Q3Face>::const_iterator const_iterator;
+    
+    iterator begin() { return m_faces.begin(); }
+    const_iterator begin() const { return m_faces.begin(); }
+    
+    iterator end() { return m_faces.end(); }
+    const_iterator end() const { return m_faces.end(); }
 */
 
-class Q3BezierPatch {
-
-public:
-
-	GLint m_lod;
-	Q3BspVertex m_anchors[9];
-	std::unique_ptr<Q3BspVertex[]> m_vertices;
-	std::unique_ptr<GLuint[]> m_indices;
-
-	Q3BezierPatch()
-		:m_lod(0) {}
-
-	bool tesselate();
-	void render();
-};
-
-class Q3Patch {
-public:
-	int m_numPatches;
-	std::unique_ptr<Q3BezierPatch[]> m_bezierPatches;
-
-	Q3Patch()
-		:m_numPatches(0) {}
-
-	void render();
 };
 
 
+class Q3FacePlanar : public Q3Face {
+    
+public:
+    
+    
+    
+    void render() {
+        
+    }
+
+};
+
+
+class Q3FacePatch : public Q3Face {
+
+    class Q3BiquadraticBezier {
+    public:
+        GLint m_lod;
+        Q3Vertex m_anchors[9];
+        std::unique_ptr<Q3Vertex[]> m_vertices;
+        std::unique_ptr<GLuint[]> m_indices;
+        
+        Q3BiquadraticBezier()
+        :m_lod(0) {}
+        
+        bool tesselate();
+        void render();
+    };
+    
+
+    int patchWidth, patchHeight;
+    std::unique_ptr<Q3BiquadraticBezier[]> m_bezierPatches;
+    
+public:
+
+    bool init() {
+        return true;
+    }
+    
+    void render() {};
+};
+
+
+class Q3FaceTriangleSoup : public Q3Face {
+    
+public:
+    void render() {
+        
+    }
+    
+};
+
+class Q3FaceFlare : public Q3Face {
+    
+public:
+    void render() {
+        
+    }
+};
 
 
 class Q3Bsp : public SceneNode {
 
-	Q3BspHeader m_header;
-	std::shared_ptr<Q3ShaderManager> m_shaderManager;
-	std::unique_ptr<Q3Shader[]> m_shaders;
+//	Q3BspHeader m_header;
+//	std::shared_ptr<Q3ShaderManager> m_shaderManager;
 	std::unique_ptr<GLuint[]> m_lmIds;
 
 	GLdouble m_Delta;
@@ -235,10 +335,16 @@ class Q3Bsp : public SceneNode {
 	std::set<int> m_facesToRender;
 	Matrix4f m_clipMatrix;
 //	std::shared_ptr<Camera> m_attachedCamera;
-	Q3ShaderPass* m_currentShaderPass;
-	std::map<int, Q3Patch> m_patches;
+//	Q3ShaderPass* m_currentShaderPass;
+	std::map<int, Q3FacePatch> m_patches;
 
-	// BSP data
+	// Level data
+    Q3VerticesList   m_worldVertices;
+    Q3IndexesList    m_worldIndexes;
+    Q3FacesList      m_faces;
+//	std::vector<Q3Shader>   m_shaders;
+    
+    /*
 	std::unique_ptr<Q3BspVertex[]> m_vertexes;
 	std::unique_ptr<Q3BspMeshVert[]> m_meshVerts;
 	std::unique_ptr<Q3BspShader[]> m_bspShaders;
@@ -255,38 +361,41 @@ class Q3Bsp : public SceneNode {
 
 	std::unique_ptr<Q3BspVisData> m_visData;
 	std::string m_entities;
-
+*/
 	static int bbox_index[8][3];
+    
 
-	bool _loadVertexes(FILE * file);
-	bool _loadMeshVerts(FILE * file);
-	bool _loadShaders(FILE * file);
-	bool _loadFaces(FILE * file);
-	bool _loadLightMaps(FILE * file);
-	bool _loadBspTree(FILE * file);
-	bool _loadVisData(FILE * file);
-	bool _loadEntities(FILE * file);
+    // Private methods
+    
+	bool _loadVertices(FILE * file, int offset, int length);
+	bool _loadIndexes(FILE * file, int offset, int length);
+	bool _loadShaders(FILE * file, int offset, int length);
+	bool _loadFaces(FILE * file, int offset, int length);
+	bool _loadLightMaps(FILE * file, int offset, int length);
+	/*bool _loadBspTree(FILE * file, int offset, int length);
+	bool _loadVisData(FILE * file, int offset, int length);
+	bool _loadEntities(FILE * file, int offset, int length);
 
 	void _selectFaces(int index);
 
 	void _setCurrentShaderPass(Q3ShaderPass* currentShaderPass) { m_currentShaderPass = currentShaderPass; };
 	void _beginShaderPass();
 	void _endShaderPass();
+     */
 	
 public:
 	Q3Bsp();
 	virtual ~Q3Bsp();
-
+/*
 	int getLeafIndex(const Vector3d& v) const;
 	bool checkClusterVisibility(int from, int to) const;
-
-//	void attachCamera(std::shared_ptr<Camera> camera) { m_attachedCamera = camera; };
 
 
 	void render();
 	void update(GLdouble delta);
-
+*/
 	bool load(const char* filename);
+ 
 };
 
 
