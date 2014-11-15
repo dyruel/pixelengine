@@ -26,19 +26,19 @@ enum {
 };
 
 
-int Q3Bsp::bbox_index[8][3] =
+int Q3Level::bbox_index[8][3] =
 {
 	{ 0, 1, 2 }, { 3, 1, 2 }, { 3, 4, 2 }, { 0, 4, 2 },
 	{ 0, 1, 5 }, { 3, 1, 5 }, { 3, 4, 5 }, { 0, 4, 5 }
 };
 
 
-Q3Bsp::Q3Bsp()
+Q3Level::Q3Level()
 	: m_cameraCluster(0), m_Delta(0.) {
 }
 
 
-Q3Bsp::~Q3Bsp() {
+Q3Level::~Q3Level() {
     /*
 	if (m_visData && m_visData->bits) {
 		delete[] m_visData->bits;
@@ -46,7 +46,7 @@ Q3Bsp::~Q3Bsp() {
 }
 
 
-bool Q3Bsp::load(const char* filename) {
+bool Q3Level::load(const char* filename) {
 	FILE * file = NULL;
 
 	ILogger::log("Bsp:: Loading %s ...\n", filename);
@@ -93,6 +93,7 @@ bool Q3Bsp::load(const char* filename) {
                             bspHeader.entries[LUMP_LEAFFACES],
                             bspHeader.entries[LUMP_LEAFBRUSHES],
                             bspHeader.entries[LUMP_VISDATA])
+        
 		 //|| !this->_loadEntities(file, m_header.entries[LUMP_VERTICES].offset, m_header.entries[LUMP_VERTICES].length)
 		)
 	{
@@ -107,7 +108,7 @@ bool Q3Bsp::load(const char* filename) {
 	return true;
 }
 
-bool Q3Bsp::_loadVertices(FILE * file, const BspLumpEntry& verticesLump, const BspLumpEntry& indexesLump) {
+bool Q3Level::_loadVertices(FILE * file, const BspLumpEntry& verticesLump, const BspLumpEntry& indexesLump) {
     int n = 0;
     
 	if (!file) {
@@ -127,32 +128,32 @@ bool Q3Bsp::_loadVertices(FILE * file, const BspLumpEntry& verticesLump, const B
 	fseek(file, verticesLump.offset, SEEK_SET);
 	fread(bspVertices.get(), verticesLump.length, 1, file);
     
-    m_verticesPool.vertices.reserve(n);
-    m_verticesPool.vertices.resize(n);
+    m_map.m_verticesPool.vertices.reserve(n);
+    m_map.m_verticesPool.vertices.resize(n);
     
     for (int i = 0; i < n; ++i) {
-        m_verticesPool.vertices[i].position.x = bspVertices[i].position[0];
-        m_verticesPool.vertices[i].position.y = bspVertices[i].position[1];
-        m_verticesPool.vertices[i].position.z = bspVertices[i].position[2];
+        m_map.m_verticesPool.vertices[i].position.x = bspVertices[i].position[0];
+        m_map.m_verticesPool.vertices[i].position.y = bspVertices[i].position[1];
+        m_map.m_verticesPool.vertices[i].position.z = bspVertices[i].position[2];
         
-        m_verticesPool.vertices[i].texcoord.s = bspVertices[i].texcoord[0][0];
-        m_verticesPool.vertices[i].texcoord.t = bspVertices[i].texcoord[0][1];
+        m_map.m_verticesPool.vertices[i].texcoord.s = bspVertices[i].texcoord[0][0];
+        m_map.m_verticesPool.vertices[i].texcoord.t = bspVertices[i].texcoord[0][1];
         
-        m_verticesPool.vertices[i].lmcoord.s = bspVertices[i].texcoord[1][0];
-        m_verticesPool.vertices[i].lmcoord.t = bspVertices[i].texcoord[1][1];
+        m_map.m_verticesPool.vertices[i].lmcoord.s = bspVertices[i].texcoord[1][0];
+        m_map.m_verticesPool.vertices[i].lmcoord.t = bspVertices[i].texcoord[1][1];
         
-        m_verticesPool.vertices[i].normal.x = bspVertices[i].normal[0];
-        m_verticesPool.vertices[i].normal.y = bspVertices[i].normal[1];
-        m_verticesPool.vertices[i].normal.z = bspVertices[i].normal[2];
+        m_map.m_verticesPool.vertices[i].normal.x = bspVertices[i].normal[0];
+        m_map.m_verticesPool.vertices[i].normal.y = bspVertices[i].normal[1];
+        m_map.m_verticesPool.vertices[i].normal.z = bspVertices[i].normal[2];
 
-        m_verticesPool.vertices[i].normal.x = bspVertices[i].normal[0];
-        m_verticesPool.vertices[i].normal.y = bspVertices[i].normal[1];
-        m_verticesPool.vertices[i].normal.z = bspVertices[i].normal[2];
+        m_map.m_verticesPool.vertices[i].normal.x = bspVertices[i].normal[0];
+        m_map.m_verticesPool.vertices[i].normal.y = bspVertices[i].normal[1];
+        m_map.m_verticesPool.vertices[i].normal.z = bspVertices[i].normal[2];
         
-        m_verticesPool.vertices[i].color.r = bspVertices[i].color[0];
-        m_verticesPool.vertices[i].color.g = bspVertices[i].color[1];
-        m_verticesPool.vertices[i].color.b = bspVertices[i].color[2];
-        m_verticesPool.vertices[i].color.a = bspVertices[i].color[3];
+        m_map.m_verticesPool.vertices[i].color.r = bspVertices[i].color[0];
+        m_map.m_verticesPool.vertices[i].color.g = bspVertices[i].color[1];
+        m_map.m_verticesPool.vertices[i].color.b = bspVertices[i].color[2];
+        m_map.m_verticesPool.vertices[i].color.a = bspVertices[i].color[3];
     }
     
 
@@ -164,11 +165,11 @@ bool Q3Bsp::_loadVertices(FILE * file, const BspLumpEntry& verticesLump, const B
     fseek(file, indexesLump.offset, SEEK_SET);
     fread(bspIndexes.get(), indexesLump.length, 1, file);
     
-    m_verticesPool.indexes.reserve(n);
-    m_verticesPool.indexes.resize(n);
+    m_map.m_verticesPool.indexes.reserve(n);
+    m_map.m_verticesPool.indexes.resize(n);
     
     for (int i = 0; i < n; ++i) {
-        m_verticesPool.indexes[i] = bspIndexes[i];
+        m_map.m_verticesPool.indexes[i] = bspIndexes[i];
     }
     
     ILogger::log("--> %d indexes loaded.\n", n);
@@ -179,7 +180,7 @@ bool Q3Bsp::_loadVertices(FILE * file, const BspLumpEntry& verticesLump, const B
 
 
 
-bool Q3Bsp::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLumpEntry& shadersLump, const BspLumpEntry& lightmapsLump) {
+bool Q3Level::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLumpEntry& shadersLump, const BspLumpEntry& lightmapsLump) {
 	if (!file) {
 		return false;
 	}
@@ -262,7 +263,7 @@ bool Q3Bsp::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                 
             case FACE_PLANAR:
             {
-                std::shared_ptr<Q3Face> face = std::make_shared<Q3FacePlanar>(m_verticesPool);
+                std::shared_ptr<Q3Face> face = std::make_shared<Q3FacePlanar>(m_map.m_verticesPool);
                 face->type = FACE_PLANAR;
                 
                 if (shaderManager->exists(bspShaders[bspFaces[i].shader].name)) {
@@ -275,7 +276,7 @@ bool Q3Bsp::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                     infoString = "(No shader script found, default loaded)";
                 }
                 
-                m_faces.push_back(face);
+                m_map.m_faces.push_back(face);
                 ++nPlanar;
                 
                 ILogger::log("---> Face %d, type planar, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
@@ -341,7 +342,7 @@ bool Q3Bsp::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
 
 
 
-bool Q3Bsp::_loadBspTree(FILE * file,
+bool Q3Level::_loadBspTree(FILE * file,
                          const BspLumpEntry& nodesLump,
                          const BspLumpEntry& leafLump,
                          const BspLumpEntry& planesLump,
@@ -368,32 +369,74 @@ bool Q3Bsp::_loadBspTree(FILE * file,
         int cluster;
         int area;
         int bbox[6];
-        int leafface;
-        int n_leaffaces;
-        int leafbrush;
-        int n_leafbrushes;
+        
+        int firstLeafFace;
+        int numLeafFaces;
+        
+        int firstLeafBrush;
+        int numLeafBrushes;
     } ;
 
-    int n = 0;
+    int nInternalNodes = 0, nPlanes = 0, n = 0;
 
-	n = nodesLump.length / sizeof(BspNode);
-    std::unique_ptr<BspNode[]> bspNodes = std::make_unique<BspNode[]>(n);
+	nInternalNodes = nodesLump.length / sizeof(BspNode);
+    std::unique_ptr<BspNode[]> bspNodes = std::make_unique<BspNode[]>(nInternalNodes);
 	fseek(file, nodesLump.offset, SEEK_SET);
 	fread(bspNodes.get(), nodesLump.length, 1, file);
-
-	ILogger::log("--> %d nodes loaded.\n", n);
     
-    n = planesLump.length / sizeof(BspPlane);
-    std::unique_ptr<BspPlane[]> bspPlanes = std::make_unique<BspPlane[]>(n);
+	ILogger::log("--> %d nodes loaded.\n", nInternalNodes);
+    
+    nPlanes = planesLump.length / sizeof(BspPlane);
+    std::unique_ptr<BspPlane[]> bspPlanes = std::make_unique<BspPlane[]>(nPlanes);
     fseek(file, planesLump.offset, SEEK_SET);
     fread(bspPlanes.get(), planesLump.length, 1, file);
 
-	ILogger::log("--> %d planes loaded.\n", n);
+	ILogger::log("--> %d planes loaded.\n", nPlanes);
+    
+    
+    for (int i = 0; i < nInternalNodes; ++i) {
+        std::shared_ptr<Q3Map::InternalNode> node = std::make_shared<Q3Map::InternalNode>();
+        
+        node->plane.normal.x = bspPlanes[bspNodes[i].plane].normal[0];
+        node->plane.normal.y = bspPlanes[bspNodes[i].plane].normal[1];
+        node->plane.normal.z = bspPlanes[bspNodes[i].plane].normal[2];
+        
+        node->plane.dist = bspPlanes[bspNodes[i].plane].dist;
+        
+        for (int j = 0; j < 6; ++j) {
+            node->bbox[j] = bspNodes[i].bbox[j];
+        }
+        
+        for (int j = 0; j < 1; ++j) {
+            node->children[j] = bspNodes[i].children[j];
+        }
+        
+        m_map.m_internalNodes.push_back(node);
+    }
 
     n = leafLump.length / sizeof(BspLeaf);
     std::unique_ptr<BspLeaf[]> bspLeaf = std::make_unique<BspLeaf[]>(n);
     fseek(file, leafLump.offset, SEEK_SET);
     fread(bspLeaf.get(), leafLump.length, 1, file);
+    
+    for (int i = 0; i < n; ++i) {
+        std::shared_ptr<Q3Map::LeafNode> leaf = std::make_shared<Q3Map::LeafNode>();
+        
+        leaf->cluster = bspLeaf[i].cluster;
+        leaf->area    = bspLeaf[i].area;
+        
+        for (int j = 0; j < 6; ++j) {
+            leaf->bbox[j] = bspLeaf[i].bbox[j];
+        }
+        
+        leaf->firstLeafFace = bspLeaf[i].firstLeafFace;
+        leaf->numLeafFaces = bspLeaf[i].numLeafFaces;
+        
+        leaf->firstLeafBrush = bspLeaf[i].firstLeafBrush;
+        leaf->numLeafBrushes = bspLeaf[i].numLeafBrushes;
+        
+        m_map.m_leafNodes.push_back(leaf);
+    }
 
 	ILogger::log("--> %d leafs loaded.\n", n);
 
@@ -401,26 +444,35 @@ bool Q3Bsp::_loadBspTree(FILE * file,
     std::unique_ptr<int[]> bspLeafFace = std::make_unique<int[]>(n);
     fseek(file, leafFaceLump.offset, SEEK_SET);
     fread(bspLeafFace.get(), leafFaceLump.length, 1, file);
+    
+    for (int i = 0; i < n; ++i) {
+        m_map.m_leafFaceIndexes.push_back(bspLeafFace[i]);
+    }
 
-	ILogger::log("--> %d leaf faces loaded.\n", n);
+	ILogger::log("--> %d leaf face indexes loaded.\n", n);
+    
 
     n = leafBrushLump.length / sizeof(int);
-    std::unique_ptr<int[]> bspBrushFace = std::make_unique<int[]>(n);
+    std::unique_ptr<int[]> bspLeafBrush = std::make_unique<int[]>(n);
     fseek(file, leafBrushLump.offset, SEEK_SET);
-    fread(bspBrushFace.get(), leafBrushLump.length, 1, file);
+    fread(bspLeafBrush.get(), leafBrushLump.length, 1, file);
 
-	ILogger::log("--> %d leaf brushes loaded.\n", n);
+    for (int i = 0; i < n; ++i) {
+        m_map.m_leafBrushIndexes.push_back(bspLeafBrush[i]);
+    }
+    
+	ILogger::log("--> %d leaf brush indexes loaded.\n", n);
     
 
-    int visData[2];
     fseek(file, visDataLump.offset, SEEK_SET);
-    fread(visData, 2, sizeof(int), file);
+    fread(&m_map.m_visData, 2, sizeof(int), file);
     
-    int size = visData[0] * visData[1];
-    std::unique_ptr<unsigned char[]> bits = std::make_unique<unsigned char[]>(size);
-    fread(bits.get(), 1, size, file);
+    int size = m_map.m_visData.numClusters * m_map.m_visData.sizeCluster;
+    m_map.m_visData.bits = std::make_unique<unsigned char[]>(size);
+    fread(m_map.m_visData.bits.get(), 1, size, file);
     
-    ILogger::log("--> vis data loaded.\n");
+    ILogger::log("--> vis data loaded (%d x %d).\n", m_map.m_visData.numClusters, m_map.m_visData.sizeCluster);
+    
 
 	return true;
 }
@@ -453,7 +505,7 @@ bool Q3Bsp::_loadEntities(FILE * file, int offset, int length) {
 */
 
 #if 0
-int Q3Bsp::getLeafIndex(const Vector3d& v) const {
+int Q3Level::getLeafIndex(const Vector3d& v) const {
 	int index = 0;
 
 	while (index >= 0) {

@@ -182,47 +182,7 @@ typedef	struct {
 */
 
 
-class Q3BspTree {
-    friend class Q3Bsp;
-    
-    struct Node {
-        int bbox[6];
-        std::unique_ptr<Node> children[2];
-        
-    };
-    
-    struct InternalNode : public Node {
-        Vector3f normal;
-        float dist;
-    };
-    
-    struct LeafNode : public Node {
-        int cluster;
-        int area;
-        int leafface;
-        int n_leaffaces;
-        int leafbrush;
-        int n_leafbrushes;
-    };
-    
-    
-    std::unique_ptr<Node> m_root;
-    
-public:
-    
-    int getLeafIndex(const Vector3d& v) const {
-        if(!m_root)
-            return 0;
- /*
-        while (m_root->children[0] || m_root->children[1]) {
 
-        }
-   */     
-        return 0;
-    }
-    
-    
-};
 
 
 class Q3Vertex {
@@ -265,7 +225,7 @@ typedef struct {
 
 
 class Q3Face {
-    friend class Q3Bsp;
+    friend class Q3Level;
     
 protected:
     Q3Shader m_shader;
@@ -394,7 +354,77 @@ public:
 };
 
 
-class Q3Bsp : public SceneNode {
+class Q3Map : public SceneNode {
+    friend class Q3Level;
+    
+    struct VisData {
+        int numClusters;
+        int sizeCluster;
+        std::unique_ptr<unsigned char[]> bits;
+    };
+    
+    struct Node {
+        int bbox[6];
+    };
+    
+    struct Plane {
+        Vector3f normal;
+        float dist;
+    };
+    
+    struct InternalNode : public Node {
+        Plane plane;
+        int children[2];
+    };
+    
+    struct LeafNode : public Node {
+        int cluster;
+        int area;
+        
+        int firstLeafFace;
+        int numLeafFaces;
+        
+        int firstLeafBrush;
+        int numLeafBrushes;
+    };
+    
+    typedef std::vector<std::shared_ptr<InternalNode>>      InternalNodesList;
+    typedef std::vector<std::shared_ptr<LeafNode>>          LeafNodesList;
+    typedef std::vector<int>                                IndexesList;
+    
+    Q3VerticesPool      m_verticesPool;
+    Q3FacesList         m_faces;
+    InternalNodesList   m_internalNodes;
+    LeafNodesList       m_leafNodes;
+    IndexesList         m_leafFaceIndexes;
+    IndexesList         m_leafBrushIndexes;
+    VisData             m_visData;
+    
+public:
+    
+    int getLeafIndex(const Vector3f& v) const {
+        int index = 0;
+        
+        while (index >= 0) {
+            std::shared_ptr<InternalNode> node = m_internalNodes[index];
+            const double distance = node->plane.normal.dotProduct(v) - node->plane.dist;
+            
+            if (distance >= 0) {
+                index = node->children[0];
+            }
+            else {
+                index = node->children[1];
+            }
+        }
+        
+        return -(index + 1);
+    }
+    
+    
+};
+
+
+class Q3Level : public SceneNode {
     
     struct BspLumpEntry {
         int offset;
@@ -417,11 +447,11 @@ class Q3Bsp : public SceneNode {
 	Matrix4f m_clipMatrix;
 //	std::shared_ptr<Camera> m_attachedCamera;
 //	Q3ShaderPass* m_currentShaderPass;
-	std::map<int, Q3FacePatch> m_patches;
+//	std::map<int, Q3FacePatch> m_patches;
 
-	// Level data
-    Q3VerticesPool   m_verticesPool;
-    Q3FacesList      m_faces;
+	// Level map
+    Q3Map m_map;
+
 //	std::vector<Q3Shader>   m_shaders;
     
     /*
@@ -477,8 +507,8 @@ class Q3Bsp : public SceneNode {
      */
 	
 public:
-	Q3Bsp();
-	virtual ~Q3Bsp();
+	Q3Level();
+	virtual ~Q3Level();
 /*
 	int getLeafIndex(const Vector3d& v) const;
 	bool checkClusterVisibility(int from, int to) const;

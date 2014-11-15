@@ -27,7 +27,7 @@ int main(int argc, const char * argv[]){
 
 	std::shared_ptr<DummyNode> dummyNode(new DummyNode());
 	std::shared_ptr<Camera> camera(new CameraFree());
-	std::shared_ptr<Q3Bsp> q3bsp(new Q3Bsp());
+	std::shared_ptr<Q3Level> q3bsp(new Q3Level());
 
 	sceneManager->attachCamera(camera);
 	sceneManager->addSceneNode(q3bsp);
