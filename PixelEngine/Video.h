@@ -19,7 +19,7 @@
 
 
 class Video : public Singleton<Video> {
-	friend class Singleton <Video>;
+    friend class Singleton<Video>;
 
 private:
     
@@ -31,15 +31,15 @@ private:
     int m_windowHeight;
     
 	bool init();
-	bool deinit();
         
     Video();
-	Video(Video&);
-	void operator =(Video&);
+	Video(const Video&);
+	void operator =(const Video&);
 
 public:
 
-	virtual ~Video();
+	~Video();
+    
 
 	void setOglDefaultState();
 
@@ -50,5 +50,6 @@ public:
 
     bool windowShouldClose();
 };
+
 
 #endif /* defined(__PixelEngine__Video__) */

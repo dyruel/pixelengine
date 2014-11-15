@@ -18,17 +18,10 @@ public:
 
 	static std::shared_ptr<T> getInstance() {
 		if (!instance) {
-			instance.reset(new T);
+            instance.reset(new T);
 			instance->init();
 		}
 		return instance;
-	}
-
-
-	static void drop() {
-		if (instance) {
-			instance->deinit();
-		}
 	}
 
 protected:
@@ -37,14 +30,13 @@ protected:
 	~Singleton() {};
 
 	virtual bool init() { return true; };
-	virtual bool deinit() { return true; };
+//	virtual bool deinit() { return true; };
 
 private:
 
 	static std::shared_ptr<T> instance;
-
-	Singleton(Singleton&);
-	void operator =(Singleton&);
+	Singleton(Singleton const&);
+	void operator =(Singleton const&);
 
 };
 

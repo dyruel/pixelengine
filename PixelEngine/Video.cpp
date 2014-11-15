@@ -17,7 +17,10 @@ Video::Video()
 
 
 Video::~Video() {
-
+    ILogger::log("Video :: Start engine deinitialization...");
+    glfwDestroyWindow(m_window);
+    glfwTerminate();
+    ILogger::log("done.\n");
 }
 
 bool Video::init() {
@@ -110,13 +113,6 @@ void Video::setOglDefaultState() {
 	
 }
 
-bool Video::deinit() {
-	ILogger::log("Video :: Start engine deinitialization...");
-	glfwDestroyWindow(m_window);
-	glfwTerminate();
-	ILogger::log("done.\n");
-	return true;
-}
 
 
 void Video::beginScene() const {

@@ -8,6 +8,7 @@
 
 #include <cstdio>
 
+#include "unique.h"
 #include "Video.h"
 #include "Q3Bsp.h"
 #include "Texture.h"
@@ -47,17 +48,6 @@ Q3Bsp::~Q3Bsp() {
 
 bool Q3Bsp::load(const char* filename) {
 	FILE * file = NULL;
-    
-    struct BspLumpEntry {
-        int offset;
-        int length;
-    };
-    
-    struct BspHeader  {
-        char magic[4];
-        int version;
-        BspLumpEntry entries[LUMP_TOTAL];
-    };
 
 	ILogger::log("Bsp:: Loading %s ...\n", filename);
 
@@ -83,14 +73,27 @@ bool Q3Bsp::load(const char* filename) {
 	ILogger::log("-> Magic : %s\n-> Version : %d\n", bspHeader.magic, bspHeader.version);
 
 
-	if (!this->_loadVertices(   file,  bspHeader.entries[LUMP_VERTICES].offset,  bspHeader.entries[LUMP_VERTICES].length)
-         || !this->_loadIndexes(    file,  bspHeader.entries[LUMP_INDEXES].offset,   bspHeader.entries[LUMP_INDEXES].length)
-		 || !this->_loadFaces(      file,  bspHeader.entries[LUMP_FACES].offset,     bspHeader.entries[LUMP_FACES].length)
-		 || !this->_loadLightMaps(  file,  bspHeader.entries[LUMP_LIGHTMAPS].offset, bspHeader.entries[LUMP_LIGHTMAPS].length)
-		 || !this->_loadShaders(    file,  bspHeader.entries[LUMP_SHADERS].offset,   bspHeader.entries[LUMP_SHADERS].length)
-	/*	 || !this->_loadBspTree(file, m_header.entries[LUMP_VERTICES].offset, m_header.entries[LUMP_VERTICES].length)
-		 || !this->_loadVisData(file, m_header.entries[LUMP_VERTICES].offset, m_header.entries[LUMP_VERTICES].length)
-		 || !this->_loadEntities(file, m_header.entries[LUMP_VERTICES].offset, m_header.entries[LUMP_VERTICES].length)*/
+	if (!this->_loadVertices(file,
+                             bspHeader.entries[LUMP_VERTICES],
+                             bspHeader.entries[LUMP_INDEXES])
+        
+        ||
+        
+        !this->_loadFaces(file,
+                          bspHeader.entries[LUMP_FACES],
+                          bspHeader.entries[LUMP_SHADERS],
+                          bspHeader.entries[LUMP_LIGHTMAPS])
+        
+        ||
+        
+        !this->_loadBspTree(file,
+                            bspHeader.entries[LUMP_NODES],
+                            bspHeader.entries[LUMP_LEAFS],
+                            bspHeader.entries[LUMP_PLANES],
+                            bspHeader.entries[LUMP_LEAFFACES],
+                            bspHeader.entries[LUMP_LEAFBRUSHES],
+                            bspHeader.entries[LUMP_VISDATA])
+		 //|| !this->_loadEntities(file, m_header.entries[LUMP_VERTICES].offset, m_header.entries[LUMP_VERTICES].length)
 		)
 	{
 		ILogger::log("-> Error while loading data from bsp file %s.\n", filename);
@@ -104,7 +107,9 @@ bool Q3Bsp::load(const char* filename) {
 	return true;
 }
 
-bool Q3Bsp::_loadVertices(FILE * file, int offset, int length) {
+bool Q3Bsp::_loadVertices(FILE * file, const BspLumpEntry& verticesLump, const BspLumpEntry& indexesLump) {
+    int n = 0;
+    
 	if (!file) {
 		return false;
 	}
@@ -116,78 +121,74 @@ bool Q3Bsp::_loadVertices(FILE * file, int offset, int length) {
         unsigned char color[4];
     };
 
-	int n = length / sizeof(BspVertex);
+	n = verticesLump.length / sizeof(BspVertex);
+    std::unique_ptr<BspVertex[]> bspVertices = std::make_unique<BspVertex[]>(n);
     
-    std::unique_ptr<BspVertex[]> bspVertices(new BspVertex[n]);
+	fseek(file, verticesLump.offset, SEEK_SET);
+	fread(bspVertices.get(), verticesLump.length, 1, file);
     
-	fseek(file, offset, SEEK_SET);
-	fread(bspVertices.get(), length, 1, file);
-    
-    m_worldVertices.reserve(n);
-    m_worldVertices.resize(n);
+    m_verticesPool.vertices.reserve(n);
+    m_verticesPool.vertices.resize(n);
     
     for (int i = 0; i < n; ++i) {
-        m_worldVertices[i].position.x = bspVertices[i].position[0];
-        m_worldVertices[i].position.y = bspVertices[i].position[1];
-        m_worldVertices[i].position.z = bspVertices[i].position[2];
+        m_verticesPool.vertices[i].position.x = bspVertices[i].position[0];
+        m_verticesPool.vertices[i].position.y = bspVertices[i].position[1];
+        m_verticesPool.vertices[i].position.z = bspVertices[i].position[2];
         
-        m_worldVertices[i].texcoord.s = bspVertices[i].texcoord[0][0];
-        m_worldVertices[i].texcoord.t = bspVertices[i].texcoord[0][1];
+        m_verticesPool.vertices[i].texcoord.s = bspVertices[i].texcoord[0][0];
+        m_verticesPool.vertices[i].texcoord.t = bspVertices[i].texcoord[0][1];
         
-        m_worldVertices[i].lmcoord.s = bspVertices[i].texcoord[1][0];
-        m_worldVertices[i].lmcoord.t = bspVertices[i].texcoord[1][1];
+        m_verticesPool.vertices[i].lmcoord.s = bspVertices[i].texcoord[1][0];
+        m_verticesPool.vertices[i].lmcoord.t = bspVertices[i].texcoord[1][1];
         
-        m_worldVertices[i].normal.x = bspVertices[i].normal[0];
-        m_worldVertices[i].normal.y = bspVertices[i].normal[1];
-        m_worldVertices[i].normal.z = bspVertices[i].normal[2];
+        m_verticesPool.vertices[i].normal.x = bspVertices[i].normal[0];
+        m_verticesPool.vertices[i].normal.y = bspVertices[i].normal[1];
+        m_verticesPool.vertices[i].normal.z = bspVertices[i].normal[2];
 
-        m_worldVertices[i].normal.x = bspVertices[i].normal[0];
-        m_worldVertices[i].normal.y = bspVertices[i].normal[1];
-        m_worldVertices[i].normal.z = bspVertices[i].normal[2];
+        m_verticesPool.vertices[i].normal.x = bspVertices[i].normal[0];
+        m_verticesPool.vertices[i].normal.y = bspVertices[i].normal[1];
+        m_verticesPool.vertices[i].normal.z = bspVertices[i].normal[2];
         
-        m_worldVertices[i].color.r = bspVertices[i].color[0];
-        m_worldVertices[i].color.g = bspVertices[i].color[1];
-        m_worldVertices[i].color.b = bspVertices[i].color[2];
-        m_worldVertices[i].color.a = bspVertices[i].color[3];
-        
-//        std::cout << m_vertices[i].position.toString() << std::endl;
+        m_verticesPool.vertices[i].color.r = bspVertices[i].color[0];
+        m_verticesPool.vertices[i].color.g = bspVertices[i].color[1];
+        m_verticesPool.vertices[i].color.b = bspVertices[i].color[2];
+        m_verticesPool.vertices[i].color.a = bspVertices[i].color[3];
     }
     
 
     ILogger::log("--> %d vertexes loaded.\n", n);
-	return true;
-}
-
-
-bool Q3Bsp::_loadIndexes(FILE * file, int offset, int length) {
-	if (!file) {
-		return false;
-	}
-
-	int n = length / sizeof(int);
     
-    std::unique_ptr<int[]> bspIndexes(new int[n]);
     
-	fseek(file, offset, SEEK_SET);
-	fread(bspIndexes.get(), length, 1, file);
-
-    m_worldIndexes.reserve(n);
-    m_worldIndexes.resize(n);
+    n = indexesLump.length / sizeof(int);
+    std::unique_ptr<int[]> bspIndexes = std::make_unique<int[]>(n);
+    fseek(file, indexesLump.offset, SEEK_SET);
+    fread(bspIndexes.get(), indexesLump.length, 1, file);
+    
+    m_verticesPool.indexes.reserve(n);
+    m_verticesPool.indexes.resize(n);
     
     for (int i = 0; i < n; ++i) {
-        m_worldIndexes[i] = bspIndexes[i];
+        m_verticesPool.indexes[i] = bspIndexes[i];
     }
-
-	ILogger::log("--> %d indexes loaded.\n", n);
-
+    
+    ILogger::log("--> %d indexes loaded.\n", n);
+    
+    
 	return true;
 }
 
 
-bool Q3Bsp::_loadFaces(FILE * file, int offset, int length) {
+
+bool Q3Bsp::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLumpEntry& shadersLump, const BspLumpEntry& lightmapsLump) {
 	if (!file) {
 		return false;
 	}
+    
+    std::shared_ptr<Q3ShaderManager> shaderManager = Q3ShaderManager::getInstance();
+    std::shared_ptr<TextureManager> textureManager = TextureManager::getInstance();
+    std::vector<Q3Shader> shaders;
+    std::string infoString("");
+    int n = 0, nPlanar = 0, nPatch = 0, nTriSoup = 0, nBad = 0;
 
     struct BspFace {
         int shader;
@@ -217,300 +218,216 @@ bool Q3Bsp::_loadFaces(FILE * file, int offset, int length) {
         int contents;
     };
     
-    std::shared_ptr<Q3ShaderManager> m_shaderManager = Q3ShaderManager::getInstance();
+    struct Q3BspLightMap {
+        unsigned char  map[128][128][3];
+    };
     
-    m_shaderManager->loadFromFile("scripts/base.shader");
-    m_shaderManager->loadFromFile("scripts/base_button.shader");
-    m_shaderManager->loadFromFile("scripts/base_floor.shader");
-    m_shaderManager->loadFromFile("scripts/base_light.shader");
-    m_shaderManager->loadFromFile("scripts/base_object.shader");
-    m_shaderManager->loadFromFile("scripts/base_support.shader");
-    m_shaderManager->loadFromFile("scripts/base_trim.shader");
-    m_shaderManager->loadFromFile("scripts/base_wall.shader");
-    m_shaderManager->loadFromFile("scripts/common.shader");
-    m_shaderManager->loadFromFile("scripts/ctf.shader");
-    m_shaderManager->loadFromFile("scripts/eerie.shader");
-    m_shaderManager->loadFromFile("scripts/gfx.shader");
-    m_shaderManager->loadFromFile("scripts/gothic_block.shader");
-    m_shaderManager->loadFromFile("scripts/gothic_floor.shader");
-    m_shaderManager->loadFromFile("scripts/gothic_light.shader");
-    m_shaderManager->loadFromFile("scripts/gothic_trim.shader");
-    m_shaderManager->loadFromFile("scripts/gothic_wall.shader");
-    m_shaderManager->loadFromFile("scripts/hell.shader");
-    m_shaderManager->loadFromFile("scripts/liquid.shader");
-    m_shaderManager->loadFromFile("scripts/menu.shader");
-    m_shaderManager->loadFromFile("scripts/models.shader");
-    m_shaderManager->loadFromFile("scripts/organics.shader");
-    m_shaderManager->loadFromFile("scripts/sfx.shader");
-    m_shaderManager->loadFromFile("scripts/shrine.shader");
-    m_shaderManager->loadFromFile("scripts/skin.shader");
-    m_shaderManager->loadFromFile("scripts/sky.shader");
     
-	int n = length / sizeof(BspFace);
-    std::unique_ptr<BspFace[]> bspFaces(new BspFace[n]);
-	fseek(file, offset, SEEK_SET);
-	fread(bspFaces.get(), length, 1, file);
-
-    n = length / sizeof(BspShader);
-    std::unique_ptr<BspShader[]> bspShader(new BspShader[n]);
-    fseek(file, offset, SEEK_SET);
-    fread(bspShader.get(), length, 1, file);
+    // Load and create lightmaps
+    n = lightmapsLump.length / sizeof(Q3BspLightMap);
+    std::unique_ptr<Q3BspLightMap[]> bspLightmap = std::make_unique<Q3BspLightMap[]>(n);
+    fseek(file, lightmapsLump.offset, SEEK_SET);
+    fread(bspLightmap.get(), lightmapsLump.length, 1, file);
     
-//    m_faces.reserve(n);
-//    m_faces.resize(n);
-
-	for (int i = 0; i < n; ++i) {
+    std::unique_ptr<GLuint[]> lmIds = std::make_unique<GLuint[]>(n);
+    
+    glGenTextures(n, lmIds.get());
+    
+    for (int i = 0; i < n; ++i) {
+        glBindTexture(GL_TEXTURE_2D, lmIds[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, bspLightmap[i].map);
+    }
+    
+    ILogger::log("--> %d LightMaps\n", n);
+    
+    // Load shaders and faces from the file
+    n = shadersLump.length / sizeof(BspShader);
+    std::unique_ptr<BspShader[]> bspShaders = std::make_unique<BspShader[]>(n);
+    fseek(file, shadersLump.offset, SEEK_SET);
+    fread(bspShaders.get(), shadersLump.length, 1, file);
+    
+    n = facesLump.length / sizeof(BspFace);
+    std::unique_ptr<BspFace[]> bspFaces = std::make_unique<BspFace[]>(n);
+    fseek(file, facesLump.offset, SEEK_SET);
+    fread(bspFaces.get(), facesLump.length, 1, file);
+    
+    // Fill faces informations
+    for (int i = 0; i < n; ++i) {
         
         switch (bspFaces[i].type) {
-            case FACE_PLANAR:
-                Q3FacePlanar facePlanar;
-                m_faces.push_back(facePlanar);
                 
-                break;
+            case FACE_PLANAR:
+            {
+                std::shared_ptr<Q3Face> face = std::make_shared<Q3FacePlanar>(m_verticesPool);
+                face->type = FACE_PLANAR;
+                
+                if (shaderManager->exists(bspShaders[bspFaces[i].shader].name)) {
+                    face->m_shader = shaderManager->getShader(bspShaders[bspFaces[i].shader].name);
+                }
+                else {
+                    //std::cout << bspShader[i].name << std::endl;
+                    Q3ShaderDefault shaderDefault(textureManager->getTexture(bspShaders[bspFaces[i].shader].name), lmIds[bspFaces[i].lm_index]);
+                    face->m_shader = shaderDefault;
+                    infoString = "(No shader script found, default loaded)";
+                }
+                
+                m_faces.push_back(face);
+                ++nPlanar;
+                
+                ILogger::log("---> Face %d, type planar, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
+            }
+            break;
                 
             case FACE_PATCH:
-                
-                break;
+            {
+                /*
+                 int maxPatchesX = (m_faces[i].size[0] - 1) >> 1;
+                 int maxPatchesY = (m_faces[i].size[1] - 1) >> 1;
+                 
+                 m_patches[i].m_numPatches = maxPatchesX * maxPatchesY;
+                 m_patches[i].m_bezierPatches.reset(new Q3BezierPatch[m_patches[i].m_numPatches]);
+                 
+                 for (int y = 0; y < maxPatchesY; ++y)
+                 {
+                 for (int x = 0; x < maxPatchesX; ++x)
+                 {
+                 for (int a = 0; a < 3; ++a)
+                 {
+                 for (int b = 0; b < 3; ++b)
+                 {
+                 m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b] = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)];
+                 }
+                 }
+                 
+                 m_patches[i].m_bezierPatches[y*maxPatchesX + x].tesselate();
+                 }
+                 }
+                 
+                 }
+                 */
+                ++nPatch;
+                ILogger::log("---> Face %d, type patch, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
+            }
+            break;
                 
             case FACE_TRIANGLE_SOUP:
-                
-                break;
+            {
+                ++nTriSoup;
+                ILogger::log("---> Face %d, type triangle soup, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
+            }
+            break;
                 
             case FACE_BAD:
             default:
-                break;
+            {
+                ++nBad;
+                ILogger::log("---> Face %d, type bad\n", i);
+            }
+            break;
         }
+
     }
     
-        
-/*
-		int maxPatchesX = (m_faces[i].size[0] - 1) >> 1;
-		int maxPatchesY = (m_faces[i].size[1] - 1) >> 1;
-
-		m_patches[i].m_numPatches = maxPatchesX * maxPatchesY;
-		m_patches[i].m_bezierPatches.reset(new Q3BezierPatch[m_patches[i].m_numPatches]);
-		
-		for (int y = 0; y < maxPatchesY; ++y)
-		{
-			for (int x = 0; x < maxPatchesX; ++x)
-			{
-				for (int a = 0; a < 3; ++a)
-				{
-					for (int b = 0; b < 3; ++b)
-					{
-						m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b] = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)];
-					}
-				}
-
-				m_patches[i].m_bezierPatches[y*maxPatchesX + x].tesselate();
-			}
-		}
-
-	}
-    */
-    
-    ILogger::log("--> %d faces loaded.\n", n);
+    ILogger::log("--> %d faces loaded (%d Planars, %d Patches, %d Triangle Soup, %d Bad).\n",
+                 nPlanar+nPatch+nTriSoup+nBad, nPlanar, nPatch, nTriSoup, nBad);
 
 	return true;
 }
 
-/*
-bool Q3Bsp::_loadShaders(FILE * file, int offset, int length) {
-	std::shared_ptr<TextureManager> textureManager = TextureManager::getInstance();
-	std::string noshader("noshader");
 
+
+
+bool Q3Bsp::_loadBspTree(FILE * file,
+                         const BspLumpEntry& nodesLump,
+                         const BspLumpEntry& leafLump,
+                         const BspLumpEntry& planesLump,
+                         const BspLumpEntry& leafFaceLump,
+                         const BspLumpEntry& leafBrushLump,
+                         const BspLumpEntry& visDataLump)
+{
 	if (!file) {
 		return false;
 	}
     
-    if(m_faces.empty()) {
-        ILogger::log("--> Error in _loadShaders: the faces must be loaded first!\n");
-        return false;
-    }
+    struct BspPlane {
+        float normal[3];
+        float dist;
+    } ;
     
-    struct BspShader {
-        char name[64];
-        int flags;
-        int contents;
-    };
-
-	int n = length / sizeof(BspShader);
+    struct BspNode {
+        int plane;
+        int children[2];
+        int bbox[6];
+    } ;
     
-    std::unique_ptr<BspShader[]> bspShader(new BspShader[n]);
-    
-	fseek(file, offset, SEEK_SET);
-	fread(bspShader.get(), length, 1, file);
+    struct BspLeaf {
+        int cluster;
+        int area;
+        int bbox[6];
+        int leafface;
+        int n_leaffaces;
+        int leafbrush;
+        int n_leafbrushes;
+    } ;
 
-    //FIXME: change m_shaderManager's name
-	std::shared_ptr<Q3ShaderManager> m_shaderManager = Q3ShaderManager::getInstance();
-    
-    // FIXME : move these calls to ShaderManager
-	m_shaderManager->loadFromFile("scripts/base.shader");
-	m_shaderManager->loadFromFile("scripts/base_button.shader");
-	m_shaderManager->loadFromFile("scripts/base_floor.shader");
-	m_shaderManager->loadFromFile("scripts/base_light.shader");
-	m_shaderManager->loadFromFile("scripts/base_object.shader");
-	m_shaderManager->loadFromFile("scripts/base_support.shader");
-	m_shaderManager->loadFromFile("scripts/base_trim.shader");
-	m_shaderManager->loadFromFile("scripts/base_wall.shader");
-	m_shaderManager->loadFromFile("scripts/common.shader");
-	m_shaderManager->loadFromFile("scripts/ctf.shader");
-	m_shaderManager->loadFromFile("scripts/eerie.shader");
-	m_shaderManager->loadFromFile("scripts/gfx.shader");
-	m_shaderManager->loadFromFile("scripts/gothic_block.shader");
-	m_shaderManager->loadFromFile("scripts/gothic_floor.shader");
-	m_shaderManager->loadFromFile("scripts/gothic_light.shader");
-	m_shaderManager->loadFromFile("scripts/gothic_trim.shader");
-	m_shaderManager->loadFromFile("scripts/gothic_wall.shader");
-	m_shaderManager->loadFromFile("scripts/hell.shader");
-	m_shaderManager->loadFromFile("scripts/liquid.shader");
-	m_shaderManager->loadFromFile("scripts/menu.shader");
-	m_shaderManager->loadFromFile("scripts/models.shader");
-	m_shaderManager->loadFromFile("scripts/organics.shader");
-	m_shaderManager->loadFromFile("scripts/sfx.shader");
-	m_shaderManager->loadFromFile("scripts/shrine.shader");
-	m_shaderManager->loadFromFile("scripts/skin.shader");
-	m_shaderManager->loadFromFile("scripts/sky.shader");
-    
-    
-    
-    Q3FacesList::iterator face = m_faces.begin();
-    Q3FacesList::iterator faceEnd = m_faces.end();
-    
-    while (face != faceEnd) {
-        
-        face->
-        
-        ++face;
-    }
-    
- //   m_shaders.reserve(n);
- //   m_shaders.resize(n);
+    int n = 0;
 
-	for (int i = 0; i < n; ++i) {
-        
-        if(!noshader.compare(bspShader[i].name)) {
-            continue;
-        }
-        
-        // FIXME: maybe these can be performed by the getShader method?
-		if (m_shaderManager->exists(bspShader[i].name)) {
-			m_shaders[i] = m_shaderManager->getShader(bspShader[i].name);
-			ILogger::log("--->  %s\n", bspShader[i].name);
-		}
-		else {
-			Q3ShaderDefault shaderDefault(textureManager->getTexture(bspShader[i].name));
-			m_shaders[i] = shaderDefault;
-			ILogger::log("--->  %s (No shader file, default loaded)\n", bspShader[i].name);
-		}
-	}
-	
-    ILogger::log("--> %d Shaders\n", n);
-
-	return true;
-}
-*/
-
-bool Q3Bsp::_loadLightMaps(FILE * file, int offset, int length) {
-	if (!file) {
-		return false;
-	}
-
-	int n = length / sizeof(Q3BspLightMap);
-	m_lightMaps.reset(new Q3BspLightMap[nLightMaps]);
-
-	fseek(file, offset, SEEK_SET);
-	fread(m_lightMaps.get(), length, 1, file);
-
-	ILogger::log("--> %d LightMaps\n", nLightMaps);
-
-	m_lmIds.reset(new GLuint[nLightMaps]);
-
-    glGenTextures(nLightMaps, &m_lmIds[0]);
-
-	for (int i = 0; i<nLightMaps; ++i) {
-		glBindTexture(GL_TEXTURE_2D, m_lmIds[i]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, m_lightMaps[i].map);
-	}
-
-	return true;
-}
-
-#if 0
-bool Q3Bsp::_loadBspTree(FILE * file, int offset, int length) {
-	if (!file) {
-		return false;
-	}
-
-	int n = m_header.entries[LUMP_NODES].length / sizeof(Q3BspNode);
-
-	m_nodes.reset(new Q3BspNode[n]);
-	fseek(file, m_header.entries[LUMP_NODES].offset, SEEK_SET);
-	fread(m_nodes.get(), m_header.entries[LUMP_NODES].length, 1, file);
+	n = nodesLump.length / sizeof(BspNode);
+    std::unique_ptr<BspNode[]> bspNodes = std::make_unique<BspNode[]>(n);
+	fseek(file, nodesLump.offset, SEEK_SET);
+	fread(bspNodes.get(), nodesLump.length, 1, file);
 
 	ILogger::log("--> %d nodes loaded.\n", n);
-
-	n = m_header.entries[LUMP_PLANES].length / sizeof(Q3BspPlane);
-
-	m_planes.reset(new Q3BspPlane[n]);
-	fseek(file, m_header.entries[LUMP_PLANES].offset, SEEK_SET);
-	fread(m_planes.get(), m_header.entries[LUMP_PLANES].length, 1, file);
+    
+    n = planesLump.length / sizeof(BspPlane);
+    std::unique_ptr<BspPlane[]> bspPlanes = std::make_unique<BspPlane[]>(n);
+    fseek(file, planesLump.offset, SEEK_SET);
+    fread(bspPlanes.get(), planesLump.length, 1, file);
 
 	ILogger::log("--> %d planes loaded.\n", n);
 
-	m_nLeafs = m_header.entries[LUMP_LEAFS].length / sizeof(Q3BspLeaf);
+    n = leafLump.length / sizeof(BspLeaf);
+    std::unique_ptr<BspLeaf[]> bspLeaf = std::make_unique<BspLeaf[]>(n);
+    fseek(file, leafLump.offset, SEEK_SET);
+    fread(bspLeaf.get(), leafLump.length, 1, file);
 
-	m_leafs.reset(new Q3BspLeaf[m_nLeafs]);
-	fseek(file, m_header.entries[LUMP_LEAFS].offset, SEEK_SET);
-	fread(m_leafs.get(), m_header.entries[LUMP_LEAFS].length, 1, file);
+	ILogger::log("--> %d leafs loaded.\n", n);
 
-	ILogger::log("--> %d leafs loaded.\n", m_nLeafs);
-
-
-	n = m_header.entries[LUMP_LEAFFACES].length / sizeof(Q3BspLeafFace);
-
-	m_leafFaces.reset(new Q3BspLeafFace[n]);
-	fseek(file, m_header.entries[LUMP_LEAFFACES].offset, SEEK_SET);
-	fread(m_leafFaces.get(), m_header.entries[LUMP_LEAFFACES].length, 1, file);
+    n = leafFaceLump.length / sizeof(int);
+    std::unique_ptr<int[]> bspLeafFace = std::make_unique<int[]>(n);
+    fseek(file, leafFaceLump.offset, SEEK_SET);
+    fread(bspLeafFace.get(), leafFaceLump.length, 1, file);
 
 	ILogger::log("--> %d leaf faces loaded.\n", n);
 
-	n = m_header.entries[LUMP_LEAFBRUSHES].length / sizeof(Q3BspLeafBrush);
-
-	m_leafBrushes.reset(new Q3BspLeafBrush[n]);
-	fseek(file, m_header.entries[LUMP_LEAFBRUSHES].offset, SEEK_SET);
-	fread(m_leafBrushes.get(), m_header.entries[LUMP_LEAFBRUSHES].length, 1, file);
+    n = leafBrushLump.length / sizeof(int);
+    std::unique_ptr<int[]> bspBrushFace = std::make_unique<int[]>(n);
+    fseek(file, leafBrushLump.offset, SEEK_SET);
+    fread(bspBrushFace.get(), leafBrushLump.length, 1, file);
 
 	ILogger::log("--> %d leaf brushes loaded.\n", n);
+    
+
+    int visData[2];
+    fseek(file, visDataLump.offset, SEEK_SET);
+    fread(visData, 2, sizeof(int), file);
+    
+    int size = visData[0] * visData[1];
+    std::unique_ptr<unsigned char[]> bits = std::make_unique<unsigned char[]>(size);
+    fread(bits.get(), 1, size, file);
+    
+    ILogger::log("--> vis data loaded.\n");
 
 	return true;
 }
 
 
-bool Q3Bsp::_loadVisData(FILE * file, int offset, int length) {
-	if (!file) {
-		return false;
-	}
 
-	m_visData.reset(new Q3BspVisData);
-
-	fseek(file, m_header.entries[LUMP_VISDATA].offset, SEEK_SET);
-	fread(m_visData.get(), 2, sizeof(int), file);
-
-	int size = m_visData->n_clusters * m_visData->sz_clusters;
-	m_visData->bits = new unsigned char[size];
-	fread(m_visData->bits, 1, size, file);
-
-	ILogger::log("--> vis data loaded.\n");
-
-	return true;
-}
-
-
+/*
 bool Q3Bsp::_loadEntities(FILE * file, int offset, int length) {
 	if (!file) {
 		return false;
@@ -533,8 +450,9 @@ bool Q3Bsp::_loadEntities(FILE * file, int offset, int length) {
 
 	return true;
 }
+*/
 
-
+#if 0
 int Q3Bsp::getLeafIndex(const Vector3d& v) const {
 	int index = 0;
 

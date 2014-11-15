@@ -122,7 +122,7 @@ public:
 class Q3ShaderDefault : public Q3Shader  {
 
 public:
-	Q3ShaderDefault(int texId) {
+	Q3ShaderDefault(int texId, int lmId) {
 		Q3ShaderPass shaderPass;
 
 		name = "default";
@@ -131,7 +131,7 @@ public:
 
 		shaderPass.clear();
 		shaderPass.m_flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
-		shaderPass.m_texId = -1;
+		shaderPass.m_texId = lmId;
 		shaderPass.m_depthFunc = GL_LEQUAL;
 		m_shaderPasses.push_back(shaderPass);
 
@@ -158,7 +158,7 @@ private:
     
     void _loadCommand();
     
-    bool init() { return true; };
+    bool init();
     bool deinit() { return true; };
     
     // Variables used in the parser
@@ -177,7 +177,7 @@ public:
     
     const std::map<std::string, Q3Shader>& getShaders() const { return m_shaders; };
 
-    Q3Shader& getShader(const std::string& name)  {
+    const Q3Shader& getShader(const std::string& name)  {
 			return m_shaders.at(name); 
 	};
 

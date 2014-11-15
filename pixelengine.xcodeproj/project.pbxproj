@@ -38,6 +38,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		909CBA951A16B9E900036238 /* unique.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = unique.h; path = PixelEngine/unique.h; sourceTree = SOURCE_ROOT; };
 		90A00CBB1A0D0C2F00555EE8 /* Camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Camera.cpp; path = PixelEngine/Camera.cpp; sourceTree = SOURCE_ROOT; };
 		90A00CBC1A0D0C2F00555EE8 /* Camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Camera.h; path = PixelEngine/Camera.h; sourceTree = SOURCE_ROOT; };
 		90A00CBD1A0D0C2F00555EE8 /* File.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = File.cpp; path = PixelEngine/File.cpp; sourceTree = SOURCE_ROOT; };
@@ -136,6 +137,7 @@
 				90A00CD41A0D0C2F00555EE8 /* Video.h */,
 				90CE54891A0E17B300C234CF /* Sprite.cpp */,
 				90CE548A1A0E17B300C234CF /* Sprite.h */,
+				909CBA951A16B9E900036238 /* unique.h */,
 			);
 			path = pixelengine;
 			sourceTree = "<group>";

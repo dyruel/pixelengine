@@ -21,8 +21,7 @@ class Sprite : public SceneNode {
 typedef std::vector<Sprite> SpriteList;
 
 
-class SpriteManager : public Singleton<SpriteManager> {
-    friend class Singleton<SpriteManager>;
+class _SpriteManager {
     
 private:
     
@@ -31,18 +30,18 @@ private:
     bool init();
     bool deinit();
     
-    SpriteManager() {};
-    SpriteManager(SpriteManager&);
-    void operator =(SpriteManager&);
+    _SpriteManager() {};
+    _SpriteManager(_SpriteManager const&);
+    void operator =(_SpriteManager const&);
     
 public:
     
-    virtual ~SpriteManager() {};
+    virtual ~_SpriteManager() {};
     
     bool addSprite(Sprite& sprite) { m_sprites.push_back(sprite); return true;};
 
 };
 
-
+typedef Singleton<_SpriteManager> Video;
 
 #endif /* defined(__pixelengine__Sprite__) */

@@ -407,3 +407,36 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 	file.close();
 	return true;
 }
+
+
+bool Q3ShaderManager::init() {
+    
+    this->loadFromFile("scripts/base.shader");
+    this->loadFromFile("scripts/base_button.shader");
+    this->loadFromFile("scripts/base_floor.shader");
+    this->loadFromFile("scripts/base_light.shader");
+    this->loadFromFile("scripts/base_object.shader");
+    this->loadFromFile("scripts/base_support.shader");
+    this->loadFromFile("scripts/base_trim.shader");
+    this->loadFromFile("scripts/base_wall.shader");
+    this->loadFromFile("scripts/common.shader");
+    this->loadFromFile("scripts/ctf.shader");
+    this->loadFromFile("scripts/eerie.shader");
+    this->loadFromFile("scripts/gfx.shader");
+    this->loadFromFile("scripts/gothic_block.shader");
+    this->loadFromFile("scripts/gothic_floor.shader");
+    this->loadFromFile("scripts/gothic_light.shader");
+    this->loadFromFile("scripts/gothic_trim.shader");
+    this->loadFromFile("scripts/gothic_wall.shader");
+    this->loadFromFile("scripts/hell.shader");
+    this->loadFromFile("scripts/liquid.shader");
+    this->loadFromFile("scripts/menu.shader");
+    this->loadFromFile("scripts/models.shader");
+    this->loadFromFile("scripts/organics.shader");
+    this->loadFromFile("scripts/sfx.shader");
+    this->loadFromFile("scripts/shrine.shader");
+    this->loadFromFile("scripts/skin.shader");
+    this->loadFromFile("scripts/sky.shader");
+    
+    return true;
+}

@@ -61,17 +61,17 @@ typedef	struct {
 	int version;
 	Q3BspLumpEntry entries[LUMP_TOTAL];
 } Q3BspHeader;
-*/
+
 typedef	struct {
 	char * ents;
 } Q3BspEntity;
-/*
+
 typedef	struct {
 	char name[64];
 	int flags;
 	int contents;
 } Q3BspShader;
-*/
+
 typedef	struct {
 	float normal[3];
 	float dist;
@@ -119,26 +119,26 @@ typedef	struct {
 	int plane;
 	int shader;
 } Q3BspBrushSide;
-/*
+
 typedef	struct {
 	float position[3];
 	float texcoord[2][2];
 	float normal[3];
 	unsigned char color[4];
 } Q3BspVertex;
-*/
-/*
+
+
 typedef	struct {
 	int offset;
 } Q3BspMeshVert;
-*/
+
 typedef	struct {
 	char * name[64];
 	int brush;
 	int unknown;
 } Q3BspEffect;
 
-/*
+
 typedef	struct {
 	int shader;
 	int effect;
@@ -160,7 +160,7 @@ typedef	struct {
 
 	int size[2];
 } Q3BspFace;
-*/
+
 
 typedef	struct {
 	unsigned char  map[128][128][3];
@@ -179,6 +179,50 @@ typedef	struct {
 	int sz_clusters;
 	unsigned char * bits;
 } Q3BspVisData;
+*/
+
+
+class Q3BspTree {
+    friend class Q3Bsp;
+    
+    struct Node {
+        int bbox[6];
+        std::unique_ptr<Node> children[2];
+        
+    };
+    
+    struct InternalNode : public Node {
+        Vector3f normal;
+        float dist;
+    };
+    
+    struct LeafNode : public Node {
+        int cluster;
+        int area;
+        int leafface;
+        int n_leaffaces;
+        int leafbrush;
+        int n_leafbrushes;
+    };
+    
+    
+    std::unique_ptr<Node> m_root;
+    
+public:
+    
+    int getLeafIndex(const Vector3d& v) const {
+        if(!m_root)
+            return 0;
+ /*
+        while (m_root->children[0] || m_root->children[1]) {
+
+        }
+   */     
+        return 0;
+    }
+    
+    
+};
 
 
 class Q3Vertex {
@@ -213,11 +257,20 @@ public:
 typedef std::vector<Q3Vertex> Q3VerticesList;
 typedef std::vector<int> Q3IndexesList;
 
+typedef struct {
+    Q3VerticesList vertices;
+    Q3IndexesList indexes;
+} Q3VerticesPool;
+
+
 
 class Q3Face {
-    Q3Shader& m_shader;
-    const Q3VerticesList& m_worldVertices;
-    const Q3IndexesList& m_worldIndexes;
+    friend class Q3Bsp;
+    
+protected:
+    Q3Shader m_shader;
+    const Q3VerticesPool& m_verticesPool;
+    int type;
     
 //    int m_effectIndex;
 //    int m_lightmapIndex;
@@ -235,20 +288,22 @@ class Q3Face {
 //    Vector3f lightmapVecs[3];
     
 public:
-    Q3Face(const Q3VerticesList& worldVertices, const Q3IndexesList& worldIndexes, Q3Shader& shader)
-    :m_shader(shader), m_worldVertices(worldVertices), m_worldIndexes(worldIndexes){}
+    Q3Face(const Q3VerticesPool& verticesPool)
+    :m_verticesPool(verticesPool){}
     virtual ~Q3Face() {}
     
-    
     virtual void render() = 0;
+    
+    void attachShader(const Q3Shader& shader) { m_shader = shader; }
 };
 
+typedef std::vector<std::shared_ptr<Q3Face>> Q3FacesList;
 
-class Q3FacesList : public std::vector<Q3Face> {
+//class Q3FacesList : public std::vector<std::unique_ptr<Q3Face>> {
     
 //    std::vector<Q3Face> m_faces;
     
-public:
+//public:
 /*
     typedef std::vector<Q3Face>::iterator iterator;
     typedef std::vector<Q3Face>::const_iterator const_iterator;
@@ -260,13 +315,15 @@ public:
     const_iterator end() const { return m_faces.end(); }
 */
 
-};
+//};
 
 
 class Q3FacePlanar : public Q3Face {
     
 public:
-    
+    Q3FacePlanar(const Q3VerticesPool& verticesPool)
+    :Q3Face(verticesPool){}
+    virtual ~Q3FacePlanar() {}
     
     
     void render() {
@@ -297,6 +354,10 @@ class Q3FacePatch : public Q3Face {
     std::unique_ptr<Q3BiquadraticBezier[]> m_bezierPatches;
     
 public:
+    
+    Q3FacePatch(const Q3VerticesPool& verticesPool)
+    :Q3Face(verticesPool){}
+    virtual ~Q3FacePatch() {}
 
     bool init() {
         return true;
@@ -309,6 +370,10 @@ public:
 class Q3FaceTriangleSoup : public Q3Face {
     
 public:
+    Q3FaceTriangleSoup(const Q3VerticesPool& verticesPool)
+    :Q3Face(verticesPool){}
+    virtual ~Q3FaceTriangleSoup() {}
+    
     void render() {
         
     }
@@ -318,6 +383,11 @@ public:
 class Q3FaceFlare : public Q3Face {
     
 public:
+    
+    Q3FaceFlare(const Q3VerticesPool& verticesPool)
+    :Q3Face(verticesPool){}
+    virtual ~Q3FaceFlare() {}
+    
     void render() {
         
     }
@@ -325,6 +395,17 @@ public:
 
 
 class Q3Bsp : public SceneNode {
+    
+    struct BspLumpEntry {
+        int offset;
+        int length;
+    };
+    
+    struct BspHeader  {
+        char magic[4];
+        int version;
+        BspLumpEntry entries[LUMP_TOTAL];
+    };
 
 //	Q3BspHeader m_header;
 //	std::shared_ptr<Q3ShaderManager> m_shaderManager;
@@ -339,8 +420,7 @@ class Q3Bsp : public SceneNode {
 	std::map<int, Q3FacePatch> m_patches;
 
 	// Level data
-    Q3VerticesList   m_worldVertices;
-    Q3IndexesList    m_worldIndexes;
+    Q3VerticesPool   m_verticesPool;
     Q3FacesList      m_faces;
 //	std::vector<Q3Shader>   m_shaders;
     
@@ -365,13 +445,26 @@ class Q3Bsp : public SceneNode {
 	static int bbox_index[8][3];
     
 
-    // Private methods
+    // Private methods for extracting bsp file data
+	bool _loadVertices(FILE * file,
+                       const BspLumpEntry& verticesLump,
+                       const BspLumpEntry& indexesLump);
     
-	bool _loadVertices(FILE * file, int offset, int length);
-	bool _loadIndexes(FILE * file, int offset, int length);
-	bool _loadShaders(FILE * file, int offset, int length);
-	bool _loadFaces(FILE * file, int offset, int length);
-	bool _loadLightMaps(FILE * file, int offset, int length);
+	bool _loadFaces(FILE * file,
+                    const BspLumpEntry& facesLump,
+                    const BspLumpEntry& shadersLump,
+                    const BspLumpEntry& lightmapsLump);
+    
+    bool _loadBspTree(FILE * file,
+                      const BspLumpEntry& nodesLump,
+                      const BspLumpEntry& leafLump,
+                      const BspLumpEntry& planesLump,
+                      const BspLumpEntry& leafFaceLump,
+                      const BspLumpEntry& leafBrushLump,
+                      const BspLumpEntry& visDataLump);
+    
+    
+//	bool _loadLightMaps(FILE * file, const BspLumpEntry& lightmapsLump);
 	/*bool _loadBspTree(FILE * file, int offset, int length);
 	bool _loadVisData(FILE * file, int offset, int length);
 	bool _loadEntities(FILE * file, int offset, int length);
