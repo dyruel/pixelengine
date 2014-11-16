@@ -15,9 +15,17 @@
 #include "Logger.h"
 
 
-
-bool Q3Level::loadMap(const char* filename) {
+bool Q3Level::_loadMap(const char* filename) {
     return m_map.load(filename);
+}
+
+
+bool Q3Level::load(const char* filename) {
+    bool r = true;
+    
+    r = this->_loadMap(filename);
+    
+    return r;
 }
 
 

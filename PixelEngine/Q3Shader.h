@@ -78,8 +78,8 @@ private:
 	unsigned int    m_flags;
     
     // OpenGL data for textures
-    float *         m_TexCoordPointer;
-    GLsizei         m_Stride;
+//    float *         m_TexCoordPointer;
+//    GLsizei         m_Stride;
     
     // OpenGL states
     GLboolean       m_oglStates[NUMSTATES];
@@ -104,16 +104,14 @@ private:
     void _saveOglSates();
     void _restoreOglStates();
     
-    void _setTexCoordPointer(float * texCoordPointer, GLsizei stride) {
-        m_TexCoordPointer = texCoordPointer;
-        m_Stride = stride;
-    }
+//    void _setTexCoordPointer(float * texCoordPointer, GLsizei stride) {
+//        m_TexCoordPointer = texCoordPointer;
+//        m_Stride = stride;
+//    }
     
 public:
     
-    Q3ShaderPass()
-    : m_TexCoordPointer{nullptr}, m_Stride(0)
-    { this->clear(); }
+    Q3ShaderPass() { this->clear(); }
     ~Q3ShaderPass() {}
 
 	void clear() {
@@ -128,6 +126,8 @@ public:
 		m_alphaFuncRef      = 0.0f;
 		m_depthFunc         = GL_LEQUAL;
 	}
+    
+    void init();
     
     void update(double delta);
         
@@ -188,7 +188,6 @@ public:
 		shaderPass.m_flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
         shaderPass.m_Texture = tex[1];
 		shaderPass.m_depthFunc = GL_LEQUAL;
-        shaderPass._setTexCoordPointer(texCoordPointer[1], stride[1]);
 		m_shaderPasses.push_back(shaderPass);
 
 		shaderPass.clear();
@@ -197,7 +196,6 @@ public:
 		shaderPass.m_blendSrc = GL_DST_COLOR;
 		shaderPass.m_blendDst = GL_ZERO;
 		shaderPass.m_depthFunc = GL_LEQUAL;
-        shaderPass._setTexCoordPointer(texCoordPointer[0], stride[0]);
 		m_shaderPasses.push_back(shaderPass);
 
 	};

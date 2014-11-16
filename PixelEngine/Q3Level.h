@@ -160,13 +160,13 @@ class Q3Level : public SceneNode {
 
     Q3Map m_map;
 
-
+    bool _loadMap(const char* filename);
     
 public:
     Q3Level() {};
     virtual ~Q3Level() {};
 
-	bool loadMap(const char* filename);
+	bool load(const char* filename);
     
     void render();
     void update(double delta);

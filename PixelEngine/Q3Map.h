@@ -336,6 +336,7 @@ public:
     
     
     bool load(const char* filename);
+    bool load(FILE * file);
     
     void render();
     

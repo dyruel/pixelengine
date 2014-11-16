@@ -23,20 +23,16 @@ inline void Q3FacePlanar::render() {
     std::vector<Q3ShaderPass>::iterator shaderPasse = shaderPasses.begin();
     std::vector<Q3ShaderPass>::iterator shaderPassesEnd = shaderPasses.end();
     
-    
-    
-    
-    glVertexPointer(3, GL_FLOAT, sizeof(Q3Vertex), m_verticesPool.vertices.data() + m_firstVertex);
+    glVertexPointer(3, GL_FLOAT, sizeof(Q3Vertex), m_verticesPool.vertices.data() + m_firstVertex);    
+    glTexCoordPointer(2, GL_FLOAT, sizeof(Q3Vertex), &m_verticesPool.vertices[m_firstVertex].texcoord.s);
     
     while (shaderPasse != shaderPassesEnd) {
         
-//        shaderPasse->update(0.1);
-        
-        //m_verticesPool.indexes[m_firstIndex]
+        shaderPasse->begin();
         
         glDrawElements(GL_TRIANGLES, m_numIndexes, GL_UNSIGNED_INT, m_verticesPool.indexes.data() + m_firstIndex);
         
-        //shaderPasse->end();
+        shaderPasse->end();
         
         ++shaderPasse;
     }
@@ -136,15 +132,8 @@ inline void Q3Map::_pushFaces(int index) {
     }
 }
 
-
-bool Q3Map::load(const char *filename) {
-    FILE * file = NULL;
-    
-    ILogger::log("Bsp:: Loading %s ...\n", filename);
-    
-    file = fopen(filename, "rb");
+bool Q3Map::load(FILE * file) {
     if (!file) {
-        ILogger::log("Unable to open the bsp file %s.\n", filename);
         return false;
     }
     
@@ -156,7 +145,7 @@ bool Q3Map::load(const char *filename) {
         bspHeader.magic[2] != 'S' || bspHeader.magic[3] != 'P' ||
         bspHeader.version != Q3BSP_VERSION)
     {
-        ILogger::log("%s is not a quake 3 map.", filename);
+        ILogger::log("Not a quake 3 map.");
         fclose(file);
         return false;
     }
@@ -188,11 +177,27 @@ bool Q3Map::load(const char *filename) {
         //|| !this->_loadEntities(file, m_header.entries[LUMP_VERTICES].offset, m_header.entries[LUMP_VERTICES].length)
         )
     {
-        ILogger::log("-> Error while loading data from bsp file %s.\n", filename);
+        ILogger::log("-> Error while loading data from bsp file.\n");
         fclose(file);
         return false;
     }
     
+    return true;
+}
+
+bool Q3Map::load(const char *filename) {
+    FILE * file = NULL;
+    
+    ILogger::log("Bsp:: Loading %s ...\n", filename);
+    
+    file = fopen(filename, "rb");
+    if (!file) {
+        ILogger::log("Unable to open the bsp file %s.\n", filename);
+        return false;
+    }
+    
+    if(!this->load(file))
+        return false;
     
     fclose(file);
     ILogger::log("done\n");
@@ -371,8 +376,8 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                     std::vector<Q3ShaderPass>::iterator shaderPassesEnd = face->m_shader.getShaderPasses().end();
                     
                     while (shaderPass != shaderPassesEnd) {
-                        TextureManager::getInstance()->getTexture(shaderPass->m_Texture);
-                        shaderPass->_setTexCoordPointer(&m_verticesPool.vertices[bspFaces[i].vertex].texcoord.s, sizeof(Q3Vertex));
+                        shaderPass->init();
+//                        shaderPass->_setTexCoordPointer(&m_verticesPool.vertices[bspFaces[i].vertex].texcoord.s, sizeof(Q3Vertex));
                         ++shaderPass;
                     }
                 }
