@@ -117,21 +117,21 @@ inline void Q3Shader::_restoreOglStates() {
 }
 */
 
-/*
+
 inline void Q3Shader::begin() {
     if (m_flags & SHADER_NOCULL) {
         glDisable(GL_CULL_FACE);
     }
     
 }
-*/
-/*
+
+
 inline void Q3Shader::end() {
     if (m_flags & SHADER_NOCULL) {
         glEnable(GL_CULL_FACE);
     }
 }
-*/
+
 
 
 bool Q3ShaderManager::loadFromFile(const char* filename) {

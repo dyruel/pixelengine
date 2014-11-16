@@ -16,28 +16,7 @@
 #include "Q3Map.h"
 #include "Scene.h"
 
-const int Q3BSP_VERSION = 46; // quake 3 maps
 
-enum {
-	LUMP_ENTITIES = 0,
-	LUMP_SHADERS,
-	LUMP_PLANES,
-	LUMP_NODES,
-	LUMP_LEAFS,
-	LUMP_LEAFFACES,
-	LUMP_LEAFBRUSHES,
-	LUMP_MODELS,
-	LUMP_BRUSHES,
-	LUMP_BRUSHSIDES,
-	LUMP_VERTICES,
-	LUMP_INDEXES,
-	LUMP_EFFECTS,
-	LUMP_FACES,
-	LUMP_LIGHTMAPS,
-	LUMP_LIGHTVOLS,
-	LUMP_VISDATA,
-	LUMP_TOTAL
-};
 
 
 
@@ -175,45 +154,19 @@ typedef	struct {
 */
 
 
-
-
 class Q3Level : public SceneNode {
     
-    struct BspLumpEntry {
-        int offset;
-        int length;
-    };
-    
-    struct BspHeader  {
-        char magic[4];
-        int version;
-        BspLumpEntry entries[LUMP_TOTAL];
-    };
+
 
     Q3Map m_map;
 
-	bool _loadVertices(FILE * file,
-                       const BspLumpEntry& verticesLump,
-                       const BspLumpEntry& indexesLump);
-    
-	bool _loadFaces(FILE * file,
-                    const BspLumpEntry& facesLump,
-                    const BspLumpEntry& shadersLump,
-                    const BspLumpEntry& lightmapsLump);
-    
-    bool _loadBspTree(FILE * file,
-                      const BspLumpEntry& nodesLump,
-                      const BspLumpEntry& leafLump,
-                      const BspLumpEntry& planesLump,
-                      const BspLumpEntry& leafFaceLump,
-                      const BspLumpEntry& leafBrushLump,
-                      const BspLumpEntry& visDataLump);
+
     
 public:
     Q3Level() {};
     virtual ~Q3Level() {};
 
-	bool load(const char* filename);
+	bool loadMap(const char* filename);
     
     void render();
     void update(double delta);

@@ -12,9 +12,12 @@
 #include <vector>
 #include <set>
 
+
 #include "Vector.h"
 #include "Q3Shader.h"
 #include "Scene.h"
+
+
 
 class Q3Vertex {
 public:
@@ -56,7 +59,7 @@ typedef struct {
 
 
 class Q3Face {
-    friend class Q3Level;
+    friend class Q3Map;
     
     
 protected:
@@ -179,7 +182,29 @@ public:
 
 
 class Q3Map : public SceneNode {
-    friend class Q3Level;
+    
+    const int Q3BSP_VERSION = 46; // quake 3 maps
+    
+    enum {
+        LUMP_ENTITIES = 0,
+        LUMP_SHADERS,
+        LUMP_PLANES,
+        LUMP_NODES,
+        LUMP_LEAFS,
+        LUMP_LEAFFACES,
+        LUMP_LEAFBRUSHES,
+        LUMP_MODELS,
+        LUMP_BRUSHES,
+        LUMP_BRUSHSIDES,
+        LUMP_VERTICES,
+        LUMP_INDEXES,
+        LUMP_EFFECTS,
+        LUMP_FACES,
+        LUMP_LIGHTMAPS,
+        LUMP_LIGHTVOLS,
+        LUMP_VISDATA,
+        LUMP_TOTAL
+    };
     
     enum {
         CLIP_X_LEFT		= 1 << 0,
@@ -188,6 +213,17 @@ class Q3Map : public SceneNode {
         CLIP_Y_RIGHT	= 1 << 3,
         CLIP_Z_LEFT		= 1 << 4,
         CLIP_Z_RIGHT	= 1 << 5,
+    };
+    
+    struct BspLumpEntry {
+        int offset;
+        int length;
+    };
+    
+    struct BspHeader  {
+        char magic[4];
+        int version;
+        BspLumpEntry entries[LUMP_TOTAL];
     };
     
     struct VisData {
@@ -223,7 +259,6 @@ class Q3Map : public SceneNode {
     
     typedef std::vector<std::shared_ptr<InternalNode>>      InternalNodesList;
     typedef std::vector<std::shared_ptr<LeafNode>>          LeafNodesList;
-    //    typedef std::vector<int>                                IndexesList;
     typedef int                                             ClusterIndex;
     
     static int bbox_index[8][3];
@@ -243,6 +278,24 @@ class Q3Map : public SceneNode {
     
     Matrix4f            m_clipMatrix;
     bool                _clipTest(const Node& node) const;
+    
+    
+    bool _loadVertices(FILE * file,
+                       const BspLumpEntry& verticesLump,
+                       const BspLumpEntry& indexesLump);
+    
+    bool _loadFaces(FILE * file,
+                    const BspLumpEntry& facesLump,
+                    const BspLumpEntry& shadersLump,
+                    const BspLumpEntry& lightmapsLump);
+    
+    bool _loadBspTree(FILE * file,
+                      const BspLumpEntry& nodesLump,
+                      const BspLumpEntry& leafLump,
+                      const BspLumpEntry& planesLump,
+                      const BspLumpEntry& leafFaceLump,
+                      const BspLumpEntry& leafBrushLump,
+                      const BspLumpEntry& visDataLump);
     
 public:
     
@@ -280,6 +333,9 @@ public:
         
         return (bits & (1 << (clusterTo & 7))) != 0;
     }
+    
+    
+    bool load(const char* filename);
     
     void render();
     

@@ -54,10 +54,14 @@ enum {
 };
 
 
+//class Q3ShaderPass;
+//
+
+
+
 class Q3ShaderPass {
     friend class Q3ShaderManager;
     friend class Q3ShaderDefault;
-    friend class Q3Level;
     
 private:
     
@@ -136,7 +140,6 @@ public:
 //FIXME : should extend std::vector<Q3ShaderPass>
 class Q3Shader {
     friend class Q3ShaderManager;
-    friend class Q3Level;
 
 protected:
 
@@ -165,17 +168,9 @@ public:
 	const std::string& getName() const { return name;  }
     
     
-    void begin() {
-        if (m_flags & SHADER_NOCULL) {
-            glDisable(GL_CULL_FACE);
-        }
-    };
+    void begin();
     
-    void end() {
-        if (m_flags & SHADER_NOCULL) {
-            glEnable(GL_CULL_FACE);
-        }
-    }
+    void end();
 };
 
 

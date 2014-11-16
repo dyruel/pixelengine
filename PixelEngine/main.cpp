@@ -12,9 +12,7 @@
 
 #include "Video.h"
 #include "Scene.h"
-#include "Texture.h"
 #include "Q3Level.h"
-#include "Q3Shader.h"
 
 const GLdouble deltaTime = .01; // 1/100th seconds
 
