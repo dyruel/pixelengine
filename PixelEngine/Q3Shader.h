@@ -15,6 +15,8 @@
 #include <vector>
 #include <map>
 
+
+#include "Texture.h"
 #include "Singleton.h"
 
 
@@ -52,45 +54,89 @@ enum {
 };
 
 
-typedef	struct {
-	GLuint m_texId;
-	unsigned int m_flags;
+class Q3ShaderPass {
+    friend class Q3ShaderManager;
+    friend class Q3ShaderDefault;
+    friend class Q3Level;
+    
+private:
+    
+    enum {
+        BLEND = 0,
+        ALPHA_TEST,
+        DEPTHWRITE,
+        NO_CULL,
+        NUMSTATES
+    };
+    
+    Texture         m_Texture;
+    
+	unsigned int    m_flags;
+    
+    // OpenGL data for textures
+    float *         m_TexCoordPointer;
+    GLsizei         m_Stride;
+    
+    // OpenGL states
+    GLboolean       m_oglStates[NUMSTATES];
 
 	// Blending
-	GLenum m_blendSrc, m_blendDst;
+	GLenum          m_blendSrc, m_blendDst;
 
 	// Animmap
-	float m_animSpeed;
-	int m_animNumframes;
-	GLuint m_animFrames[SHADER_MAX_FRAMES];
-	float m_frame;
+	float           m_animSpeed;
+	int             m_animNumframes;
+    Texture         m_animFrames[SHADER_MAX_FRAMES];
+	float           m_frame;
 
 	// Alpha func
-	GLenum m_alphaFunc;
-	GLclampf m_alphaFuncRef;
+	GLenum          m_alphaFunc;
+	GLclampf        m_alphaFuncRef;
 
 	// Depth func
-	GLenum m_depthFunc;
+	GLenum          m_depthFunc;
+    
+    
+    void _saveOglSates();
+    void _restoreOglStates();
+    
+    void _setTexCoordPointer(float * texCoordPointer, GLsizei stride) {
+        m_TexCoordPointer = texCoordPointer;
+        m_Stride = stride;
+    }
+    
+public:
+    
+    Q3ShaderPass()
+    : m_TexCoordPointer{nullptr}, m_Stride(0)
+    { this->clear(); }
+    ~Q3ShaderPass() {}
 
 	void clear() {
-		m_texId = 0;
-		m_flags = SHADER_DEPTHWRITE;
-		m_blendSrc = GL_DST_COLOR;
-		m_blendDst = GL_ZERO;
-		m_animSpeed = 0.0f;
-		m_animNumframes = 0;
-		m_frame = 0;
-		m_alphaFunc = 0;
-		m_alphaFuncRef = 0.0f;
-		m_depthFunc = GL_LEQUAL;
+        m_Texture.clear();
+		m_flags             = SHADER_DEPTHWRITE;
+		m_blendSrc          = GL_DST_COLOR;
+		m_blendDst          = GL_ZERO;
+		m_animSpeed         = 0.0f;
+		m_animNumframes     = 0;
+		m_frame             = 0;
+		m_alphaFunc         = 0;
+		m_alphaFuncRef      = 0.0f;
+		m_depthFunc         = GL_LEQUAL;
 	}
+    
+    void update(double delta);
+        
+    void begin();
+    void end();
 
-} Q3ShaderPass;
+};
 
 
+//FIXME : should extend std::vector<Q3ShaderPass>
 class Q3Shader {
     friend class Q3ShaderManager;
-
+    friend class Q3Level;
 
 protected:
 
@@ -98,7 +144,8 @@ protected:
 	unsigned int m_flags;
     std::vector<Q3ShaderPass> m_shaderPasses;
 
-
+    void _saveOglSates();
+    void _restoreOglStates();
 
 public:
 	Q3Shader() { };
@@ -106,6 +153,7 @@ public:
 
 	void addShaderPass(const Q3ShaderPass& shaderPass) { m_shaderPasses.push_back(shaderPass); };
 	std::vector<Q3ShaderPass>& getShaderPasses() { return m_shaderPasses; };
+    
     virtual void clear() {
         name.clear();
         m_flags = 0;
@@ -115,14 +163,26 @@ public:
 	const unsigned int getFlags() const { return m_flags; }
 
 	const std::string& getName() const { return name;  }
-
+    
+    
+    void begin() {
+        if (m_flags & SHADER_NOCULL) {
+            glDisable(GL_CULL_FACE);
+        }
+    };
+    
+    void end() {
+        if (m_flags & SHADER_NOCULL) {
+            glEnable(GL_CULL_FACE);
+        }
+    }
 };
 
 
 class Q3ShaderDefault : public Q3Shader  {
 
 public:
-	Q3ShaderDefault(int texId, int lmId) {
+	Q3ShaderDefault(const Texture tex[2], float * texCoordPointer[2], const GLsizei stride[2]) {
 		Q3ShaderPass shaderPass;
 
 		name = "default";
@@ -131,16 +191,18 @@ public:
 
 		shaderPass.clear();
 		shaderPass.m_flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
-		shaderPass.m_texId = lmId;
+        shaderPass.m_Texture = tex[1];
 		shaderPass.m_depthFunc = GL_LEQUAL;
+        shaderPass._setTexCoordPointer(texCoordPointer[1], stride[1]);
 		m_shaderPasses.push_back(shaderPass);
 
 		shaderPass.clear();
 		shaderPass.m_flags = SHADER_BLENDFUNC | SHADER_DEPTHWRITE;
-		shaderPass.m_texId = texId;
+        shaderPass.m_Texture = tex[0];
 		shaderPass.m_blendSrc = GL_DST_COLOR;
 		shaderPass.m_blendDst = GL_ZERO;
 		shaderPass.m_depthFunc = GL_LEQUAL;
+        shaderPass._setTexCoordPointer(texCoordPointer[0], stride[0]);
 		m_shaderPasses.push_back(shaderPass);
 
 	};

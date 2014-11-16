@@ -14,6 +14,126 @@
 #include "Logger.h"
 #include "Texture.h"
 
+
+inline void Q3ShaderPass::_saveOglSates() {
+    m_oglStates[BLEND] = glIsEnabled(GL_BLEND);
+    m_oglStates[ALPHA_TEST] = glIsEnabled(GL_ALPHA_TEST);
+    glGetBooleanv(GL_DEPTH_WRITEMASK, &m_oglStates[DEPTHWRITE]);
+    // glIsEnabled(GL_COLOR_ARRAY) ?
+}
+
+inline void Q3ShaderPass::_restoreOglStates() {
+    if (m_oglStates[BLEND]) {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    }
+    else {
+        glDisable(GL_BLEND);
+    }
+    
+    if (m_oglStates[ALPHA_TEST]) {
+        glEnable(GL_ALPHA_TEST);
+    }
+    else {
+        glDisable(GL_ALPHA_TEST);
+    }
+    
+    if (m_oglStates[DEPTHWRITE]) {
+        glDepthMask(GL_TRUE);
+    }
+    else {
+        glDepthMask(GL_FALSE);
+    }
+}
+
+
+inline void Q3ShaderPass::begin() {
+    
+    this->_saveOglSates();
+    
+    if (m_flags & SHADER_ANIMMAP) {
+        glTexCoordPointer(2, GL_FLOAT, m_Stride, m_TexCoordPointer);
+        glBindTexture(GL_TEXTURE_2D, m_animFrames[(int) m_frame].m_texId);
+    }
+    else {
+        glTexCoordPointer(2, GL_FLOAT, m_Stride, m_TexCoordPointer);
+        glBindTexture(GL_TEXTURE_2D, m_Texture.m_texId);
+    }
+    
+    if (m_flags & SHADER_BLENDFUNC) {
+        glEnable(GL_BLEND);
+        glBlendFunc(m_blendSrc, m_blendDst);
+    }
+    else {
+        glDisable(GL_BLEND);
+    }
+    
+    if (m_flags & SHADER_ALPHAFUNC) {
+        glEnable(GL_ALPHA_TEST);
+        glAlphaFunc(m_alphaFunc, m_alphaFuncRef);
+    }
+    else {
+        glDisable(GL_ALPHA_TEST);
+    }
+    
+    glDepthFunc(m_depthFunc);
+    
+    if (m_flags & SHADER_DEPTHWRITE) {
+        glDepthMask(GL_TRUE);
+    }
+    else {
+        glDepthMask(GL_FALSE);
+    }
+    
+}
+
+
+inline void Q3ShaderPass::end() {
+    this->_restoreOglStates();
+}
+
+
+inline void Q3ShaderPass::update(double delta) {
+    if (m_flags & SHADER_ANIMMAP) {
+        m_frame += delta * m_animSpeed;
+        if(((int) m_frame) >= m_animNumframes)
+            m_frame = 0.f;
+    }
+}
+
+
+/*
+inline void Q3Shader::_saveOglSates() {
+    m_oglStates[CULL_FACE] = glIsEnabled(GL_CULL_FACE);
+}
+
+inline void Q3Shader::_restoreOglStates() {
+    if (m_oglStates[CULL_FACE]) {
+        glEnable(GL_CULL_FACE);
+    }
+    else {
+        glDisable(GL_CULL_FACE);
+    }
+}
+*/
+
+/*
+inline void Q3Shader::begin() {
+    if (m_flags & SHADER_NOCULL) {
+        glDisable(GL_CULL_FACE);
+    }
+    
+}
+*/
+/*
+inline void Q3Shader::end() {
+    if (m_flags & SHADER_NOCULL) {
+        glEnable(GL_CULL_FACE);
+    }
+}
+*/
+
+
 bool Q3ShaderManager::loadFromFile(const char* filename) {
 	std::ifstream file(filename, std::ios::in);
 	std::stringstream sstream;
@@ -249,10 +369,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 
 							unsigned int k = 0;
 							while (j != args.end() && k < SHADER_MAX_FRAMES){
-
-								
-								shaderPass.m_animFrames[k] = TextureManager::getInstance()->getTexture(*j);
-//								std::cout << *j << " " << shaderPass.m_animFrames[k] << std::endl;
+                                shaderPass.m_animFrames[k].m_name  = *j; // TextureManager::getInstance()->getTexture(*j);
 								++j;
 								++k;
 							}
@@ -320,7 +437,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 								shaderPass.m_flags |= SHADER_LIGHTMAP;
 							}
 							else {
-								shaderPass.m_texId = TextureManager::getInstance()->getTexture(args[1]);
+                                shaderPass.m_Texture.m_name = args[1]; //TextureManager::getInstance()->getTexture(args[1]);
 							}
 
 						}
@@ -334,7 +451,8 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 
 						}
 						else if (!args[0].compare("clampmap")) {
-							shaderPass.m_texId = TextureManager::getInstance()->getTexture(args[1], TEXTURE_CLAMP);
+                            shaderPass.m_Texture.m_name     =  args[1]; //TextureManager::getInstance()->getTexture(args[1], TEXTURE_CLAMP);
+                            shaderPass.m_Texture.m_flags    |= TEXTURE_CLAMP;
 						}
 						else if (!args[0].compare("alphafunc")) {
 							shaderPass.m_flags |= SHADER_ALPHAFUNC;

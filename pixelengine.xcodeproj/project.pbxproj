@@ -7,13 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		909CBA981A18090F00036238 /* Q3Map.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 909CBA961A18090F00036238 /* Q3Map.cpp */; };
 		90A00CD51A0D0C2F00555EE8 /* Camera.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CBB1A0D0C2F00555EE8 /* Camera.cpp */; };
 		90A00CD61A0D0C2F00555EE8 /* File.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CBD1A0D0C2F00555EE8 /* File.cpp */; };
 		90A00CD71A0D0C2F00555EE8 /* Input.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CC01A0D0C2F00555EE8 /* Input.cpp */; };
 		90A00CD81A0D0C2F00555EE8 /* Logger.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CC21A0D0C2F00555EE8 /* Logger.cpp */; };
 		90A00CD91A0D0C2F00555EE8 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CC41A0D0C2F00555EE8 /* main.cpp */; };
 		90A00CDA1A0D0C2F00555EE8 /* Physics.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CC61A0D0C2F00555EE8 /* Physics.cpp */; };
-		90A00CDB1A0D0C2F00555EE8 /* Q3Bsp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CC81A0D0C2F00555EE8 /* Q3Bsp.cpp */; };
+		90A00CDB1A0D0C2F00555EE8 /* Q3Level.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CC81A0D0C2F00555EE8 /* Q3Level.cpp */; };
 		90A00CDC1A0D0C2F00555EE8 /* Q3Shader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CCA1A0D0C2F00555EE8 /* Q3Shader.cpp */; };
 		90A00CDD1A0D0C2F00555EE8 /* Scene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CCC1A0D0C2F00555EE8 /* Scene.cpp */; };
 		90A00CDE1A0D0C2F00555EE8 /* Texture.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 90A00CCF1A0D0C2F00555EE8 /* Texture.cpp */; };
@@ -39,6 +40,8 @@
 
 /* Begin PBXFileReference section */
 		909CBA951A16B9E900036238 /* unique.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = unique.h; path = PixelEngine/unique.h; sourceTree = SOURCE_ROOT; };
+		909CBA961A18090F00036238 /* Q3Map.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Q3Map.cpp; path = PixelEngine/Q3Map.cpp; sourceTree = SOURCE_ROOT; };
+		909CBA971A18090F00036238 /* Q3Map.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Q3Map.h; path = PixelEngine/Q3Map.h; sourceTree = SOURCE_ROOT; };
 		90A00CBB1A0D0C2F00555EE8 /* Camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Camera.cpp; path = PixelEngine/Camera.cpp; sourceTree = SOURCE_ROOT; };
 		90A00CBC1A0D0C2F00555EE8 /* Camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Camera.h; path = PixelEngine/Camera.h; sourceTree = SOURCE_ROOT; };
 		90A00CBD1A0D0C2F00555EE8 /* File.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = File.cpp; path = PixelEngine/File.cpp; sourceTree = SOURCE_ROOT; };
@@ -52,8 +55,8 @@
 		90A00CC51A0D0C2F00555EE8 /* main.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = main.h; path = PixelEngine/main.h; sourceTree = SOURCE_ROOT; };
 		90A00CC61A0D0C2F00555EE8 /* Physics.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Physics.cpp; path = PixelEngine/Physics.cpp; sourceTree = SOURCE_ROOT; };
 		90A00CC71A0D0C2F00555EE8 /* Physics.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Physics.h; path = PixelEngine/Physics.h; sourceTree = SOURCE_ROOT; };
-		90A00CC81A0D0C2F00555EE8 /* Q3Bsp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Q3Bsp.cpp; path = PixelEngine/Q3Bsp.cpp; sourceTree = SOURCE_ROOT; };
-		90A00CC91A0D0C2F00555EE8 /* Q3Bsp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Q3Bsp.h; path = PixelEngine/Q3Bsp.h; sourceTree = SOURCE_ROOT; };
+		90A00CC81A0D0C2F00555EE8 /* Q3Level.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Q3Level.cpp; path = PixelEngine/Q3Level.cpp; sourceTree = SOURCE_ROOT; };
+		90A00CC91A0D0C2F00555EE8 /* Q3Level.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Q3Level.h; path = PixelEngine/Q3Level.h; sourceTree = SOURCE_ROOT; };
 		90A00CCA1A0D0C2F00555EE8 /* Q3Shader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Q3Shader.cpp; path = PixelEngine/Q3Shader.cpp; sourceTree = SOURCE_ROOT; };
 		90A00CCB1A0D0C2F00555EE8 /* Q3Shader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Q3Shader.h; path = PixelEngine/Q3Shader.h; sourceTree = SOURCE_ROOT; };
 		90A00CCC1A0D0C2F00555EE8 /* Scene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Scene.cpp; path = PixelEngine/Scene.cpp; sourceTree = SOURCE_ROOT; };
@@ -122,8 +125,8 @@
 				90A00CC51A0D0C2F00555EE8 /* main.h */,
 				90A00CC61A0D0C2F00555EE8 /* Physics.cpp */,
 				90A00CC71A0D0C2F00555EE8 /* Physics.h */,
-				90A00CC81A0D0C2F00555EE8 /* Q3Bsp.cpp */,
-				90A00CC91A0D0C2F00555EE8 /* Q3Bsp.h */,
+				90A00CC81A0D0C2F00555EE8 /* Q3Level.cpp */,
+				90A00CC91A0D0C2F00555EE8 /* Q3Level.h */,
 				90A00CCA1A0D0C2F00555EE8 /* Q3Shader.cpp */,
 				90A00CCB1A0D0C2F00555EE8 /* Q3Shader.h */,
 				90A00CCC1A0D0C2F00555EE8 /* Scene.cpp */,
@@ -138,6 +141,8 @@
 				90CE54891A0E17B300C234CF /* Sprite.cpp */,
 				90CE548A1A0E17B300C234CF /* Sprite.h */,
 				909CBA951A16B9E900036238 /* unique.h */,
+				909CBA961A18090F00036238 /* Q3Map.cpp */,
+				909CBA971A18090F00036238 /* Q3Map.h */,
 			);
 			path = pixelengine;
 			sourceTree = "<group>";
@@ -206,11 +211,12 @@
 				90A00CDA1A0D0C2F00555EE8 /* Physics.cpp in Sources */,
 				90A00CE01A0D0C2F00555EE8 /* Video.cpp in Sources */,
 				90A00CDF1A0D0C2F00555EE8 /* Vector.cpp in Sources */,
+				909CBA981A18090F00036238 /* Q3Map.cpp in Sources */,
 				90A00CDE1A0D0C2F00555EE8 /* Texture.cpp in Sources */,
 				90A00CD91A0D0C2F00555EE8 /* main.cpp in Sources */,
 				90A00CDD1A0D0C2F00555EE8 /* Scene.cpp in Sources */,
 				90A00CD81A0D0C2F00555EE8 /* Logger.cpp in Sources */,
-				90A00CDB1A0D0C2F00555EE8 /* Q3Bsp.cpp in Sources */,
+				90A00CDB1A0D0C2F00555EE8 /* Q3Level.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

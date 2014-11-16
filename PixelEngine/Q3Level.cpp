@@ -8,42 +8,12 @@
 
 #include <cstdio>
 
+#include "Q3Level.h"
 #include "unique.h"
 #include "Video.h"
-#include "Q3Bsp.h"
 #include "Texture.h"
 #include "Logger.h"
 
-
-
-enum {
-	CLIP_X_LEFT		= 1 << 0,
-	CLIP_X_RIGHT	= 1 << 1,
-	CLIP_Y_LEFT		= 1 << 2,
-	CLIP_Y_RIGHT	= 1 << 3,
-	CLIP_Z_LEFT		= 1 << 4,
-	CLIP_Z_RIGHT	= 1 << 5,
-};
-
-
-int Q3Level::bbox_index[8][3] =
-{
-	{ 0, 1, 2 }, { 3, 1, 2 }, { 3, 4, 2 }, { 0, 4, 2 },
-	{ 0, 1, 5 }, { 3, 1, 5 }, { 3, 4, 5 }, { 0, 4, 5 }
-};
-
-
-Q3Level::Q3Level()
-	: m_cameraCluster(0), m_Delta(0.) {
-}
-
-
-Q3Level::~Q3Level() {
-    /*
-	if (m_visData && m_visData->bits) {
-		delete[] m_visData->bits;
-	}*/
-}
 
 
 bool Q3Level::load(const char* filename) {
@@ -189,7 +159,7 @@ bool Q3Level::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLu
     std::shared_ptr<TextureManager> textureManager = TextureManager::getInstance();
     std::vector<Q3Shader> shaders;
     std::string infoString("");
-    int n = 0, nPlanar = 0, nPatch = 0, nTriSoup = 0, nBad = 0;
+    int n = 0, nPlanar = 0, nPatch = 0, nTriSoup = 0, nFlare = 0,nBad = 0;
 
     struct BspFace {
         int shader;
@@ -259,23 +229,55 @@ bool Q3Level::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLu
     // Fill faces informations
     for (int i = 0; i < n; ++i) {
         
+//        if(i == 2054) {
+//            std::cout << "qsd " << bspFaces[i].type <<  std::endl;
+//        }
+        
         switch (bspFaces[i].type) {
                 
-            case FACE_PLANAR:
+            case Q3Face::FACE_PLANAR:
             {
+                
                 std::shared_ptr<Q3Face> face = std::make_shared<Q3FacePlanar>(m_map.m_verticesPool);
-                face->type = FACE_PLANAR;
+                face->type = Q3Face::FACE_PLANAR;
                 
                 if (shaderManager->exists(bspShaders[bspFaces[i].shader].name)) {
                     face->m_shader = shaderManager->getShader(bspShaders[bspFaces[i].shader].name);
+                    
+                    std::vector<Q3ShaderPass>::iterator shaderPass = face->m_shader.m_shaderPasses.begin();
+                    std::vector<Q3ShaderPass>::iterator shaderPassesEnd = face->m_shader.m_shaderPasses.end();
+                    
+                    while (shaderPass != shaderPassesEnd) {
+                        TextureManager::getInstance()->getTexture(shaderPass->m_Texture);
+                        shaderPass->_setTexCoordPointer(&m_map.m_verticesPool.vertices[bspFaces[i].vertex].texcoord.s, sizeof(Q3Vertex));
+                        ++shaderPass;
+                    }
                 }
                 else {
-                    //std::cout << bspShader[i].name << std::endl;
-                    Q3ShaderDefault shaderDefault(textureManager->getTexture(bspShaders[bspFaces[i].shader].name), lmIds[bspFaces[i].lm_index]);
+                    Texture tex[2];
+                    
+                    float * texCoordPointer[2] = {
+                        &m_map.m_verticesPool.vertices[bspFaces[i].vertex].texcoord.s,
+                        &m_map.m_verticesPool.vertices[bspFaces[i].vertex].lmcoord.s
+                    };
+                    
+                    GLsizei stride[2] = {
+                        sizeof(Q3Vertex),
+                        sizeof(Q3Vertex)
+                    };
+                    
+                    tex[0].m_name   = bspShaders[bspFaces[i].shader].name;
+                    tex[1].m_name   = "lightmap";
+                    tex[1].m_texId  = lmIds[bspFaces[i].lm_index];
+                    
+                    TextureManager::getInstance()->getTexture(tex[0]);
+                    
+                    Q3ShaderDefault shaderDefault(tex, texCoordPointer, stride);
+                    
                     face->m_shader = shaderDefault;
                     infoString = "(No shader script found, default loaded)";
                 }
-                
+
                 m_map.m_faces.push_back(face);
                 ++nPlanar;
                 
@@ -283,8 +285,11 @@ bool Q3Level::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLu
             }
             break;
                 
-            case FACE_PATCH:
+            case Q3Face::FACE_PATCH:
             {
+                std::shared_ptr<Q3Face> face = std::make_shared<Q3FacePatch>(m_map.m_verticesPool);
+                face->type = Q3Face::FACE_PATCH;
+                
                 /*
                  int maxPatchesX = (m_faces[i].size[0] - 1) >> 1;
                  int maxPatchesY = (m_faces[i].size[1] - 1) >> 1;
@@ -310,19 +315,36 @@ bool Q3Level::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLu
                  
                  }
                  */
+                m_map.m_faces.push_back(face);
                 ++nPatch;
                 ILogger::log("---> Face %d, type patch, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
             }
             break;
                 
-            case FACE_TRIANGLE_SOUP:
+            case Q3Face::FACE_TRIANGLE_SOUP:
             {
+                std::shared_ptr<Q3Face> face = std::make_shared<Q3FacePatch>(m_map.m_verticesPool);
+                face->type = Q3Face::FACE_PATCH;
+                
+                m_map.m_faces.push_back(face);
                 ++nTriSoup;
                 ILogger::log("---> Face %d, type triangle soup, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
             }
             break;
                 
-            case FACE_BAD:
+                
+            case Q3Face::FACE_FLARE:
+            {
+                std::shared_ptr<Q3Face> face = std::make_shared<Q3FaceFlare>(m_map.m_verticesPool);
+                face->type = Q3Face::FACE_FLARE;
+                
+                m_map.m_faces.push_back(face);
+                ++nFlare;
+                ILogger::log("---> Face %d, type flare, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
+            }
+            break;
+                
+            case Q3Face::FACE_BAD:
             default:
             {
                 ++nBad;
@@ -407,7 +429,7 @@ bool Q3Level::_loadBspTree(FILE * file,
             node->bbox[j] = bspNodes[i].bbox[j];
         }
         
-        for (int j = 0; j < 1; ++j) {
+        for (int j = 0; j < 2; ++j) {
             node->children[j] = bspNodes[i].children[j];
         }
         
@@ -504,359 +526,23 @@ bool Q3Bsp::_loadEntities(FILE * file, int offset, int length) {
 }
 */
 
-#if 0
-int Q3Level::getLeafIndex(const Vector3d& v) const {
-	int index = 0;
-
-	while (index >= 0) {
-		const Q3BspNode&  node = m_nodes[index];
-		const Q3BspPlane& plane = m_planes[node.plane];
-		const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
-
-		const double distance = planeNormal.dotProduct(v) - plane.dist;
-
-		if (distance >= 0) {
-			index = node.children[0];
-		}
-		else {
-			index = node.children[1];
-		}
-	}
-
-	return -(index + 1);
-}
-
-
-bool Q3Bsp::checkClusterVisibility(int from, int to) const {
-	unsigned char bits = 0;
-
-	if (!m_visData->bits || from < 0) {
-		return true;
-	}
-	
-	bits = m_visData->bits[(from * m_visData->sz_clusters) + (to >> 3)];
-
-	return (bits & (1 << (to & 7))) != 0;
-}
 
 
 
-void Q3Bsp::_selectFaces(int index) {
-	
-	if (index < 0) { // Leaf
-		int i = -(index + 1);
 
-		// PVS test
-		if (!checkClusterVisibility(m_cameraCluster, m_leafs[i].cluster)) {
-			return;
-		}
-
-		// Clipping test
-		unsigned int and_clip = ~0;
-		
-		for (int j = 0; j < 8; ++j)
-		{
-			Vector4f v, cv;
-			unsigned int flags = 0;
-
-			v.x = (GLfloat) m_leafs[i].bbox[bbox_index[j][0]];
-			v.y = (GLfloat) m_leafs[i].bbox[bbox_index[j][1]];
-			v.z = (GLfloat) m_leafs[i].bbox[bbox_index[j][2]];
-			v.w = 1.0f;
-
-			cv = m_clipMatrix * v;
-
-			if (cv.x < -cv.w)
-				flags |= CLIP_X_LEFT;
-
-			if (cv.x > cv.w)
-				flags |= CLIP_X_RIGHT;
-
-			if (cv.y > cv.w)
-				flags |= CLIP_Y_LEFT;
-
-			if (cv.y > cv.w)
-				flags |= CLIP_Y_RIGHT;
-
-			if (cv.z > cv.w)
-				flags |= CLIP_Z_LEFT;
-
-			if (cv.z > cv.w)
-				flags |= CLIP_Z_RIGHT;
-
-			and_clip &= flags;
-		}
-
-		if (and_clip)
-			return;
-
-		for (int j = 0; j < m_leafs[i].n_leaffaces; ++j) {
-			const int f = j + m_leafs[i].leafface;
-			m_facesToRender.insert(m_leafFaces[f].face);
-		}
-
-	}
-	 else { // Node
-		 const Q3BspNode&  node = m_nodes[index];
-		 const Q3BspPlane& plane = m_planes[node.plane];
-		 const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
-
-		 // Clipping test
-		 unsigned int and_clip = ~0;
-
-		 for (int j = 0; j < 8; ++j)
-		 {
-			 Vector4f v, cv;
-			 unsigned int flags = 0;
-
-			 v.x = (GLfloat) node.bbox[bbox_index[j][0]];
-			 v.y = (GLfloat) node.bbox[bbox_index[j][1]];
-			 v.z = (GLfloat) node.bbox[bbox_index[j][2]];
-			 v.w = 1.0f;
-
-			 cv = m_clipMatrix * v;
-
-			 if (cv.x < -cv.w)
-				 flags |= CLIP_X_LEFT;
-
-			 if (cv.x > cv.w)
-				 flags |= CLIP_X_RIGHT;
-
-			 if (cv.y > cv.w)
-				 flags |= CLIP_Y_LEFT;
-
-			 if (cv.y > cv.w)
-				 flags |= CLIP_Y_RIGHT;
-
-			 if (cv.z > cv.w)
-				 flags |= CLIP_Z_LEFT;
-
-			 if (cv.z > cv.w)
-				 flags |= CLIP_Z_RIGHT;
-
-			 and_clip &= flags;
-		 }
-
-		 if (and_clip)
-			 return;
-
-		 _selectFaces(node.children[0]);
-		 _selectFaces(node.children[1]);
-
-	 }
-}
-
-
-
-void Q3Bsp::_beginShaderPass() {
-	if (!m_currentShaderPass)
-		return;
+inline void Q3Level::render() {
+//    std::cout << "qze" << std::endl;
+    m_map.render();
 
 }
 
 
-void Q3Bsp::_endShaderPass() {
-	if (!m_currentShaderPass)
-		return;
-
-
-}
-
-void Q3Bsp::render() {
-	//	std::cout << m_facesToRender.size() << std::endl;
-
-	// Step 2 : Render previously selected faces
-	std::set<int>::iterator faceToRender = m_facesToRender.begin();
-	std::set<int>::iterator faceToRenderEnd = m_facesToRender.end();
-
-	std::string noshader("noshader");
-
-	while (faceToRender != faceToRenderEnd) {
-		const Q3BspFace& face = m_faces[*faceToRender];
-		Q3Shader& shader = m_shaders[face.shader];
-
-//		if (!noshader.compare(m_bspShaders[face.shader].name))
-//			std::cout << "dd" << std::endl;
-        
-		if (face.type == FACE_BAD || face.type == FACE_BILLBOARD) {
-			
-		}
-		else {
-			std::vector<Q3ShaderPass>& shaderPasses = shader.getShaderPasses();
-
-			GLboolean ogl_env_cullface = glIsEnabled(GL_CULL_FACE);
-
-			if (shader.getFlags() & SHADER_NOCULL) {
-				glDisable(GL_CULL_FACE);
-			}
-			else {
-				glEnable(GL_CULL_FACE);
-			}
-
-			std::vector<Q3ShaderPass>::iterator shaderPasse = shaderPasses.begin();
-			std::vector<Q3ShaderPass>::iterator shaderPassesEnd = shaderPasses.end();
-
-			//		if (face.type == FACE_MESH || face.type == FACE_POLYGON) {
-
-			glVertexPointer(3, GL_FLOAT, sizeof(Q3BspVertex), m_vertexes[face.vertex].position);
-
-			while (shaderPasse != shaderPassesEnd) {
-
-				GLboolean ogl_env_blend = glIsEnabled(GL_BLEND);
-				GLboolean ogl_env_alpha = glIsEnabled(GL_ALPHA_TEST);
-				GLboolean ogl_env_depthmask;
-				glGetBooleanv(GL_DEPTH_WRITEMASK, &ogl_env_depthmask);
-//				GLboolean ogl_env_colorarray = glIsEnabled(GL_COLOR_ARRAY);
-
-				if ((*shaderPasse).m_flags & SHADER_LIGHTMAP) {
-					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[1]));
-					glBindTexture(GL_TEXTURE_2D, m_lmIds[face.lm_index]);
-					//			std::cout << face.lm_index << std::endl;
-					//				m_lmIds
-
-				}
-				else if ((*shaderPasse).m_flags & SHADER_ANIMMAP) {
-
-					int frame = 0;
-
-					(*shaderPasse).m_frame += m_Delta * (*shaderPasse).m_animSpeed;
-
-					frame = ((int)(*shaderPasse).m_frame) % (*shaderPasse).m_animNumframes;
-
-					//					std::cout << (*shaderPasse).m_animFrames[frame] << std::endl;
-					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[0]));
-					glBindTexture(GL_TEXTURE_2D, (*shaderPasse).m_animFrames[frame]);
-				}
-				else {
-					glTexCoordPointer(2, GL_FLOAT, sizeof(Q3BspVertex), &(m_vertexes[face.vertex].texcoord[0]));
-					glBindTexture(GL_TEXTURE_2D, (*shaderPasse).m_texId);
-				}
-
-				if ((*shaderPasse).m_flags & SHADER_BLENDFUNC) {
-					glEnable(GL_BLEND);
-					glBlendFunc((*shaderPasse).m_blendSrc, (*shaderPasse).m_blendDst);
-				}
-				else {
-					glDisable(GL_BLEND);
-				}
-
-				if ((*shaderPasse).m_flags & SHADER_ALPHAFUNC) {
-					glEnable(GL_ALPHA_TEST);
-					glAlphaFunc((*shaderPasse).m_alphaFunc, (*shaderPasse).m_alphaFuncRef);
-				}
-				else {
-					glDisable(GL_ALPHA_TEST);
-				}
-
-
-				glDepthFunc((*shaderPasse).m_depthFunc);
-				if ((*shaderPasse).m_flags & SHADER_DEPTHWRITE) {
-					glDepthMask(GL_TRUE);
-					//std::cout << shader.getName() << std::endl;
-					//return;
-					//std::cout << "aze" << std::endl;
-				}
-				else {
-					//std::cout << "cvvc " << shader.getName() << std::endl;
-					glDepthMask(GL_FALSE);
-				}
-
-                if (face.type == FACE_PATCH) {
-                    m_patches[*faceToRender].render();
-                }
-                else
-                    glDrawElements(GL_TRIANGLES, face.n_meshverts, GL_UNSIGNED_INT, &(m_meshVerts.get()[face.meshvert]));
-
-				
-				if (ogl_env_blend) {
-                    glEnable(GL_BLEND);
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-				}
-				else {
-                    glDisable(GL_BLEND);
-				}
-
-				if (ogl_env_alpha) {
-                    glEnable(GL_ALPHA_TEST);
-				}
-				else {
-                    glDisable(GL_ALPHA_TEST);
-				}
-				
-				//				glDepthMask(GL_TRUE);
-				
-				if (ogl_env_depthmask) {
-                    glDepthMask(GL_TRUE);
-				}
-				else {
-                    glDepthMask(GL_FALSE);
-				}
-				
-				/*
-				if (ogl_env_colorarray) {
-				glEnableClientState(GL_COLOR_ARRAY);
-				}
-				else {
-				glDisableClientState(GL_COLOR_ARRAY);
-				}
-				*/
-
-				++shaderPasse;
-			}
-			//}
-
-			if (ogl_env_cullface) {
-				glEnable(GL_CULL_FACE);
-			}
-			else {
-				glDisable(GL_CULL_FACE);
-			}
-
-		}
-
-		++faceToRender;
-	}
-
-	// Step 3
-	SceneNodeList::iterator children = m_children.begin();
-	SceneNodeList::iterator childrenEnd = m_children.end();
-
-	while (children != childrenEnd) {
-		glPushMatrix();
-		(*children)->render();
-		glPopMatrix();
-		++children;
-	}
-
-}
-
-
-void Q3Bsp::update(GLdouble delta) {
+inline void Q3Level::update(GLdouble delta) {
 	SceneNodeList::iterator i = m_children.begin();
 	SceneNodeList::iterator end = m_children.end();
     
-	m_cameraCluster = m_leafs[getLeafIndex(SceneManager::getInstance()->getCamera()->getPosition())].cluster;
-	m_Delta = delta;
-
-//	std::cout << delta << std::endl;
-
-	// Get clip matrix
-	float m[16], p[16], r[16];
-	glGetFloatv(GL_PROJECTION_MATRIX, p);
-	glGetFloatv(GL_MODELVIEW_MATRIX, m);
-	glPushMatrix();
-	glLoadMatrixf(p);
-	glMultMatrixf(m);
-	glGetFloatv(GL_MODELVIEW_MATRIX, r);
-	glPopMatrix();
-
-	m_clipMatrix = r;
-
-//	if (glfwGetKey(Video::getInstance()->getWindow(), GLFW_KEY_A) == GLFW_PRESS) {
-		m_facesToRender.clear();
-		_selectFaces(0);
-//	}
-
+    m_map.update(delta);
+    
 	while (i != end) {
 		(*i)->update(delta);
 		++i;
@@ -864,6 +550,7 @@ void Q3Bsp::update(GLdouble delta) {
 }
 
 
+#if 0
 bool Q3BezierPatch::tesselate() {
 	float px = 0.f, py = 0.f;
 	float temp[3][3];

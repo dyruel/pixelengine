@@ -22,20 +22,29 @@
 #include "Logger.h"
 #include "Singleton.h"
 
-typedef	struct {
-	std::string name;
-    GLubyte	* imageData;									// Image Data (Up To 32 Bits)
-    GLuint	bpp;											// Image Color Depth In Bits Per Pixel
-    GLuint	width;											// Image Width
-    GLuint	height;											// Image Height
-    GLuint	texId;											// Texture ID Used To Select A Texture
-    GLuint	type;											// Image Type (GL_RGB, GL_RGBA)
-} Texture;
-
 
 enum {
 	TEXTURE_NOMIPMAP = 1 << 0,
 	TEXTURE_CLAMP	 = 1 << 1,
+};
+
+struct Texture {
+    std::string     m_name;
+    int             m_texId;
+    GLuint          m_flags;
+    
+    Texture()
+    :m_name(""), m_texId(-1), m_flags(0) {}
+    
+    void clear() {
+//        if(glIsTexture(m_texId)) {
+//            glDeleteTextures(1, &m_texId);
+//        }
+        
+        m_name  = "";
+        m_texId = -1;
+        m_flags = 0;
+    }
 };
 
 //typedef std::vector<Texture> TextureList;
@@ -66,6 +75,7 @@ public:
 # if 0
 	bool _loadTextures(const std::vector<std::string>& files, std::unique_ptr<GLuint[]>& ids);
 #endif
+    
 
 	GLuint getTexture(const std::string& filename, int flags = 0) {
 		if (m_textures.find(filename) != m_textures.end()) {
@@ -75,6 +85,10 @@ public:
 			return _loadTextureFromFile(filename, flags);
 		}
 	}
+
+    void getTexture(Texture& tex) {
+        tex.m_texId = this->getTexture(tex.m_name, tex.m_flags);
+    }
     
 };
 

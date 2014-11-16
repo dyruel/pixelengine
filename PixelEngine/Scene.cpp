@@ -91,6 +91,7 @@ bool SceneManager::deinit() {
 }
 
 void SceneManager::render() const {
+    
     if(m_camera && m_root) {
         m_camera->setView();
         m_root->render();
