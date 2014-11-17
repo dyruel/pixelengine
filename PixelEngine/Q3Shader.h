@@ -19,10 +19,6 @@
 #include "Texture.h"
 #include "Singleton.h"
 
-
-#define SHADER_MAX_FRAMES 10
-
-
 enum {
 	SHADER_NOCULL		= 1 << 0,
 	SHADER_TRANSPARENT	= 1 << 1,
@@ -54,14 +50,30 @@ enum {
 };
 
 
-//class Q3ShaderPass;
-//
-
-
+/*
+class Q3ShaderParser {
+    
+    std::string m_script;
+    std::string::iterator m_pos;
+    std::string::iterator m_end;
+    std::string m_currentToken;
+    
+public:
+    Q3ShaderParser() {};
+    ~Q3ShaderParser() {};
+    
+    void parse(const std::string& script) {
+        m_script = script;
+        m_pos = m_script.begin();
+        m_end = m_script.end();
+        m_currentToken = "";
+    };
+    
+    const std::string& nexttok();
+};
+*/
 
 class Q3ShaderPass {
-    friend class Q3ShaderManager;
-    friend class Q3ShaderDefault;
     
 private:
     
@@ -73,143 +85,92 @@ private:
         NUMSTATES
     };
     
-    Texture         m_Texture;
+    Texture                 m_Texture;
     
-	unsigned int    m_flags;
-    
-    // OpenGL data for textures
-//    float *         m_TexCoordPointer;
-//    GLsizei         m_Stride;
+	unsigned int            m_flags;
     
     // OpenGL states
-    GLboolean       m_oglStates[NUMSTATES];
+    GLboolean               m_oglStates[NUMSTATES];
 
 	// Blending
-	GLenum          m_blendSrc, m_blendDst;
+	GLenum                  m_blendSrc, m_blendDst;
 
 	// Animmap
-	float           m_animSpeed;
-	int             m_animNumframes;
-    Texture         m_animFrames[SHADER_MAX_FRAMES];
-	float           m_frame;
+	float                   m_animSpeed;
+    std::vector<Texture>    m_animFrames;
+	float                   m_frame;
 
 	// Alpha func
-	GLenum          m_alphaFunc;
-	GLclampf        m_alphaFuncRef;
+	GLenum                  m_alphaFunc;
+	GLclampf                m_alphaFuncRef;
 
 	// Depth func
-	GLenum          m_depthFunc;
+	GLenum                  m_depthFunc;
     
     
     void _saveOglSates();
     void _restoreOglStates();
     
-//    void _setTexCoordPointer(float * texCoordPointer, GLsizei stride) {
-//        m_TexCoordPointer = texCoordPointer;
-//        m_Stride = stride;
-//    }
-    
 public:
     
-    Q3ShaderPass() { this->clear(); }
+    Q3ShaderPass()
+    : m_flags(0), m_blendSrc(GL_DST_COLOR), m_blendDst(GL_ZERO),
+      m_animSpeed(0.0f), m_frame(0.0f),
+      m_alphaFunc(0), m_alphaFuncRef(0.0f), m_depthFunc(GL_LEQUAL) {}
     ~Q3ShaderPass() {}
 
-	void clear() {
-        m_Texture.clear();
-		m_flags             = SHADER_DEPTHWRITE;
-		m_blendSrc          = GL_DST_COLOR;
-		m_blendDst          = GL_ZERO;
-		m_animSpeed         = 0.0f;
-		m_animNumframes     = 0;
-		m_frame             = 0;
-		m_alphaFunc         = 0;
-		m_alphaFuncRef      = 0.0f;
-		m_depthFunc         = GL_LEQUAL;
-	}
+    
+    void setTexture(const Texture& texture) { m_Texture = texture; }
+    void setFlags(const unsigned int& flags) { m_flags = flags; }
+    void addFlag(const unsigned int& flag)   { m_flags |= flag; }
+    void setBlending(const GLenum& blendSrc, const GLenum& blendDst) { m_blendSrc = blendSrc; m_blendDst = blendDst; };
+    void setAnimation(const float& animSpeed, const std::vector<Texture>& animFrames) {
+        m_animSpeed      = animSpeed;
+        m_animFrames     = animFrames;
+    }
+    void setAlphaFunc(const GLenum& alphaFunc, const GLclampf& alphaFuncRef) { m_alphaFunc = alphaFunc; m_alphaFuncRef = alphaFuncRef; }
+    void setDepthFunc(const GLenum& depthFunc) { m_depthFunc = depthFunc; }
     
     void init();
+    void update(const double& delta);
     
-    void update(double delta);
-        
-    void begin();
-    void end();
+    void start();
+    void stop();
 
 };
 
 
-//FIXME : should extend std::vector<Q3ShaderPass>
-class Q3Shader {
-    friend class Q3ShaderManager;
+class Q3Shader : public std::vector<std::shared_ptr<Q3ShaderPass>>  {
 
 protected:
 
-    std::string name;
-	unsigned int m_flags;
-    std::vector<Q3ShaderPass> m_shaderPasses;
+    std::string     m_name;
+	unsigned int    m_flags;
 
     void _saveOglSates();
     void _restoreOglStates();
 
 public:
-	Q3Shader() { };
+	Q3Shader()
+    : m_name(""), m_flags(0) {};
 	virtual ~Q3Shader() {};
+    
+    void setFlags(const unsigned int& flags) { m_flags = flags; }
+    void addFlag(const unsigned int& flag)   { m_flags |= flag; }
+	const unsigned int& getFlags() const { return m_flags; }
+    
+    void setName(const std::string& name) { m_name = name; }
+	const std::string& getName() const { return m_name;  }
 
-	void addShaderPass(const Q3ShaderPass& shaderPass) { m_shaderPasses.push_back(shaderPass); };
-	std::vector<Q3ShaderPass>& getShaderPasses() { return m_shaderPasses; };
-    
-    virtual void clear() {
-        name.clear();
-        m_flags = 0;
-        m_shaderPasses.clear();
-    }
-
-	const unsigned int getFlags() const { return m_flags; }
-
-	const std::string& getName() const { return name;  }
-    
-    
-    void begin();
-    
-    void end();
+    void start();
+    void stop();
 };
 
 
-class Q3ShaderDefault : public Q3Shader  {
-
-public:
-	Q3ShaderDefault(const Texture tex[2], float * texCoordPointer[2], const GLsizei stride[2]) {
-		Q3ShaderPass shaderPass;
-
-		name = "default";
-
-		m_flags = 0;
-
-		shaderPass.clear();
-		shaderPass.m_flags = SHADER_LIGHTMAP | SHADER_DEPTHWRITE;
-        shaderPass.m_Texture = tex[1];
-		shaderPass.m_depthFunc = GL_LEQUAL;
-		m_shaderPasses.push_back(shaderPass);
-
-		shaderPass.clear();
-		shaderPass.m_flags = SHADER_BLENDFUNC | SHADER_DEPTHWRITE;
-        shaderPass.m_Texture = tex[0];
-		shaderPass.m_blendSrc = GL_DST_COLOR;
-		shaderPass.m_blendDst = GL_ZERO;
-		shaderPass.m_depthFunc = GL_LEQUAL;
-		m_shaderPasses.push_back(shaderPass);
-
-	};
-	virtual ~Q3ShaderDefault() {};
-};
-
-
-
-class Q3ShaderManager : public Singleton<Q3ShaderManager> {
+class Q3ShaderManager : public std::map<std::string, std::shared_ptr<Q3Shader>>, public Singleton<Q3ShaderManager> {
     friend class Singleton<Q3ShaderManager>;
     
 private:
-    
-    std::map<std::string, Q3Shader> m_shaders;
     
     void _loadCommand();
     
@@ -228,17 +189,10 @@ public:
     
     virtual ~Q3ShaderManager() {};
     
-    bool loadFromFile(const char* filename);
+    bool exists(const std::string& name) {return this->find(name) != this->end();}
     
-    const std::map<std::string, Q3Shader>& getShaders() const { return m_shaders; };
+    bool loadFromFile(const char* filename);
 
-    const Q3Shader& getShader(const std::string& name)  {
-			return m_shaders.at(name); 
-	};
-
-	bool exists(const std::string& name) {
-		return m_shaders.find(name) != m_shaders.end();
-	}
 };
 
 #endif

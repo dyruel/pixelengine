@@ -15,6 +15,34 @@
 #include "Texture.h"
 
 
+/*
+const std::string& Q3ShaderParser::nexttok() {
+    bool readComment = false;
+    
+    while (m_pos != m_end) {
+        char c = *m_pos;
+        
+        if (c == '/' && (m_pos + 1) != end && *(m_pos + 1) == '/') {
+            m_pos+=2;
+            readComment = true;
+            continue;
+        }
+        
+        if(readComment) {
+            if(c == '\n' || c == '\r') {
+                readComment = false;
+            }
+            
+            ++m_pos;
+            continue;
+        }
+        
+        
+        ++m_pos;
+    }
+}
+*/
+
 inline void Q3ShaderPass::_saveOglSates() {
     m_oglStates[BLEND] = glIsEnabled(GL_BLEND);
     m_oglStates[ALPHA_TEST] = glIsEnabled(GL_ALPHA_TEST);
@@ -47,7 +75,7 @@ inline void Q3ShaderPass::_restoreOglStates() {
 }
 
 
-inline void Q3ShaderPass::begin() {
+inline void Q3ShaderPass::start() {
     
     this->_saveOglSates();
     
@@ -88,18 +116,22 @@ inline void Q3ShaderPass::begin() {
 }
 
 
-inline void Q3ShaderPass::end() {
+inline void Q3ShaderPass::stop() {
     this->_restoreOglStates();
 }
+
+
+
+
 
 inline void Q3ShaderPass::init() {
     TextureManager::getInstance()->getTexture(m_Texture);
 }
 
-inline void Q3ShaderPass::update(double delta) {
+inline void Q3ShaderPass::update(const double& delta) {
     if (m_flags & SHADER_ANIMMAP) {
         m_frame += delta * m_animSpeed;
-        if(((int) m_frame) >= m_animNumframes)
+        if(((int) m_frame) >= m_animFrames.size())
             m_frame = 0.f;
     }
 }
@@ -121,7 +153,7 @@ inline void Q3Shader::_restoreOglStates() {
 */
 
 
-inline void Q3Shader::begin() {
+inline void Q3Shader::start() {
     if (m_flags & SHADER_NOCULL) {
         glDisable(GL_CULL_FACE);
     }
@@ -129,7 +161,7 @@ inline void Q3Shader::begin() {
 }
 
 
-inline void Q3Shader::end() {
+inline void Q3Shader::stop() {
     if (m_flags & SHADER_NOCULL) {
         glEnable(GL_CULL_FACE);
     }
@@ -140,8 +172,8 @@ inline void Q3Shader::end() {
 bool Q3ShaderManager::loadFromFile(const char* filename) {
 	std::ifstream file(filename, std::ios::in);
 	std::stringstream sstream;
-    Q3Shader shader;
-	Q3ShaderPass shaderPass;
+    std::shared_ptr<Q3Shader> shader;
+	std::shared_ptr<Q3ShaderPass> shaderPass;
     std::string token = "";
     
     std::vector<std::string> args;
@@ -161,10 +193,9 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 	m_readingState = SP_BEGIN_COM;
     m_depth = 0;
     
-    shader.clear();
-	shaderPass.clear();
+    shader = std::make_shared<Q3Shader>();
+    shaderPass = std::make_shared<Q3ShaderPass>();
     args.clear();
-
 
     std::string::iterator i = buffer.begin();
     
@@ -298,12 +329,12 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 						shader.m_shaderPasses[0].m_flags |= SHADER_DEPTHWRITE;
 					}
 					*/
-                    m_shaders[shader.name] = shader;
-                    shader.clear();
+                    (*this)[shader->getName()] = shader;
+                    shader = std::make_shared<Q3Shader>();
                 }
                 else { // end of a shader pass
-					shader.addShaderPass(shaderPass);
-					shaderPass.clear();
+                    shader->push_back(shaderPass);
+					shaderPass = std::make_shared<Q3ShaderPass>();
                 }
                 
               
@@ -327,120 +358,117 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
                 if(!args.empty()) {
 
                     if(m_depth == 0) { // We've read the shader's name
-                        shader.name = args[0];
+                        shader->setName(args[0]);
                     }
 					else if (m_depth == 1){ // Global command
 						if (!args[0].compare("cull")) {
 
 							if (args.size() > 1) {
 								if (!args[1].compare("none") || !args[1].compare("disable")) {
-									shader.m_flags |= SHADER_NOCULL;
+                                    shader->addFlag(SHADER_NOCULL);
 								}
 								else if (!args[1].compare("front")){
-									shader.m_flags |= SHADER_FRONTCULL;
+                                    shader->addFlag(SHADER_FRONTCULL);
 								}
 								else if (!args[1].compare("back")){
-									shader.m_flags |= SHADER_BACKCULL;
+                                    shader->addFlag(SHADER_BACKCULL);
 								}
 							}
 
 						}
 						else if (!args[0].compare("surfaceparm")) {
 							if (!args[1].compare("trans")) {
-								shader.m_flags |= SHADER_TRANSPARENT;
+                                shader->addFlag(SHADER_TRANSPARENT);
 							}
 							else if (!args[1].compare("sky")) {
-								shader.m_flags |= SHADER_SKY;
+                                shader->addFlag(SHADER_SKY);
 							}
 							else {
-								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with surfaceparm\n", shader.name.c_str(), args[1].c_str());
+								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with surfaceparm\n", shader->getName().c_str(), args[1].c_str());
 							}
 						}
 						else if (!args[0].compare("skyparms")) {
 
 						}
 						else {
-							ILogger::log("Q3Shader::Syntax error in %s: The keyword %s does not exist.\n", shader.name.c_str(), args[0].c_str());
+							ILogger::log("Q3Shader::Syntax error in %s: The keyword %s does not exist.\n", shader->getName().c_str(), args[0].c_str());
 						}
 					}
 					else { // Shader pass command
 						if (!args[0].compare("animmap")) {
-							shaderPass.m_flags |= SHADER_ANIMMAP;
-							shaderPass.m_animSpeed = atof(args[1].c_str());
+                            shaderPass->addFlag(SHADER_ANIMMAP);
+                            std::vector<Texture> animFrames;
+                            Texture texture;
 
 							std::vector<std::string>::iterator j = args.begin() + 2;
-
-							unsigned int k = 0;
-							while (j != args.end() && k < SHADER_MAX_FRAMES){
-                                shaderPass.m_animFrames[k].m_name  = *j; // TextureManager::getInstance()->getTexture(*j);
+							while (j != args.end()){
+                                texture.m_name = *j;
+                                animFrames.push_back(texture);
 								++j;
-								++k;
 							}
-							shaderPass.m_animNumframes = k;
+							
+                            shaderPass->setAnimation(atof(args[1].c_str()), animFrames);
 
 						}
 						else if (!args[0].compare("blendfunc")) {
-							shaderPass.m_flags |= SHADER_BLENDFUNC;
+                            shaderPass->addFlag(SHADER_BLENDFUNC);
 
-							if (args.size() == 2)
-							{
-								if (!args[1].compare("blend"))
-								{
-									shaderPass.m_blendSrc = GL_SRC_ALPHA;
-									shaderPass.m_blendDst = GL_ONE_MINUS_SRC_ALPHA;
+							if (args.size() == 2) {
+								if (!args[1].compare("blend")) {
+                                    shaderPass->setBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 								}
-								else if (!args[1].compare("filter"))
-								{
-									shaderPass.m_blendSrc = GL_DST_COLOR;
-									shaderPass.m_blendDst = GL_ZERO;
+								else if (!args[1].compare("filter")) {
+                                    shaderPass->setBlending(GL_DST_COLOR, GL_ZERO);
 								}
-								else if (!args[1].compare("add"))
-								{
-									shaderPass.m_blendSrc = shaderPass.m_blendDst = GL_ONE;
+								else if (!args[1].compare("add")) {
+                                    shaderPass->setBlending(GL_ONE, GL_ONE);
 								}
 								else {
-									ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with blendfunc\n", shader.name.c_str(), args[1].c_str());
+									ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with blendfunc\n", shader->getName().c_str(), args[1].c_str());
 								}
 							}
 							else
-							{						
-								for (int j = 1; j < 3; ++j)
-								{
-									GLenum& blend = j == 1 ? shaderPass.m_blendSrc : shaderPass.m_blendDst;
-
+							{
+                                GLenum blend[2];
+                                
+								for (int j = 1; j < 3; ++j) {
 									if (!args[j].compare("gl_zero"))
-										blend = GL_ZERO;
+										blend[j-1] = GL_ZERO;
 									else if (!args[j].compare("gl_one"))
-										blend = GL_ONE;
+										blend[j-1] = GL_ONE;
 									else if (!args[j].compare("gl_dst_color"))
-										blend = GL_DST_COLOR;
+										blend[j-1] = GL_DST_COLOR;
 									else if (!args[j].compare("gl_one_minus_src_alpha"))
-										blend = GL_ONE_MINUS_SRC_ALPHA;
+										blend[j-1] = GL_ONE_MINUS_SRC_ALPHA;
 									else if (!args[j].compare("gl_src_alpha"))
-										blend = GL_SRC_ALPHA;
+										blend[j-1] = GL_SRC_ALPHA;
 									else if (!args[j].compare("gl_src_color"))
-										blend = GL_SRC_COLOR;
+										blend[j-1] = GL_SRC_COLOR;
 									else if (!args[j].compare("gl_one_minus_dst_color"))
-										blend = GL_ONE_MINUS_DST_COLOR;
+										blend[j-1] = GL_ONE_MINUS_DST_COLOR;
 									else if (!args[j].compare("gl_one_minus_src_color"))
-										blend = GL_ONE_MINUS_SRC_COLOR;
+										blend[j-1] = GL_ONE_MINUS_SRC_COLOR;
 									else if (!args[j].compare("gl_dst_alpha"))
-										blend = GL_DST_ALPHA;
+										blend[j-1] = GL_DST_ALPHA;
 									else if (!args[j].compare("gl_one_minus_dst_alpha"))
-										blend = GL_ONE_MINUS_DST_ALPHA;
+										blend[j-1] = GL_ONE_MINUS_DST_ALPHA;
 									else {
-										ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with blendfunc\n", shader.name.c_str(), args[j].c_str());
+										ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with blendfunc\n", shader->getName().c_str(), args[j].c_str());
 									}
-										
 								}
+                                
+                                shaderPass->setBlending(blend[0], blend[1]);
+                                
 							}
 						}
 						else if (!args[0].compare("map")) {
 							if (!args[1].compare("$lightmap")) {
-								shaderPass.m_flags |= SHADER_LIGHTMAP;
+                                shaderPass->addFlag(SHADER_LIGHTMAP);
 							}
 							else {
-                                shaderPass.m_Texture.m_name = args[1]; //TextureManager::getInstance()->getTexture(args[1]);
+                                Texture texture;
+                                texture.m_name = args[1];
+                                shaderPass->setTexture(texture);
 							}
 
 						}
@@ -454,40 +482,38 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 
 						}
 						else if (!args[0].compare("clampmap")) {
-                            shaderPass.m_Texture.m_name     =  args[1]; //TextureManager::getInstance()->getTexture(args[1], TEXTURE_CLAMP);
-                            shaderPass.m_Texture.m_flags    |= TEXTURE_CLAMP;
+                            Texture texture;
+                            texture.m_name = args[1];
+                            texture.m_flags = TEXTURE_CLAMP;
+                            shaderPass->setTexture(texture);
 						}
 						else if (!args[0].compare("alphafunc")) {
-							shaderPass.m_flags |= SHADER_ALPHAFUNC;
+                            shaderPass->addFlag(SHADER_ALPHAFUNC);
 
-							if (!args[1].compare("gt0"))
-							{
-								shaderPass.m_alphaFunc = GL_GREATER;
-								shaderPass.m_alphaFuncRef = 0.0f;
+							if (!args[1].compare("gt0")) {
+                                shaderPass->setAlphaFunc(GL_GREATER, 0.0f);
 							}
-							else if (!args[1].compare("ge128"))
-							{
-								shaderPass.m_alphaFunc = GL_GEQUAL;
-								shaderPass.m_alphaFuncRef = 0.5f;
+							else if (!args[1].compare("ge128")) {
+                                shaderPass->setAlphaFunc(GL_GEQUAL, 0.5f);
 							}
 							else {
-								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with alphafunc\n", shader.name.c_str(), args[1].c_str());
+								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with alphafunc\n", shader->getName().c_str(), args[1].c_str());
 							}
 
 						}
 						else if (!args[0].compare("depthfunc")) {
 							if (!args[1].compare("equal")) {
-								shaderPass.m_depthFunc = GL_EQUAL;
+								shaderPass->setDepthFunc(GL_EQUAL);
 							}
 							else {
-								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with depthfunc\n", shader.name.c_str(), args[1].c_str());
+								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with depthfunc\n", shader->getName().c_str(), args[1].c_str());
 							}
 						}
 						else if (!args[0].compare("depthwrite")) {
-							shaderPass.m_flags |= SHADER_DEPTHWRITE;
+                            shaderPass->addFlag(SHADER_DEPTHWRITE);
 						}
 						else {
-							ILogger::log("Q3Shader::Syntax error in %s: The keyword %s does not exist\n", shader.name.c_str(), args[0].c_str());
+							ILogger::log("Q3Shader::Syntax error in %s: The keyword %s does not exist\n", shader->getName().c_str(), args[0].c_str());
 						}
 
 

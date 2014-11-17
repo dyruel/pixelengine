@@ -17,27 +17,26 @@ int Q3Map::bbox_index[8][3] =
 
 
 inline void Q3FacePlanar::render() {
-    m_shader.begin();
+    m_shader.start();
     
-    std::vector<Q3ShaderPass>& shaderPasses = m_shader.getShaderPasses();
-    std::vector<Q3ShaderPass>::iterator shaderPasse = shaderPasses.begin();
-    std::vector<Q3ShaderPass>::iterator shaderPassesEnd = shaderPasses.end();
+    std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPasse = m_shader.begin();
+    std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPassesEnd = m_shader.end();
     
     glVertexPointer(3, GL_FLOAT, sizeof(Q3Vertex), m_verticesPool.vertices.data() + m_firstVertex);    
     glTexCoordPointer(2, GL_FLOAT, sizeof(Q3Vertex), &m_verticesPool.vertices[m_firstVertex].texcoord.s);
     
     while (shaderPasse != shaderPassesEnd) {
         
-        shaderPasse->begin();
+        (*shaderPasse)->start();
         
         glDrawElements(GL_TRIANGLES, m_numIndexes, GL_UNSIGNED_INT, m_verticesPool.indexes.data() + m_firstIndex);
         
-        shaderPasse->end();
+        (*shaderPasse)->stop();
         
         ++shaderPasse;
     }
     
-    m_shader.end();
+    m_shader.stop();
 }
 
 
@@ -370,37 +369,40 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                 face->type = Q3Face::FACE_PLANAR;
                 
                 if (shaderManager->exists(bspShaders[bspFaces[i].shader].name)) {
-                    face->m_shader = shaderManager->getShader(bspShaders[bspFaces[i].shader].name);
+                    face->m_shader = *(shaderManager->at(bspShaders[bspFaces[i].shader].name));
                     
-                    std::vector<Q3ShaderPass>::iterator shaderPass = face->m_shader.getShaderPasses().begin();
-                    std::vector<Q3ShaderPass>::iterator shaderPassesEnd = face->m_shader.getShaderPasses().end();
+                    std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPass = face->m_shader.begin();
+                    std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPassesEnd = face->m_shader.end();
                     
                     while (shaderPass != shaderPassesEnd) {
-                        shaderPass->init();
-//                        shaderPass->_setTexCoordPointer(&m_verticesPool.vertices[bspFaces[i].vertex].texcoord.s, sizeof(Q3Vertex));
+                        (*shaderPass)->init();
                         ++shaderPass;
                     }
                 }
                 else {
                     Texture tex[2];
-                    
-                    float * texCoordPointer[2] = {
-                        &m_verticesPool.vertices[bspFaces[i].vertex].texcoord.s,
-                        &m_verticesPool.vertices[bspFaces[i].vertex].lmcoord.s
-                    };
-                    
-                    GLsizei stride[2] = {
-                        sizeof(Q3Vertex),
-                        sizeof(Q3Vertex)
-                    };
+                    Q3Shader shaderDefault;
+                    std::shared_ptr<Q3ShaderPass> shaderPass = std::make_shared<Q3ShaderPass>();
                     
                     tex[0].m_name   = bspShaders[bspFaces[i].shader].name;
                     tex[1].m_name   = "lightmap";
                     tex[1].m_texId  = lmIds[bspFaces[i].lm_index];
                     
-                    TextureManager::getInstance()->getTexture(tex[0]);
+                    shaderDefault.setName("default");
+                    shaderDefault.setFlags(0);
                     
-                    Q3ShaderDefault shaderDefault(tex, texCoordPointer, stride);
+                    shaderPass->setFlags(SHADER_LIGHTMAP | SHADER_DEPTHWRITE);
+                    shaderPass->setTexture(tex[1]);
+                    shaderPass->setDepthFunc(GL_LEQUAL);
+                    shaderDefault.push_back(shaderPass);
+                    
+                    shaderPass = std::make_shared<Q3ShaderPass>();
+                    shaderPass->setFlags(SHADER_BLENDFUNC | SHADER_DEPTHWRITE);
+                    shaderPass->setTexture(tex[0]);
+                    shaderPass->setDepthFunc(GL_LEQUAL);
+                    shaderPass->setBlending(GL_DST_COLOR, GL_ZERO);
+                    shaderPass->init();
+                    shaderDefault.push_back(shaderPass);
                     
                     face->m_shader = shaderDefault;
                     infoString = "(No shader script found, default loaded)";
