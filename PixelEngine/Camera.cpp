@@ -27,7 +27,7 @@ Camera::Camera() {
     glGetIntegerv(GL_VIEWPORT, viewport);
     
     m_fov = 60.;
-    m_near = 10.;
+    m_near = .1;
     m_far = 3000.;
     m_aspect = ((GLdouble) viewport[2] / (GLdouble) viewport[3]);
 
@@ -147,6 +147,9 @@ void CameraFree::update(GLdouble delta) {
 	}
 
 	m_position += (move * (m_speed * delta));
+    
+    
+ //   std::cout << m_position.toString() << std::endl;
 
 	glfwSetCursorPos(window, winHalfWidth, winHalfHeight);
 }

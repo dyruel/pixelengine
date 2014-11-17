@@ -71,7 +71,7 @@ protected:
     //    int m_lightmapIndex;
     
     int m_firstVertex;
-    int n_numVertices;
+    int m_numVertices;
     
     int m_firstIndex;
     int m_numIndexes;

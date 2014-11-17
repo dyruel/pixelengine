@@ -94,6 +94,7 @@ void Video::setOglDefaultState() {
 	glClearDepth(1.0f);
 	glCullFace(GL_FRONT);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
+    glClearColor(.5f, .5f, .5f, 1.f);
 	glEnable(GL_TEXTURE_2D);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -106,7 +107,7 @@ void Video::setOglDefaultState() {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_SCISSOR_TEST);
+	glEnable(GL_SCISSOR_TEST);
 	glEnable(GL_CULL_FACE);
 	glDisable(GL_BLEND);
 

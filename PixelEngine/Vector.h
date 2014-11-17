@@ -149,33 +149,7 @@ template<class T>
 class Vector2
 {
 public:
-	union
-	{
-		/**
-		 * First element of vector, alias for X-coordinate.
-		 */
-		T x;
-
-		/**
-		 * First element of vector, alias for S-coordinate.
-		 * For textures notation.
-		 */
-		T s;
-	};
-
-	union
-	{
-		/**
-		 * Second element of vector, alias for Y-coordinate.
-		 */
-		T y;
-
-		/**
-		 * Second element of vector, alias for T-coordinate.
-		 * For textures notation.
-		 */
-		T t;
-	};
+    T x, y;
 
 	//----------------[ constructors ]--------------------------
 	/**
@@ -580,63 +554,7 @@ template<class T>
 class Vector3
 {
 public:
-	//T x, y, z;
-	union
-	{
-		/**
-		 * First element of vector, alias for X-coordinate.
-		 */
-		T x;
-
-		/**
-		 * First element of vector, alias for S-coordinate.
-		 * For textures notation.
-		 */
-		T s;
-
-		/**
-		 * First element of vector, alias for R-coordinate.
-		 * For color notation.
-		 */
-		T r;
-	};
-
-	union
-	{
-		/**
-		 * Second element of vector, alias for Y-coordinate.
-		 */
-		T y;
-		/**
-		 * Second element of vector, alias for T-coordinate.
-		 * For textures notation.
-		 */
-		T t;
-		/**
-		 * Second element of vector, alias for G-coordinate.
-		 * For color notation.
-		 */
-		T g;
-	};
-
-	union
-	{
-		/**
-		 * Third element of vector, alias for Z-coordinate.
-		 */
-		T z;
-
-		/**
-		 * Third element of vector, alias for U-coordinate.
-		 * For textures notation.
-		 */
-		T u;
-		/**
-		 * Third element of vector, alias for B-coordinate.
-		 * For color notation.
-		 */
-		T b;
-	};
+	T x, y, z;
 
 	//----------------[ constructors ]--------------------------
 	/**
@@ -1106,59 +1024,7 @@ class Vector4
 {
 public:
 
-	union
-	{
-		/**
-		 * First element of vector, alias for R-coordinate.
-		 * For color notation.
-		 */
-		T r
-		/**
-		 * First element of vector, alias for X-coordinate.
-		 */;
-		T x;
-	};
-
-	union
-	{
-		/**
-		 * Second element of vector, alias for G-coordinate.
-		 * For color notation.
-		 */
-		T g;
-		/**
-		 * Second element of vector, alias for Y-coordinate.
-		 */
-		T y;
-	};
-
-	union
-	{
-		/**
-		 * Third element of vector, alias for B-coordinate.
-		 * For color notation.
-		 */
-		T b;
-		/**
-		 * Third element of vector, alias for Z-coordinate.
-		 */
-		T z;
-	};
-
-	union
-	{
-		/**
-		 * Fourth element of vector, alias for A-coordinate.
-		 * For color notation. This represnt aplha chanell
-		 */
-		T a;
-		/**
-		 * First element of vector, alias for W-coordinate.
-		 * @note For vectors (such as normals) should be set to 0.0
-		 * For vertices should be set to 1.0
-		 */
-		T w;
-	};
+    T x, y, z, w;
 
 	//----------------[ constructors ]--------------------------
 	/**

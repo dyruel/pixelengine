@@ -43,14 +43,14 @@ const std::string& Q3ShaderParser::nexttok() {
 }
 */
 
-inline void Q3ShaderPass::_saveOglSates() {
+void Q3ShaderPass::_saveOglSates() {
     m_oglStates[BLEND] = glIsEnabled(GL_BLEND);
     m_oglStates[ALPHA_TEST] = glIsEnabled(GL_ALPHA_TEST);
     glGetBooleanv(GL_DEPTH_WRITEMASK, &m_oglStates[DEPTHWRITE]);
     // glIsEnabled(GL_COLOR_ARRAY) ?
 }
 
-inline void Q3ShaderPass::_restoreOglStates() {
+void Q3ShaderPass::_restoreOglStates() {
     if (m_oglStates[BLEND]) {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -75,7 +75,7 @@ inline void Q3ShaderPass::_restoreOglStates() {
 }
 
 
-inline void Q3ShaderPass::start() {
+void Q3ShaderPass::start() {
     
     this->_saveOglSates();
     
@@ -116,7 +116,7 @@ inline void Q3ShaderPass::start() {
 }
 
 
-inline void Q3ShaderPass::stop() {
+void Q3ShaderPass::stop() {
     this->_restoreOglStates();
 }
 
@@ -124,11 +124,11 @@ inline void Q3ShaderPass::stop() {
 
 
 
-inline void Q3ShaderPass::init() {
+void Q3ShaderPass::init() {
     TextureManager::getInstance()->getTexture(m_Texture);
 }
 
-inline void Q3ShaderPass::update(const double& delta) {
+void Q3ShaderPass::update(const double& delta) {
     if (m_flags & SHADER_ANIMMAP) {
         m_frame += delta * m_animSpeed;
         if(((int) m_frame) >= m_animFrames.size())
@@ -153,7 +153,7 @@ inline void Q3Shader::_restoreOglStates() {
 */
 
 
-inline void Q3Shader::start() {
+void Q3Shader::start() {
     if (m_flags & SHADER_NOCULL) {
         glDisable(GL_CULL_FACE);
     }
@@ -161,7 +161,7 @@ inline void Q3Shader::start() {
 }
 
 
-inline void Q3Shader::stop() {
+void Q3Shader::stop() {
     if (m_flags & SHADER_NOCULL) {
         glEnable(GL_CULL_FACE);
     }

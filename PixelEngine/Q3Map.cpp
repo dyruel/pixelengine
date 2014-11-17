@@ -16,15 +16,28 @@ int Q3Map::bbox_index[8][3] =
 };
 
 
-inline void Q3FacePlanar::render() {
+void Q3FacePlanar::render() {
     m_shader.start();
     
     std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPasse = m_shader.begin();
     std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPassesEnd = m_shader.end();
     
-    glVertexPointer(3, GL_FLOAT, sizeof(Q3Vertex), m_verticesPool.vertices.data() + m_firstVertex);    
-    glTexCoordPointer(2, GL_FLOAT, sizeof(Q3Vertex), &m_verticesPool.vertices[m_firstVertex].texcoord.s);
-    
+    glVertexPointer(3, GL_FLOAT, sizeof(Q3Vertex), m_verticesPool.vertices.data() + m_firstVertex);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(Q3Vertex), &m_verticesPool.vertices[m_firstVertex].texcoord.x);
+ 
+/*
+    glBegin(GL_TRIANGLES);
+    for (int b = m_firstIndex; b < m_firstIndex + m_numIndexes; ++b)
+    {
+
+        glVertex3f(m_verticesPool.vertices[m_verticesPool.indexes[b] + m_firstVertex].position.x,
+                   m_verticesPool.vertices[m_verticesPool.indexes[b] + m_firstVertex].position.y,
+                   m_verticesPool.vertices[m_verticesPool.indexes[b] + m_firstVertex].position.z);
+        
+        std::cout << m_verticesPool.vertices[m_verticesPool.indexes[b]].position.toString() << std::endl;
+    }
+    glEnd();
+*/
     while (shaderPasse != shaderPassesEnd) {
         
         (*shaderPasse)->start();
@@ -46,7 +59,7 @@ inline void Q3FacePlanar::render() {
  *
  * Return true if the node can be safely clipped
  */
-inline bool Q3Map::_clipTest(const Node& node) const {
+bool Q3Map::_clipTest(const Node& node) const {
     unsigned int and_clip = ~0;
     
     for (int j = 0; j < 8; ++j)
@@ -89,7 +102,7 @@ inline bool Q3Map::_clipTest(const Node& node) const {
 }
 
 
-inline void Q3Map::_pushFaces(int index) {
+void Q3Map::_pushFaces(int index) {
     
     if (index < 0) { // Leaf
         int i = -(index + 1);
@@ -172,7 +185,7 @@ bool Q3Map::load(FILE * file) {
                             bspHeader.entries[LUMP_LEAFFACES],
                             bspHeader.entries[LUMP_LEAFBRUSHES],
                             bspHeader.entries[LUMP_VISDATA])
-        
+   
         //|| !this->_loadEntities(file, m_header.entries[LUMP_VERTICES].offset, m_header.entries[LUMP_VERTICES].length)
         )
     {
@@ -233,24 +246,24 @@ bool Q3Map::_loadVertices(FILE * file, const BspLumpEntry& verticesLump, const B
         m_verticesPool.vertices[i].position.y = bspVertices[i].position[1];
         m_verticesPool.vertices[i].position.z = bspVertices[i].position[2];
         
-        m_verticesPool.vertices[i].texcoord.s = bspVertices[i].texcoord[0][0];
-        m_verticesPool.vertices[i].texcoord.t = bspVertices[i].texcoord[0][1];
+        m_verticesPool.vertices[i].texcoord.x = bspVertices[i].texcoord[0][0];
+        m_verticesPool.vertices[i].texcoord.y = bspVertices[i].texcoord[0][1];
         
-        m_verticesPool.vertices[i].lmcoord.s = bspVertices[i].texcoord[1][0];
-        m_verticesPool.vertices[i].lmcoord.t = bspVertices[i].texcoord[1][1];
-        
-        m_verticesPool.vertices[i].normal.x = bspVertices[i].normal[0];
-        m_verticesPool.vertices[i].normal.y = bspVertices[i].normal[1];
-        m_verticesPool.vertices[i].normal.z = bspVertices[i].normal[2];
+        m_verticesPool.vertices[i].lmcoord.x = bspVertices[i].texcoord[1][0];
+        m_verticesPool.vertices[i].lmcoord.y = bspVertices[i].texcoord[1][1];
         
         m_verticesPool.vertices[i].normal.x = bspVertices[i].normal[0];
         m_verticesPool.vertices[i].normal.y = bspVertices[i].normal[1];
         m_verticesPool.vertices[i].normal.z = bspVertices[i].normal[2];
         
-        m_verticesPool.vertices[i].color.r = bspVertices[i].color[0];
-        m_verticesPool.vertices[i].color.g = bspVertices[i].color[1];
-        m_verticesPool.vertices[i].color.b = bspVertices[i].color[2];
-        m_verticesPool.vertices[i].color.a = bspVertices[i].color[3];
+        m_verticesPool.vertices[i].normal.x = bspVertices[i].normal[0];
+        m_verticesPool.vertices[i].normal.y = bspVertices[i].normal[1];
+        m_verticesPool.vertices[i].normal.z = bspVertices[i].normal[2];
+        
+        m_verticesPool.vertices[i].color.x = bspVertices[i].color[0];
+        m_verticesPool.vertices[i].color.y = bspVertices[i].color[1];
+        m_verticesPool.vertices[i].color.z = bspVertices[i].color[2];
+        m_verticesPool.vertices[i].color.w = bspVertices[i].color[3];
     }
     
     
@@ -287,6 +300,7 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
     std::vector<Q3Shader> shaders;
     std::string infoString("");
     int n = 0, nPlanar = 0, nPatch = 0, nTriSoup = 0, nFlare = 0,nBad = 0;
+    std::shared_ptr<Q3Face> face = nullptr;
     
     struct BspFace {
         int shader;
@@ -340,6 +354,9 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, bspLightmap[i].map);
     }
     
+    //GLenum e = glGetError();
+    
+    
     ILogger::log("--> %d LightMaps\n", n);
     
     // Load shaders and faces from the file
@@ -354,21 +371,20 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
     fread(bspFaces.get(), facesLump.length, 1, file);
     
     // Fill faces informations
+    
     for (int i = 0; i < n; ++i) {
-        
-        //        if(i == 2054) {
-        //            std::cout << "qsd " << bspFaces[i].type <<  std::endl;
-        //        }
         
         switch (bspFaces[i].type) {
                 
             case Q3Face::FACE_PLANAR:
             {
                 
-                std::shared_ptr<Q3Face> face = std::make_shared<Q3FacePlanar>(m_verticesPool);
+                
+                face = std::make_shared<Q3FacePlanar>(m_verticesPool);
                 face->type = Q3Face::FACE_PLANAR;
                 
                 if (shaderManager->exists(bspShaders[bspFaces[i].shader].name)) {
+                    
                     face->m_shader = *(shaderManager->at(bspShaders[bspFaces[i].shader].name));
                     
                     std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPass = face->m_shader.begin();
@@ -378,8 +394,10 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                         (*shaderPass)->init();
                         ++shaderPass;
                     }
+
                 }
                 else {
+                    
                     Texture tex[2];
                     Q3Shader shaderDefault;
                     std::shared_ptr<Q3ShaderPass> shaderPass = std::make_shared<Q3ShaderPass>();
@@ -408,7 +426,7 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                     infoString = "(No shader script found, default loaded)";
                 }
                 
-                m_faces.push_back(face);
+
                 ++nPlanar;
                 
                 ILogger::log("---> Face %d, type planar, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
@@ -417,35 +435,11 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                 
             case Q3Face::FACE_PATCH:
             {
-                std::shared_ptr<Q3Face> face = std::make_shared<Q3FacePatch>(m_verticesPool);
+                face = std::make_shared<Q3FacePatch>(m_verticesPool);
                 face->type = Q3Face::FACE_PATCH;
                 
-                /*
-                 int maxPatchesX = (m_faces[i].size[0] - 1) >> 1;
-                 int maxPatchesY = (m_faces[i].size[1] - 1) >> 1;
-                 
-                 m_patches[i].m_numPatches = maxPatchesX * maxPatchesY;
-                 m_patches[i].m_bezierPatches.reset(new Q3BezierPatch[m_patches[i].m_numPatches]);
-                 
-                 for (int y = 0; y < maxPatchesY; ++y)
-                 {
-                 for (int x = 0; x < maxPatchesX; ++x)
-                 {
-                 for (int a = 0; a < 3; ++a)
-                 {
-                 for (int b = 0; b < 3; ++b)
-                 {
-                 m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b] = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)];
-                 }
-                 }
-                 
-                 m_patches[i].m_bezierPatches[y*maxPatchesX + x].tesselate();
-                 }
-                 }
-                 
-                 }
-                 */
-                m_faces.push_back(face);
+
+
                 ++nPatch;
                 ILogger::log("---> Face %d, type patch, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
             }
@@ -453,10 +447,10 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                 
             case Q3Face::FACE_TRIANGLE_SOUP:
             {
-                std::shared_ptr<Q3Face> face = std::make_shared<Q3FacePatch>(m_verticesPool);
+                face = std::make_shared<Q3FacePatch>(m_verticesPool);
                 face->type = Q3Face::FACE_PATCH;
                 
-                m_faces.push_back(face);
+
                 ++nTriSoup;
                 ILogger::log("---> Face %d, type triangle soup, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
             }
@@ -465,10 +459,10 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                 
             case Q3Face::FACE_FLARE:
             {
-                std::shared_ptr<Q3Face> face = std::make_shared<Q3FaceFlare>(m_verticesPool);
+                face = std::make_shared<Q3FaceFlare>(m_verticesPool);
                 face->type = Q3Face::FACE_FLARE;
                 
-                m_faces.push_back(face);
+                
                 ++nFlare;
                 ILogger::log("---> Face %d, type flare, %s %s\n", i, bspShaders[bspFaces[i].shader].name, infoString.c_str());
             }
@@ -480,9 +474,20 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
                 ++nBad;
                 ILogger::log("---> Face %d, type bad\n", i);
             }
-                break;
+            break;
         }
         
+        if(face) {
+            face->m_firstVertex = bspFaces[i].vertex;
+            face->m_numVertices = bspFaces[i].n_vertexes;
+            
+            face->m_firstIndex = bspFaces[i].meshvert;
+            face->m_numIndexes = bspFaces[i].n_meshverts;
+            
+            
+            m_faces.push_back(face);
+            face = nullptr;
+        }
     }
     
     ILogger::log("--> %d faces loaded (%d Planars, %d Patches, %d Triangle Soup, %d Bad).\n",
@@ -490,6 +495,32 @@ bool Q3Map::_loadFaces(FILE * file, const BspLumpEntry& facesLump, const BspLump
     
     return true;
 }
+
+/*
+ int maxPatchesX = (m_faces[i].size[0] - 1) >> 1;
+ int maxPatchesY = (m_faces[i].size[1] - 1) >> 1;
+ 
+ m_patches[i].m_numPatches = maxPatchesX * maxPatchesY;
+ m_patches[i].m_bezierPatches.reset(new Q3BezierPatch[m_patches[i].m_numPatches]);
+ 
+ for (int y = 0; y < maxPatchesY; ++y)
+ {
+ for (int x = 0; x < maxPatchesX; ++x)
+ {
+ for (int a = 0; a < 3; ++a)
+ {
+ for (int b = 0; b < 3; ++b)
+ {
+ m_patches[i].m_bezierPatches[y*maxPatchesX + x].m_anchors[a * 3 + b] = m_vertexes[m_faces[i].vertex + (2 * y*m_faces[i].size[0] + 2 * x) + (a * m_faces[i].size[0] + b)];
+ }
+ }
+ 
+ m_patches[i].m_bezierPatches[y*maxPatchesX + x].tesselate();
+ }
+ }
+ 
+ }
+ */
 
 
 
@@ -630,7 +661,7 @@ bool Q3Map::_loadBspTree(FILE * file,
 }
 
 
-inline void Q3Map::update(double delta) {
+void Q3Map::update(double delta) {
     SceneNodeList::iterator i = m_children.begin();
     SceneNodeList::iterator end = m_children.end();
     
@@ -656,11 +687,14 @@ inline void Q3Map::update(double delta) {
 }
 
 
-inline void Q3Map::render() {
+void Q3Map::render() {
     std::set<int>::iterator faceToRender = m_facesToRender.begin();
     std::set<int>::iterator faceToRenderEnd = m_facesToRender.end();
   
+   
+    
     while (faceToRender != faceToRenderEnd) {
+        
         std::shared_ptr<Q3Face> face = m_faces[*faceToRender];
         face->render();
         ++faceToRender;

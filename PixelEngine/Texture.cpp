@@ -130,7 +130,7 @@ GLuint TextureManager::_loadTextureFromFile(const std::string& filename, int fla
 	ILuint imgId = 0;
 	GLuint id = 0;
 	bool isLoaded = false;
-
+    
 	ilGenImages(1, &imgId);
 	ilBindImage(imgId);
 
@@ -156,6 +156,7 @@ GLuint TextureManager::_loadTextureFromFile(const std::string& filename, int fla
 	else if (ilLoad(IL_JPG, jpg.c_str())) {
 		isLoaded = true;
 	}
+
 
 	if (isLoaded) {
 		glGenTextures(1, &id);

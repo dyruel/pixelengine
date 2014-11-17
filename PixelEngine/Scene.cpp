@@ -13,6 +13,7 @@
 
 
 void DummyNode::render() {
+    
     glBegin(GL_QUADS);
     
     glColor3ub(255,0,0);
