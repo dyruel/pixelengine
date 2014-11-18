@@ -32,9 +32,11 @@ struct Texture {
     std::string     m_name;
     int             m_texId;
     GLuint          m_flags;
+    GLvoid*         m_texCoordPointer;
+    GLsizei         m_Stride;
     
     Texture()
-    :m_name(""), m_texId(-1), m_flags(0) {}
+    :m_name(""), m_texId(-1), m_flags(0), m_Stride(0), m_texCoordPointer(nullptr) {}
     
     void clear() {
 //        if(glIsTexture(m_texId)) {
@@ -44,6 +46,8 @@ struct Texture {
         m_name  = "";
         m_texId = -1;
         m_flags = 0;
+        m_Stride = 0;
+        m_texCoordPointer = nullptr;
     }
 };
 

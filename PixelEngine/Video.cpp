@@ -94,7 +94,7 @@ void Video::setOglDefaultState() {
 	glClearDepth(1.0f);
 	glCullFace(GL_FRONT);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
-    glClearColor(.5f, .5f, .5f, 1.f);
+    //glClearColor(.5f, .5f, .5f, 1.f);
 	glEnable(GL_TEXTURE_2D);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);

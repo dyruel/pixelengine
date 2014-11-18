@@ -77,14 +77,15 @@ void Q3ShaderPass::_restoreOglStates() {
 
 void Q3ShaderPass::start() {
     
+    glTexCoordPointer(2, GL_FLOAT, m_Texture.m_Stride, m_Texture.m_texCoordPointer);
+//    std::cout << "Shader = " << m_Texture.m_Stride << " " << m_Texture.m_texCoordPointer << std::endl;
+    
     this->_saveOglSates();
     
     if (m_flags & SHADER_ANIMMAP) {
-//        glTexCoordPointer(2, GL_FLOAT, m_Stride, m_TexCoordPointer);
         glBindTexture(GL_TEXTURE_2D, m_animFrames[(int) m_frame].m_texId);
     }
-    else {
-//        glTexCoordPointer(2, GL_FLOAT, m_Stride, m_TexCoordPointer);
+    else  {
         glBindTexture(GL_TEXTURE_2D, m_Texture.m_texId);
     }
     
@@ -125,7 +126,9 @@ void Q3ShaderPass::stop() {
 
 
 void Q3ShaderPass::init() {
-    TextureManager::getInstance()->getTexture(m_Texture);
+    if(m_Texture.m_texId < 0) {
+        TextureManager::getInstance()->getTexture(m_Texture);
+    }
 }
 
 void Q3ShaderPass::update(const double& delta) {

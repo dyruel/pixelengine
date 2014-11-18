@@ -121,8 +121,10 @@ public:
 
     
     void setTexture(const Texture& texture) { m_Texture = texture; }
+    const Texture& getTexture() const { return m_Texture; }
     void setFlags(const unsigned int& flags) { m_flags = flags; }
     void addFlag(const unsigned int& flag)   { m_flags |= flag; }
+    const unsigned int getFlags() const { return m_flags; }
     void setBlending(const GLenum& blendSrc, const GLenum& blendDst) { m_blendSrc = blendSrc; m_blendDst = blendDst; };
     void setAnimation(const float& animSpeed, const std::vector<Texture>& animFrames) {
         m_animSpeed      = animSpeed;
@@ -161,6 +163,24 @@ public:
     
     void setName(const std::string& name) { m_name = name; }
 	const std::string& getName() const { return m_name;  }
+    
+    Q3Shader& operator=(const Q3Shader& shader)
+    {
+        if (this == &shader)
+            return *this;
+        
+        m_name  = shader.m_name;
+        m_flags = shader.m_flags;
+        
+        
+        for (Q3Shader::const_iterator i = shader.begin(); i != shader.end(); ++i) {
+            std::shared_ptr<Q3ShaderPass> shaderPass = std::make_shared<Q3ShaderPass>();
+            *shaderPass = *(*i);
+            push_back(shaderPass);
+        }
+        
+        return *this;
+    }
 
     void start();
     void stop();

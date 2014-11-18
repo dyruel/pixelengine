@@ -146,10 +146,6 @@ public:
     :Q3Face(verticesPool){}
     virtual ~Q3FacePatch() {}
     
-    bool init() {
-        return true;
-    }
-    
     void render() {};
 };
 
@@ -161,9 +157,7 @@ public:
     :Q3Face(verticesPool){}
     virtual ~Q3FaceTriangleSoup() {}
     
-    void render() {
-        
-    }
+    void render();
     
 };
 
