@@ -83,28 +83,31 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Physics.h" />
-    <ClInclude Include="Q3Bsp.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="Q3Level.h" />
+    <ClInclude Include="Q3Map.h" />
     <ClInclude Include="Q3Shader.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="unique.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="Video.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Physics.cpp" />
-    <ClCompile Include="Q3Bsp.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="File.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Q3Level.cpp" />
+    <ClCompile Include="Q3Map.cpp" />
     <ClCompile Include="Q3Shader.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="Texture.cpp" />
