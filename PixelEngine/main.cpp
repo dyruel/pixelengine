@@ -36,7 +36,7 @@ int main(int argc, const char * argv[]){
 	camera->getPosition()[1] = 0.;
 	camera->getPosition()[2] = 50.;
 
-	if (!q3bsp->load("maps/q3dm1.bsp")) {
+	if (!q3bsp->load("bsp/q3dm1.bsp")) {
 		return 0;
 	}
 

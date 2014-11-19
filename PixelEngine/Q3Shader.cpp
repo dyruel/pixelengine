@@ -129,6 +129,10 @@ void Q3ShaderPass::init() {
     if(m_Texture.m_texId < 0) {
         TextureManager::getInstance()->getTexture(m_Texture);
     }
+
+	for (std::vector<Texture>::iterator i = m_animFrames.begin(); i != m_animFrames.end(); ++i) {
+		TextureManager::getInstance()->getTexture(*i);
+	}
 }
 
 void Q3ShaderPass::update(const double& delta) {

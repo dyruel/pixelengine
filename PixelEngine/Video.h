@@ -9,11 +9,11 @@
 #ifndef __PixelEngine__Video__
 #define __PixelEngine__Video__
 
-#include <GLFW/glfw3.h>
-
 #include <iostream>
 #include <string>
 
+
+#include "Opengl.h"
 #include "Singleton.h"
 #include "Logger.h"
 

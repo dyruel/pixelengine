@@ -1,5 +1,5 @@
 //
-//  Bsp.h
+//  Q3Level.h
 //  PixelEngine
 //
 //  Created by morgan on 23/10/14.
@@ -9,8 +9,8 @@
 
 // Doc: http://www.mralligator.com/q3/
 
-#ifndef PixelEngine_Q3Bsp_h
-#define PixelEngine_Q3Bsp_h
+#ifndef PixelEngine_Q3Level_h
+#define PixelEngine_Q3Level_h
 
 
 #include "Q3Map.h"

@@ -11,11 +11,11 @@
 #ifndef PixelEngine_Q3Shader_h
 #define PixelEngine_Q3Shader_h
 
-#include <GLFW/glfw3.h>
+
 #include <vector>
 #include <map>
 
-
+#include "Opengl.h"
 #include "Texture.h"
 #include "Singleton.h"
 

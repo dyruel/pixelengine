@@ -6,8 +6,8 @@
 //  Copyright (c) 2014 Morgan Chopin. All rights reserved.
 //
 
-#ifndef __PixelEngine__Video__
-#define __PixelEngine__Video__
+#ifndef __PixelEngine__Physics__
+#define __PixelEngine__Physics__
 
 #include "Scene.h"
 #include "Singleton.h"

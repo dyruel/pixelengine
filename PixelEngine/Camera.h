@@ -9,8 +9,7 @@
 #ifndef PixelEngine_Camera_h
 #define PixelEngine_Camera_h
 
-#include <GLFW/glfw3.h>
-
+#include "Opengl.h"
 #include "Vector.h"
 
 // Camera

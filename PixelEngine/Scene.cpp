@@ -6,11 +6,10 @@
 //  Copyright (c) 2014 Morgan Chopin. All rights reserved.
 //
 
-#include "Scene.h"
-
 
 #include <iostream>
 
+#include "Scene.h"
 
 void DummyNode::render() {
     

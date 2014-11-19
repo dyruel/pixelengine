@@ -14,7 +14,7 @@
 #include <type_traits>
 #include <utility>
 
-namespace std {
+namespace std {/*
     template<class T> struct _Unique_if {
         typedef unique_ptr<T> _Single_object;
     };
@@ -43,6 +43,7 @@ namespace std {
     template<class T, class... Args>
     typename _Unique_if<T>::_Known_bound
     make_unique(Args&&...) = delete;
+	*/
 }
 
 

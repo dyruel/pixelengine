@@ -7,7 +7,6 @@
 //
 
 
-#include <GLFW/glfw3.h>
 #include <cmath>
 
 #include "Video.h"

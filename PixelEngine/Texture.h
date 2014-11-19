@@ -9,9 +9,7 @@
 #ifndef __PixelEngine__Texture__
 #define __PixelEngine__Texture__
 
-#define GLFW_INCLUDE_GLU
 
-#include <GLFW/glfw3.h>
 #include <IL/il.h>
 //#include <IL/ilu.h>
 #include <iostream>
@@ -19,6 +17,7 @@
 #include <memory>
 #include <map>
 
+#include "Opengl.h"
 #include "Logger.h"
 #include "Singleton.h"
 

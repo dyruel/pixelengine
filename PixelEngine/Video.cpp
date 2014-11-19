@@ -9,7 +9,6 @@
 #include "Video.h"
 
 
-
 Video::Video()
 	: m_windowTitle("Pixel Engine"), m_windowWidth(1024), m_windowHeight(768) {
 
@@ -27,7 +26,7 @@ bool Video::init() {
 
 	ILogger::setLogger(&fileLogger);
 
-	ILogger::log("Video :: Start engine initialization...");
+	ILogger::log("Video :: Start engine initialization...\n");
 
     if (!glfwInit()) {
 		ILogger::log("Error during the initialization of GLFW.");
@@ -75,6 +74,8 @@ bool Video::init() {
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	*/
 
+	//glGenBuffers();
+
 	this->setOglDefaultState();
     
     GLint frameWidth = 0, frameHeight = 0;
@@ -83,8 +84,20 @@ bool Video::init() {
 
 	glfwSetCursorPos(m_window, m_windowWidth >> 1, m_windowHeight >> 1);
     
-
+	//std::cout << glGetString(GL_VERSION) << std::endl; 
     //printf("%s\n", glGetString(GL_VERSION));
+
+	GLenum err = glewInit();
+	if (GLEW_OK != err) {
+		ILogger::log("Error : failed to initialize GLEW.");
+		return false;
+	}
+	ILogger::log("Using GLEW Version: %s.", glewGetString(GLEW_VERSION));
+
+	if (!GLEW_VERSION_2_0) {
+		ILogger::log("OpenGL 2.0 or above is required.");
+		return false;
+	}
 
 	ILogger::log("done.\n");
     return true;

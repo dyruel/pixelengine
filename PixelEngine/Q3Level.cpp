@@ -60,14 +60,14 @@ bool Q3Bsp::_loadEntities(FILE * file, int offset, int length) {
 
 
 
-inline void Q3Level::render() {
+void Q3Level::render() {
 //    std::cout << "qze" << std::endl;
     m_map.render();
 
 }
 
 
-inline void Q3Level::update(GLdouble delta) {
+void Q3Level::update(GLdouble delta) {
 	SceneNodeList::iterator i = m_children.begin();
 	SceneNodeList::iterator end = m_children.end();
     

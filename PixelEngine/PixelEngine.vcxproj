@@ -51,14 +51,14 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\Vendor\DevIL\include;C:\Vendor\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>F:\PixelEngine\Vendor\glfw\include;F:\PixelEngine\Vendor\glew-1.11.0\include;F:\PixelEngine\Vendor\DevIL\include;C:\Vendor\DevIL\include;C:\Vendor\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Vendor\DevIL\lib;C:\Vendor\glfw\lib-msvc120;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;glfw3.lib;DevIL.lib;ILU.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>F:\PixelEngine\Vendor\glfw\lib-msvc120;F:\PixelEngine\Vendor\DevIL\lib;F:\PixelEngine\Vendor\glew-1.11.0\lib\;C:\Vendor\DevIL\lib;C:\Vendor\glfw\lib-msvc120;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32.lib;glfw3.lib;DevIL.lib;ILU.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -69,19 +69,20 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>F:\PixelEngine\Vendor\physfs-2.0.3;F:\PixelEngine\Vendor\DevIL\include;F:\PixelEngine\Vendor\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>F:\PixelEngine\Vendor\glfw\include;F:\PixelEngine\Vendor\glew-1.11.0\include;F:\PixelEngine\Vendor\DevIL\include;F:\PixelEngine\Vendor\physfs-2.0.3;F:\PixelEngine\Vendor\DevIL\include;F:\PixelEngine\Vendor\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>F:\PixelEngine\Vendor\physfs-2.0.3\libs;F:\PixelEngine\Vendor\DevIL\lib;F:\PixelEngine\Vendor\glfw\lib-msvc120;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;glfw3.lib;DevIL.lib;ILU.lib;physfs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>F:\PixelEngine\Vendor\glfw\lib-msvc120;F:\PixelEngine\Vendor\DevIL\lib;F:\PixelEngine\Vendor\glew-1.11.0\lib\;F:\PixelEngine\Vendor\physfs-2.0.3\libs;F:\PixelEngine\Vendor\DevIL\lib;F:\PixelEngine\Vendor\glfw\lib-msvc120;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32.lib;glfw3.lib;DevIL.lib;ILU.lib;physfs.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Opengl.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="File.h" />

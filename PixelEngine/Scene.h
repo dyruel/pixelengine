@@ -9,11 +9,11 @@
 #ifndef PixelEngine_Scene_h
 #define PixelEngine_Scene_h
 
-#include <GLFW/glfw3.h>
 
 #include <vector>
 #include <memory>
 
+#include "Opengl.h"
 #include "Physics.h"
 #include "Singleton.h"
 #include "Camera.h"

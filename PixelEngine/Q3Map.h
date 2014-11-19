@@ -13,6 +13,7 @@
 #include <set>
 
 
+#include "Opengl.h"
 #include "Vector.h"
 #include "Q3Shader.h"
 #include "Scene.h"
@@ -63,18 +64,19 @@ class Q3Face {
     
     
 protected:
-    Q3Shader m_shader;
-    const Q3VerticesPool& m_verticesPool;
-    int type;
-    
+    Q3Shader	m_shader;
+	GLuint		m_vboId;
+    int			type;
+	std::vector<Q3Vertex> m_vertices;
+	//    const Q3VerticesPool& m_verticesPool;    
     //    int m_effectIndex;
     //    int m_lightmapIndex;
     
-    int m_firstVertex;
-    int m_numVertices;
+//    int m_firstVertex;
+//    int m_numVertices;
     
-    int m_firstIndex;
-    int m_numIndexes;
+//    int m_firstIndex;
+//    int m_numIndexes;
     
     
     //    int lightmapX, lightmapY;
@@ -83,8 +85,7 @@ protected:
     //    Vector3f lightmapVecs[3];
     
 public:
-    
-    
+  
     enum {
         FACE_BAD = 0,
         FACE_PLANAR,
@@ -93,10 +94,17 @@ public:
         FACE_FLARE
     };
     
-    
+	/*
     Q3Face(const Q3VerticesPool& verticesPool)
     :m_verticesPool(verticesPool){}
-    virtual ~Q3Face() {}
+	*/
+
+	Q3Face() {}
+    virtual ~Q3Face() {
+		if (glIsBuffer(m_vboId) == GL_TRUE){
+			glDeleteBuffers(1, &m_vboId);
+		}
+	}
     
     virtual void render() = 0;
     
@@ -112,8 +120,7 @@ typedef std::vector<std::shared_ptr<Q3Face>> Q3FacesList;
 class Q3FacePlanar : public Q3Face {
     
 public:
-    Q3FacePlanar(const Q3VerticesPool& verticesPool)
-    :Q3Face(verticesPool){}
+    Q3FacePlanar(){}
     virtual ~Q3FacePlanar() {}
     
     void render();
@@ -142,8 +149,7 @@ class Q3FacePatch : public Q3Face {
     
 public:
     
-    Q3FacePatch(const Q3VerticesPool& verticesPool)
-    :Q3Face(verticesPool){}
+    Q3FacePatch(){}
     virtual ~Q3FacePatch() {}
     
     void render() {};
@@ -153,8 +159,7 @@ public:
 class Q3FaceTriangleSoup : public Q3Face {
     
 public:
-    Q3FaceTriangleSoup(const Q3VerticesPool& verticesPool)
-    :Q3Face(verticesPool){}
+    Q3FaceTriangleSoup() {}
     virtual ~Q3FaceTriangleSoup() {}
     
     void render();
@@ -165,8 +170,7 @@ class Q3FaceFlare : public Q3Face {
     
 public:
     
-    Q3FaceFlare(const Q3VerticesPool& verticesPool)
-    :Q3Face(verticesPool){}
+    Q3FaceFlare(){}
     virtual ~Q3FaceFlare() {}
     
     void render() {
