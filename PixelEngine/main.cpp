@@ -14,7 +14,7 @@
 #include "Scene.h"
 #include "Q3Level.h"
 
-const GLdouble deltaTime = .01; // 1/100th seconds
+
 
 
 int main(int argc, const char * argv[]){
@@ -56,25 +56,39 @@ int main(int argc, const char * argv[]){
     */
 
     
-	GLdouble lastTime = (GLdouble) glfwGetTime();
+    const GLdouble deltaTime = 10.; // 10ms
+	GLdouble lastTime = (GLdouble) glfwGetTime()*1000;
+    GLdouble timer = (GLdouble) glfwGetTime();
+    GLint updates = 0;
+    GLint frames = 0;
+    
+//    std::cout << lastTime << std::endl;
 
 	while (!video->windowShouldClose()) {
   
-		GLdouble presentTime = (GLdouble) glfwGetTime();
+		GLdouble presentTime = (GLdouble) glfwGetTime()*1000;
+        frames++;
         
 		while (lastTime + deltaTime <= presentTime) {
-            
-			// Logic stuff here
             
 			sceneManager->update(deltaTime);
 
 			lastTime += deltaTime;
+            updates++;
 		}
         
 		// Rendering
 		video->beginScene();
 		sceneManager->render();
 		video->endScene();
+        
+        
+        if(((GLdouble) glfwGetTime()) - timer > 1.) {
+            std::cout << updates << " ups, " << frames << " fps" << std::endl;
+            updates = 0;
+            frames = 0;
+            timer += 1.;
+        }
 
 		if (glfwGetKey(Video::getInstance()->getWindow(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 			glfwSetWindowShouldClose(Video::getInstance()->getWindow(), GL_TRUE);

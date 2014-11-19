@@ -57,7 +57,7 @@ protected:
 
 public:
 
-	CameraFree() : m_speed(200.0), m_mousex(0.0), m_mousey(0.0), m_vangle(0.0), m_hangle(0.0), m_vspeed(0.2), m_hspeed(0.2) {}
+	CameraFree() : m_speed(0.2), m_mousex(0.0), m_mousey(0.0), m_vangle(0.0), m_hangle(0.0), m_vspeed(0.2), m_hspeed(0.2) {}
 	virtual ~CameraFree() {};
 
 	virtual void update(GLdouble delta);

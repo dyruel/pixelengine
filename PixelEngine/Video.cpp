@@ -34,6 +34,8 @@ bool Video::init() {
         return false;
     }
     
+    glfwSwapInterval(0); // disable vsync
+    
 //	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), glfwGetPrimaryMonitor(), NULL);
 	m_window = glfwCreateWindow(m_windowWidth, m_windowHeight, m_windowTitle.c_str(), NULL, NULL);
     if (!m_window) {
