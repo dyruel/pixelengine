@@ -9,20 +9,20 @@
 #include "Video.h"
 
 
-Video::Video()
+CVideo::CVideo()
 	: m_windowTitle("Pixel Engine"), m_windowWidth(1024), m_windowHeight(768) {
 
 }
 
 
-Video::~Video() {
+CVideo::~CVideo() {
     ILogger::log("Video :: Start engine deinitialization...");
     glfwDestroyWindow(m_window);
     glfwTerminate();
     ILogger::log("done.\n");
 }
 
-bool Video::init() {
+bool CVideo::init() {
 
 	ILogger::setLogger(&fileLogger);
 
@@ -105,19 +105,19 @@ bool Video::init() {
 
 
 
-void Video::setOglDefaultState() {
+void CVideo::setOglDefaultState() {
 	glClearDepth(1.0f);
 	glCullFace(GL_FRONT);
 	glColor4f(1.f, 1.f, 1.f, 1.f);
-    //glClearColor(.5f, .5f, .5f, 1.f);
+    glClearColor(.5f, .5f, .5f, 1.f);
 	glEnable(GL_TEXTURE_2D);
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	glShadeModel(GL_SMOOTH);
 	glDepthFunc(GL_LEQUAL);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+//	glEnableClientState(GL_VERTEX_ARRAY);
+//	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glDepthMask(GL_TRUE);
@@ -131,21 +131,18 @@ void Video::setOglDefaultState() {
 
 
 
-void Video::beginScene() const {
+void CVideo::beginFrame() const {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 
-void Video::endScene() const {
+void CVideo::endFrame() const {
     glFlush();
     glfwSwapBuffers(m_window);
 }
 
 
-
-
-
-bool Video::windowShouldClose() {
+bool CVideo::windowShouldClose() {
     return glfwWindowShouldClose(m_window) != 0;
 }
 

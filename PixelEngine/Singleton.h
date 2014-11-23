@@ -16,31 +16,40 @@ class Singleton {
 
 public:
 
-	static std::shared_ptr<T> getInstance() {
+	static T* getInstance() {
 		if (!instance) {
-            instance.reset(new T);
-			instance->init();
+            instance = new T();
+			if (instance && !instance->init()) {
+				ILogger::log("Singleton creation error.");
+				delete instance;
+				instance = NULL;
+			}
 		}
+
 		return instance;
 	}
 
 protected:
 
 	Singleton() {};
-	~Singleton() {};
+	virtual ~Singleton() {
+		if (instance != NULL) {
+			delete instance;
+		}
+	};
 
 	virtual bool init() { return true; };
 //	virtual bool deinit() { return true; };
 
 private:
 
-	static std::shared_ptr<T> instance;
+	static T* instance;
 	Singleton(Singleton const&);
 	void operator =(Singleton const&);
 
 };
 
 
-template <class T> std::shared_ptr<T> Singleton<T>::instance = NULL;
+template <class T> T* Singleton<T>::instance = NULL;
 
 #endif

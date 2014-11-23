@@ -18,37 +18,37 @@
 #include "Logger.h"
 
 
-class Video : public Singleton<Video> {
-    friend class Singleton<Video>;
-
-private:
-    
-	GLFWwindow * m_window = NULL;
-	FileLogger fileLogger;
-
-    std::string m_windowTitle;
-    int m_windowWidth;
-    int m_windowHeight;
-    
-	bool init();
-        
-    Video();
-	Video(const Video&);
-	void operator =(const Video&);
+class CVideo : public Singleton<CVideo> {
+    friend class Singleton<CVideo>;
 
 public:
-
-	~Video();
+	~CVideo();
     
 
 	void setOglDefaultState();
 
-    void beginScene() const;
-    void endScene() const;
+    void beginFrame() const;
+
+	void endFrame() const;
 
 	GLFWwindow* getWindow() const { return m_window; };
 
     bool windowShouldClose();
+
+private:
+
+	GLFWwindow * m_window = NULL;
+	FileLogger fileLogger;
+
+	std::string m_windowTitle;
+	int m_windowWidth;
+	int m_windowHeight;
+
+	bool init();
+
+	CVideo();
+	CVideo(const CVideo&);
+	void operator =(const CVideo&);
 };
 
 

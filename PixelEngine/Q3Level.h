@@ -153,7 +153,7 @@ typedef	struct {
 } Q3BspVisData;
 */
 
-
+/*
 class Q3Level : public SceneNode {
     
 
@@ -172,6 +172,6 @@ public:
     void update(double delta);
  
 };
-
+*/
 
 #endif

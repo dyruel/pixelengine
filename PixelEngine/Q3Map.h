@@ -12,14 +12,23 @@
 #include <vector>
 #include <set>
 
-
+#include "Types.h"
 #include "Opengl.h"
 #include "Vector.h"
 #include "Q3Shader.h"
 #include "Scene.h"
+#include "Memory.h"
+#include "unique.h"
+#include "File.h"
 
 
+#if 1
+// Debug variables
+//extern GLdouble			g_pushingTime;
+#endif
 
+
+/*
 class Q3Vertex {
 public:
     Vector3f position;
@@ -50,7 +59,7 @@ public:
 };
 
 typedef std::vector<Q3Vertex> Q3VerticesList;
-typedef std::vector<int>      Q3IndexesList;
+typedef std::vector<GLuint>      Q3IndexesList;
 
 typedef struct {
     Q3VerticesList vertices;
@@ -65,9 +74,10 @@ class Q3Face {
     
 protected:
     Q3Shader	m_shader;
-	GLuint		m_vboId;
+	GLuint		m_vboVerticesId;
+	GLuint		m_vboIndexesId;
     int			type;
-	std::vector<Q3Vertex> m_vertices;
+//	std::vector<Q3Vertex> m_vertices;
 	//    const Q3VerticesPool& m_verticesPool;    
     //    int m_effectIndex;
     //    int m_lightmapIndex;
@@ -76,7 +86,7 @@ protected:
 //    int m_numVertices;
     
 //    int m_firstIndex;
-//    int m_numIndexes;
+    int m_numElements;
     
     
     //    int lightmapX, lightmapY;
@@ -86,23 +96,16 @@ protected:
     
 public:
   
-    enum {
-        FACE_BAD = 0,
-        FACE_PLANAR,
-        FACE_PATCH,
-        FACE_TRIANGLE_SOUP,
-        FACE_FLARE
-    };
-    
-	/*
-    Q3Face(const Q3VerticesPool& verticesPool)
-    :m_verticesPool(verticesPool){}
-	*/
+
+ 
 
 	Q3Face() {}
     virtual ~Q3Face() {
-		if (glIsBuffer(m_vboId) == GL_TRUE){
-			glDeleteBuffers(1, &m_vboId);
+		if (glIsBuffer(m_vboVerticesId) == GL_TRUE){
+			glDeleteBuffers(1, &m_vboVerticesId);
+		}
+		if (glIsBuffer(m_vboIndexesId) == GL_TRUE){
+			glDeleteBuffers(1, &m_vboIndexesId);
 		}
 	}
     
@@ -177,169 +180,303 @@ public:
         
     }
 };
+*/
 
-
-class Q3Map : public SceneNode {
-    
-    const int Q3BSP_VERSION = 46; // quake 3 maps
-    
-    enum {
-        LUMP_ENTITIES = 0,
-        LUMP_SHADERS,
-        LUMP_PLANES,
-        LUMP_NODES,
-        LUMP_LEAFS,
-        LUMP_LEAFFACES,
-        LUMP_LEAFBRUSHES,
-        LUMP_MODELS,
-        LUMP_BRUSHES,
-        LUMP_BRUSHSIDES,
-        LUMP_VERTICES,
-        LUMP_INDEXES,
-        LUMP_EFFECTS,
-        LUMP_FACES,
-        LUMP_LIGHTMAPS,
-        LUMP_LIGHTVOLS,
-        LUMP_VISDATA,
-        LUMP_TOTAL
-    };
-    
-    enum {
-        CLIP_X_LEFT		= 1 << 0,
-        CLIP_X_RIGHT	= 1 << 1,
-        CLIP_Y_LEFT		= 1 << 2,
-        CLIP_Y_RIGHT	= 1 << 3,
-        CLIP_Z_LEFT		= 1 << 4,
-        CLIP_Z_RIGHT	= 1 << 5,
-    };
-    
-    struct BspLumpEntry {
-        int offset;
-        int length;
-    };
-    
-    struct BspHeader  {
-        char magic[4];
-        int version;
-        BspLumpEntry entries[LUMP_TOTAL];
-    };
-    
-    struct VisData {
-        int numClusters;
-        int sizeCluster;
-        std::unique_ptr<unsigned char[]> bits;
-    };
-    
-    struct Node {
-        int bbox[6];
-    };
-    
-    struct Plane {
-        Vector3f normal;
-        float dist;
-    };
-    
-    struct InternalNode : public Node {
-        Plane plane;
-        int children[2];
-    };
-    
-    struct LeafNode : public Node {
-        int cluster;
-        int area;
-        
-        int firstLeafFace;
-        int numLeafFaces;
-        
-        int firstLeafBrush;
-        int numLeafBrushes;
-    };
-    
-    typedef std::vector<std::shared_ptr<InternalNode>>      InternalNodesList;
-    typedef std::vector<std::shared_ptr<LeafNode>>          LeafNodesList;
-    typedef int                                             ClusterIndex;
-    
-    static int bbox_index[8][3];
-    
-    Q3VerticesPool      m_verticesPool;
-    Q3FacesList         m_faces;
-    InternalNodesList   m_internalNodes;
-    LeafNodesList       m_leafNodes;
-    Q3IndexesList       m_leafFaceIndexes;
-    Q3IndexesList       m_leafBrushIndexes;
-    VisData             m_visData;
-    
-    
-    
-    std::set<int>       m_facesToRender;
-    void                _pushFaces(int index);
-    
-    Matrix4f            m_clipMatrix;
-    bool                _clipTest(const Node& node) const;
-    
-    
-    bool _loadVertices(FILE * file,
-                       const BspLumpEntry& verticesLump,
-                       const BspLumpEntry& indexesLump);
-    
-    bool _loadFaces(FILE * file,
-                    const BspLumpEntry& facesLump,
-                    const BspLumpEntry& shadersLump,
-                    const BspLumpEntry& lightmapsLump);
-    
-    bool _loadBspTree(FILE * file,
-                      const BspLumpEntry& nodesLump,
-                      const BspLumpEntry& leafLump,
-                      const BspLumpEntry& planesLump,
-                      const BspLumpEntry& leafFaceLump,
-                      const BspLumpEntry& leafBrushLump,
-                      const BspLumpEntry& visDataLump);
+class CQ3Map : public ISceneNode {
     
 public:
-    
-    const LeafNode& getLeafFromPosition(const Vector3f& v) const {
-        int index = 0;
-        
-        while (index >= 0) {
-            std::shared_ptr<InternalNode> node = m_internalNodes[index];
-            const double distance = node->plane.normal.dotProduct(v) - node->plane.dist;
-            
-            if (distance >= 0) {
-                index = node->children[0];
-            }
-            else {
-                index = node->children[1];
-            }
-        }
-        
-        return *m_leafNodes[-(index + 1)];
-    }
-    
-    ClusterIndex getClusterIndex(const Vector3f& v) const {
-        return this->getLeafFromPosition(v).cluster;
-    }
-    
-    
-    bool isVisible(ClusterIndex clusterFrom, ClusterIndex clusterTo) const {
-        unsigned char bits = 0;
-        
-        if (!m_visData.bits || clusterFrom < 0) {
-            return true;
-        }
-        
-        bits = m_visData.bits[(clusterFrom * m_visData.sizeCluster) + (clusterTo >> 3)];
-        
-        return (bits & (1 << (clusterTo & 7))) != 0;
-    }
-    
+
+	CQ3Map() {}
+	~CQ3Map() {}
     
     bool load(const char* filename);
-    bool load(FILE * file);
     
     void render();
     
-    void update(double delta);
-    
+	void update(const f64& delta);
+
+private:
+
+	// Data related to the BSP
+	void*	m_buffer;
+	s32		m_bufferPos;
+
+
+	const int Q3BSP_VERSION = 46; // quake 3 maps
+
+	enum {
+		LUMP_ENTITIES = 0,
+		LUMP_SHADERS,
+		LUMP_PLANES,
+		LUMP_NODES,
+		LUMP_LEAVES,
+		LUMP_LEAFFACES,
+		LUMP_LEAFBRUSHES,
+		LUMP_MODELS,
+		LUMP_BRUSHES,
+		LUMP_BRUSHSIDES,
+		LUMP_VERTICES,
+		LUMP_MESHINDICES,
+		LUMP_FOGS,
+		LUMP_FACES,
+		LUMP_LIGHTMAPS,
+		LUMP_LIGHTVOLS,
+		LUMP_VISDATA,
+		LUMP_TOTAL
+	};
+
+	enum {
+		FACE_BAD = 0,
+		FACE_PLANAR,
+		FACE_PATCH,
+		FACE_TRIANGLE_SOUP,
+		FACE_FLARE
+	};
+
+	enum {
+		CLIP_X_LEFT = 1 << 0,
+		CLIP_X_RIGHT = 1 << 1,
+		CLIP_Y_LEFT = 1 << 2,
+		CLIP_Y_RIGHT = 1 << 3,
+		CLIP_Z_LEFT = 1 << 4,
+		CLIP_Z_RIGHT = 1 << 5,
+	};
+
+	class CBspLumpEntry {
+	public:
+		s32 offset;
+		s32 length;
+	};
+
+	class CBspHeader {
+	public:
+		s32 magic;
+		s32 version;
+		CBspLumpEntry entries[LUMP_TOTAL];
+	};
+
+	class CBspEntity {
+	public:
+		u8 * ents;
+	};
+
+	class CBspShader {
+	public:
+		c8 name[64];
+		s32 flags;
+		s32 contents;
+	};
+
+	class CBspPlane {
+	public:
+		Vector3<f32> normal;
+		f32 dist;
+	};
+
+	class CBspNode {
+	public:
+		s32 planeIdx;
+		s32 children[2];
+		s32 bbox[6];
+	};
+
+	class CBspLeaf {
+	public:
+		s32 cluster;
+		s32 area;
+		s32 bbox[6];
+
+		s32 firstFaceIdx;
+		s32 numFaces;
+
+		s32 firstBrushIdx;
+		s32 numBrushes;
+	};
+
+	class CBspModel {
+	public:
+		f32 bbox[6];
+		s32 firstFace;
+		s32 numFaces;
+		s32 firstBrush;
+		s32 numBrushes;
+	};
+
+	class CBspBrush {
+	public:
+		s32 firstBrushSide;
+		s32 numBrushSides;
+		s32 shader;
+	};
+
+	class CBspBrushSide {
+	public:
+		s32 planeIdx;
+		s32 shaderIdx;
+	};
+
+	class CBspVertex {
+	public:
+		Vector3<f32>	position;
+		Vector2<f32>	texcoord;
+		Vector2<f32>	lmcoord;
+		Vector3<f32>	normal;
+		Vector4<u8>		color;
+	};
+
+	class CBspFog {
+	public:
+		c8 name[64];
+		s32 brushIdx;
+		s32 visibleSide;
+	};
+
+
+	class CBspFace {
+	public:
+		s32 shaderIdx;
+		s32 effectIdx;
+		s32 type;
+
+		s32 firstVertexIdx;
+		s32 numVertices;
+
+		s32 firstElementIdx;
+		s32 numElements;
+
+		s32 lmIdx;
+		s32 lmStart[2];
+		s32 lmSize[2];
+		f32 lmOrigin[3];
+		f32 lmVecs[2][3];
+
+		f32 normal[3];
+
+		s32 size[2];
+	};
+
+
+	class CBspLightMap {
+	public:
+		u8  map[128][128][3];
+	};
+
+
+	class CBspLightVol {
+	public:
+		u8  ambient[3];
+		u8  directional[3];
+		u8  dir[2];
+	};
+
+
+	class CBspVisData {
+	public:
+		s32 numClusters;
+		s32 sizeClusters;
+		u8 * bits;
+	};
+
+	CBspHeader m_header;
+
+	CBspShader* m_shaders;
+	s32 m_numShaders;
+
+	CBspLightMap* m_lightMaps;
+	s32 m_numLightMaps;
+
+	CBspVertex* m_vertices;
+	s32 m_numVertices;
+
+	CBspFace* m_faces;
+	s32 m_numFaces;
+
+	CBspPlane* m_planes;
+	s32 m_numPlanes;
+
+	CBspNode* m_nodes;
+	s32 m_numNodes;
+
+	CBspLeaf* m_leaves;
+	s32 m_numLeaves;
+
+	s32* m_leafFaces;
+	s32 m_numLeafFaces;
+
+	s32* m_leafBrushes;
+	s32 m_numLeafBrushes;
+
+	CBspModel* m_models;
+	s32 m_numModels;
+
+	s32* m_meshIndices;
+	s32 m_numMeshIndices;
+
+	CBspBrush* m_brushes;
+	s32 m_numBrushes;
+
+	CBspBrushSide* m_brushSides;
+	s32 m_numBrushSides;
+
+	CBspVisData m_visData;
+
+
+	bool loadShaders		(const CBspLumpEntry& l); // Load the textures
+	bool loadLightmaps		(const CBspLumpEntry& l); // Load the lightmaps
+	bool loadVerts			(const CBspLumpEntry& l); // Load the vertices
+	bool loadFaces			(const CBspLumpEntry& l); // Load the faces
+	bool loadPlanes			(const CBspLumpEntry& l); // Load the Planes of the BSP
+	bool loadNodes			(const CBspLumpEntry& l); // load the Nodes of the BSP
+	bool loadLeaves			(const CBspLumpEntry& l); // load the Leafs of the BSP
+	bool loadLeafFaces		(const CBspLumpEntry& l); // load the Faces of the Leafs of the BSP
+	bool loadVisData		(const CBspLumpEntry& l); // load the visibility data of the clusters
+	bool loadEntities		(const CBspLumpEntry& l); // load the entities
+	bool loadModels			(const CBspLumpEntry& l); // load the models
+	bool loadMeshIndices	(const CBspLumpEntry& l); // load the mesh vertices
+	bool loadBrushes		(const CBspLumpEntry& l); // load the brushes of the BSP
+	bool loadBrushSides		(const CBspLumpEntry& l); // load the brushsides of the BSP
+	bool loadLeafBrushes	(const CBspLumpEntry& l); // load the brushes of the leaf
+	bool loadFogs			(const CBspLumpEntry& l); // load the shaders
+
+	// Additional content
+	const CBspLeaf& getLeafFromPosition(const Vector3f& v) const {
+		int index = 0;
+
+		while (index >= 0) {
+			const CBspNode&		node =	m_nodes[index];
+			const CBspPlane&	plane = m_planes[node.planeIdx];
+			const double		distance = m_planes[node.planeIdx].normal.dotProduct(v) - plane.dist;
+
+			if (distance >= 0) {
+				index = node.children[0];
+			}
+			else {
+				index = node.children[1];
+			}
+		}
+
+		return m_leaves[-(index + 1)];
+	}
+
+
+	const s32& getCluster(const Vector3f& v) const {
+		return this->getLeafFromPosition(v).cluster;
+	}
+
+
+	bool isVisible(const s32& clusterFrom, const s32& clusterTo) const {
+		unsigned char bits = 0;
+
+		if (!m_visData.bits || clusterFrom < 0) {
+			return true;
+		}
+
+		bits = m_visData.bits[(clusterFrom * m_visData.sizeClusters) + (clusterTo >> 3)];
+
+		return (bits & (1 << (clusterTo & 7))) != 0;
+	}
+
+
 };
 
 

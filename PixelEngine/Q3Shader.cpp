@@ -11,8 +11,8 @@
 #include <sstream>
 
 #include "Q3Shader.h"
-#include "Logger.h"
-#include "Texture.h"
+#include "Q3Map.h"
+
 
 
 /*
@@ -76,8 +76,9 @@ void Q3ShaderPass::_restoreOglStates() {
 
 
 void Q3ShaderPass::start() {
-    
-    glTexCoordPointer(2, GL_FLOAT, m_Texture.m_Stride, m_Texture.m_texCoordPointer);
+//	glEnable(GL_TEXTURE_COORD_ARRAY);
+	
+//	glDisable(GL_TEXTURE_COORD_ARRAY);
 //    std::cout << "Shader = " << m_Texture.m_Stride << " " << m_Texture.m_texCoordPointer << std::endl;
     
     this->_saveOglSates();

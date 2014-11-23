@@ -14,96 +14,73 @@
 #include <memory>
 
 #include "Opengl.h"
+#include "Types.h"
 #include "Physics.h"
 #include "Singleton.h"
 #include "Camera.h"
 
 class ISceneNode {
+
 public:
 	virtual ~ISceneNode() {};
 
     virtual void render() = 0;
-    virtual void update(GLdouble delta) = 0;
+	virtual void update(const f64& delta) = 0;
 };
 
-typedef std::vector<std::shared_ptr<ISceneNode>> SceneNodeList;
 
-// SceneNode
-class SceneNode : public ISceneNode {
-
-protected:
-
-	SceneNodeList m_children;
+class CInternalSceneNode : public std::vector<ISceneNode*>,  public ISceneNode {
 
 public:
-	SceneNode() {};
-	virtual ~SceneNode() {};
+	CInternalSceneNode() {};
+	virtual ~CInternalSceneNode() {};
     
     virtual void render();
-    virtual void update(GLdouble delta);
-    
-    void addChild(std::shared_ptr<ISceneNode> child) {
-        m_children.push_back(child);
-    }
+	virtual void update(const f64& delta);
+
 };
 
 
-// SkyNode
-class SkyNode : public SceneNode {
+class CDummyNode : public ISceneNode {
+
 public:
-
-	SkyNode() {};
-	~SkyNode() {};
-    
-	void render();
-};
-
-
-
-// DummyNode
-class DummyNode : public SceneNode {
-public:
-	DummyNode() {};
-	~DummyNode() {};
+	CDummyNode() {};
+	~CDummyNode() {};
 
 	void render();
 };
 
 
-// SceneManager
-class SceneManager : public Singleton<SceneManager> {
-	friend class Singleton<SceneManager>;
-    
-
-private:
-    std::shared_ptr<Camera> m_camera;
-    std::shared_ptr<SceneNode> m_root;
-    
-	bool init();
-	bool deinit();
-
-	SceneManager() {};
-	SceneManager(SceneManager&);
-	void operator =(SceneManager&);
+class CSceneManager : public Singleton<CSceneManager> {
+	friend class Singleton<CSceneManager>;
 
 public:
 
-	virtual ~SceneManager() {};
+	virtual ~CSceneManager() {};
 
-    void attachCamera(std::shared_ptr<Camera> camera) {
-        m_camera = camera;
-    }
-    
-    const std::shared_ptr<Camera>& getCamera() const {
-        return m_camera;
-    }
-    
-    void addSceneNode(std::shared_ptr<ISceneNode> node) {
-        m_root->addChild(node);
-    }
+	void attachCamera(Camera * camera) { m_camera = camera; }
+
+	void attachRoot(CInternalSceneNode * root) { m_root = root; }
+
+    const Camera* getCamera() const { return m_camera; }
+
+	const CInternalSceneNode* getRoot() const { return m_root; }
     
     void render() const;
-	void update(GLdouble delta);
+
+	void update(const f64& delta);
+
+private:
+
+	CSceneManager()
+		: m_camera(nullptr), m_root(nullptr) {};
+	CSceneManager(CSceneManager&);
+	void operator =(CSceneManager&);
+
+	Camera* m_camera;
+
+	CInternalSceneNode * m_root;
+
 };
 
 #endif

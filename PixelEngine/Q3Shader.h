@@ -18,6 +18,8 @@
 #include "Opengl.h"
 #include "Texture.h"
 #include "Singleton.h"
+#include "Logger.h"
+#include "Vector.h"
 
 enum {
 	SHADER_NOCULL		= 1 << 0,

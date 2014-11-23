@@ -11,7 +11,7 @@
 
 #include "Scene.h"
 
-void DummyNode::render() {
+void CDummyNode::render() {
     
     glBegin(GL_QUADS);
     
@@ -57,9 +57,9 @@ void DummyNode::render() {
 }
 
 
-void SceneNode::render() {
-    SceneNodeList::iterator i = m_children.begin();
-    SceneNodeList::iterator end = m_children.end();
+void CInternalSceneNode::render() {
+	iterator i = this->begin();
+    iterator end = this->end();
     
     while (i != end) {
         glPushMatrix();
@@ -69,9 +69,9 @@ void SceneNode::render() {
     }
 }
 
-void SceneNode::update(GLdouble delta) {
-	SceneNodeList::iterator i = m_children.begin();
-	SceneNodeList::iterator end = m_children.end();
+void CInternalSceneNode::update(const f64& delta) {
+	iterator i = this->begin();
+	iterator end = this->end();
 
 	while (i != end) {
 		(*i)->update(delta);
@@ -79,9 +79,8 @@ void SceneNode::update(GLdouble delta) {
 	}
 }
 
-
+/*
 bool SceneManager::init() {
-	m_root.reset(new SceneNode());
 	return true;
 }
 
@@ -89,16 +88,16 @@ bool SceneManager::deinit() {
 
 	return true;
 }
+*/
 
-void SceneManager::render() const {
-    
+void CSceneManager::render() const {
     if(m_camera && m_root) {
-        m_camera->setView();
-        m_root->render();
+		m_camera->setView();
+		m_root->render();
     }
 }
 
-void SceneManager::update(GLdouble delta) {
+void CSceneManager::update(const f64& delta) {
 	if (m_camera && m_root) {
 		m_camera->update(delta);
 		m_root->update(delta);

@@ -80,7 +80,7 @@ void Camera::setView() {
 
 
 void CameraFree::update(GLdouble delta) {
-	GLFWwindow* window = Video::getInstance()->getWindow();
+	GLFWwindow* window = CVideo::getInstance()->getWindow();
 	GLdouble mx = 0., my = 0.;
 	GLint winHalfWidth = 0, winHalfHeight = 0;
 	Vector3d move;
@@ -155,7 +155,7 @@ void CameraFree::update(GLdouble delta) {
 
 
 void CameraFps::update(GLdouble delta) {
-	GLFWwindow* window = Video::getInstance()->getWindow();
+	GLFWwindow* window = CVideo::getInstance()->getWindow();
 	GLdouble mx, my;
 	GLint winHalfWidth, winHalfHeight;
 	Vector3d move;
