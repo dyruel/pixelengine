@@ -19,5 +19,7 @@ ILogger* ILogger::m_logger = NULL;
 	vsprintf(buf, fmt, args);
 	va_end(args);
 
+//	std::cout << buf << std::endl;
+
 	ILogger::m_logger->write(buf);
 }

@@ -198,8 +198,7 @@ public:
 private:
 
 	// Data related to the BSP
-	void*	m_buffer;
-	s32		m_bufferPos;
+	CMemoryChunk*	m_memoryChunk;
 
 
 	const int Q3BSP_VERSION = 46; // quake 3 maps
@@ -437,6 +436,7 @@ private:
 	bool loadBrushSides		(const CBspLumpEntry& l); // load the brushsides of the BSP
 	bool loadLeafBrushes	(const CBspLumpEntry& l); // load the brushes of the leaf
 	bool loadFogs			(const CBspLumpEntry& l); // load the shaders
+
 
 	// Additional content
 	const CBspLeaf& getLeafFromPosition(const Vector3f& v) const {
