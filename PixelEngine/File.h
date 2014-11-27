@@ -99,16 +99,29 @@ public:
 	}
 
 	int seek(PHYSFS_uint64 pos) { 
+
+//		std::cout << "Seek: " << PHYSFS_fileLength(m_file) << " " << pos << std::endl;
+
 		int r = PHYSFS_seek(m_file, pos);
 
 		if (!r) {
 			ILogger::log("FileSystem :: Error while seeking in %s.\nPHYSFS said: %s\n", m_filename.c_str(), PHYSFS_getLastError());
 		}
 
+//		ILogger::log("Seek ok\n");
+
 		return r;
 	};
 
-	PHYSFS_sint64 read(void* buffer, u32 objSize, u32 objCount) { 
+	PHYSFS_sint64 read(void* buffer, u32 objSize, u32 objCount) {
+
+		std::cout << PHYSFS_tell(m_file) + objSize*objCount << " " << PHYSFS_fileLength(m_file) << std::endl;
+
+		if (PHYSFS_tell(m_file) + objSize*objCount > PHYSFS_fileLength(m_file)) {
+			ILogger::log("FileSystem :: Reading beyond the file.\n");
+			return 0;
+		}
+
 		int r = PHYSFS_read(m_file, buffer, objSize, objCount);
 
 		if (!r) {

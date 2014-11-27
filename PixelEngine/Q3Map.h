@@ -198,11 +198,6 @@ public:
 private:
 
 	// Data related to the BSP
-	CMemoryChunk*	m_memoryChunk;
-
-
-	const int Q3BSP_VERSION = 46; // quake 3 maps
-
 	enum {
 		LUMP_ENTITIES = 0,
 		LUMP_SHADERS,
@@ -221,7 +216,10 @@ private:
 		LUMP_LIGHTMAPS,
 		LUMP_LIGHTVOLS,
 		LUMP_VISDATA,
-		LUMP_TOTAL
+		LUMP_TOTAL,
+
+		ELUMP_FACESTODRAW,
+		ELUMP_TOTAL
 	};
 
 	enum {
@@ -246,6 +244,13 @@ private:
 		s32 offset;
 		s32 length;
 	};
+
+	CMemoryChunk*	m_memoryChunk;
+	CBspLumpEntry	m_extraDataEntries[ELUMP_TOTAL];
+
+	GLuint vboIds[2];
+
+	const int Q3BSP_VERSION = 46; // quake 3 maps
 
 	class CBspHeader {
 	public:
@@ -390,6 +395,9 @@ private:
 	CBspFace* m_faces;
 	s32 m_numFaces;
 
+	s32* m_faceToDrawIndices;
+	s32 m_numFacesToDraw;
+
 	CBspPlane* m_planes;
 	s32 m_numPlanes;
 
@@ -399,11 +407,11 @@ private:
 	CBspLeaf* m_leaves;
 	s32 m_numLeaves;
 
-	s32* m_leafFaces;
-	s32 m_numLeafFaces;
+	s32* m_leafFaceIndices;
+	s32 m_numLeafFaceIndices;
 
-	s32* m_leafBrushes;
-	s32 m_numLeafBrushes;
+	s32* m_leafBrushIndices;
+	s32 m_numLeafBrushIndices;
 
 	CBspModel* m_models;
 	s32 m_numModels;
@@ -436,7 +444,7 @@ private:
 	bool loadBrushSides		(const CBspLumpEntry& l); // load the brushsides of the BSP
 	bool loadLeafBrushes	(const CBspLumpEntry& l); // load the brushes of the leaf
 	bool loadFogs			(const CBspLumpEntry& l); // load the shaders
-
+	bool loadExtras			();
 
 	// Additional content
 	const CBspLeaf& getLeafFromPosition(const Vector3f& v) const {
@@ -476,6 +484,49 @@ private:
 		return (bits & (1 << (clusterTo & 7))) != 0;
 	}
 
+
+	void updateFacesToDrawIndices(const s32& index) {
+		if (index < 0) { // Leaf
+			const s32 i = -(index + 1);
+			const CBspLeaf& leaf = m_leaves[i];
+
+			// PVS test
+			/*
+			if (!this->isVisible(m_cameraCluster, m_leafNodes[i]->cluster)) {
+				return;
+			}
+			*/
+
+			// Frustrum culling
+			/*
+			if (this->_clipTest(*leaf)) {
+				return;
+			}
+			*/
+
+			const s32 end = leaf.firstFaceIdx + leaf.numFaces;
+
+			for (s32 j = leaf.firstFaceIdx; j < end && m_numFacesToDraw < m_numFaces; ++j) {
+				m_faceToDrawIndices[m_numFacesToDraw++] = m_leafFaceIndices[j];
+			}
+			
+		}
+		else { // Node 
+			const CBspNode& node = m_nodes[index];
+			//		 const Q3BspPlane& plane = m_planes[node.plane];
+			//		 const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
+
+			// Frustrum culling
+			/*
+			if (this->_clipTest(*node)) {
+				return;
+			}
+			*/
+
+			this->updateFacesToDrawIndices(node.children[0]);
+			this->updateFacesToDrawIndices(node.children[1]);
+		}
+	}
 
 };
 

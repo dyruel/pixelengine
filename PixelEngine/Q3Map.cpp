@@ -35,11 +35,19 @@ bool CQ3Map::load(const char* filename) {
 
 	ILogger::log("-> Magic : %d\n-> Version : %d\n", m_header.magic, m_header.version);
 
-	// Calculate the total amount of memory needed to store the BSP data
+	// Calculate the total amount of memory needed to store the BSP data...
 	u32 totalMapSize = 0;
 
 	for (int i = LUMP_ENTITIES; i < LUMP_TOTAL; ++i) {
 		totalMapSize += m_header.entries[i].length;
+	}
+
+	// ...  and additional data
+	m_extraDataEntries[ELUMP_FACESTODRAW].offset = totalMapSize;
+	m_extraDataEntries[ELUMP_FACESTODRAW].length = (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32);
+
+	for (int i = ELUMP_FACESTODRAW; i < ELUMP_TOTAL; ++i) {
+		totalMapSize += m_extraDataEntries[i].length;
 	}
 
 	// Reserve a chunk
@@ -59,10 +67,11 @@ bool CQ3Map::load(const char* filename) {
 		!this->loadEntities			(m_header.entries[LUMP_ENTITIES])		||
 		!this->loadModels			(m_header.entries[LUMP_MODELS])			||
 		!this->loadMeshIndices		(m_header.entries[LUMP_MESHINDICES])	||
-		!this->loadBrushes			(m_header.entries[LUMP_BRUSHES])		||
-		!this->loadBrushSides		(m_header.entries[LUMP_BRUSHSIDES])		||
-		!this->loadLeafBrushes		(m_header.entries[LUMP_LEAFBRUSHES])	||
-		!this->loadFogs				(m_header.entries[LUMP_FOGS])
+//		!this->loadBrushes			(m_header.entries[LUMP_BRUSHES])		||
+//		!this->loadBrushSides		(m_header.entries[LUMP_BRUSHSIDES])		||
+//		!this->loadLeafBrushes		(m_header.entries[LUMP_LEAFBRUSHES])	||
+//		!this->loadFogs				(m_header.entries[LUMP_FOGS])			||
+		!this->loadExtras			()
 		)
 	{
 		ILogger::log("-> Error while loading data from bsp file.\n");
@@ -71,6 +80,21 @@ bool CQ3Map::load(const char* filename) {
 	}
 	
 	memoryManager->print();
+	/*
+	glGenBuffers(2, vboIds);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
+	glBufferData(GL_ARRAY_BUFFER, m_numVertices * sizeof(CBspVertex), 0, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, m_numVertices * sizeof(CBspVertex), m_vertices);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+//	std::cout << m_numVertices * sizeof(CBspVertex) << std::endl;
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_numMeshIndices * sizeof(s32), 0, GL_STATIC_DRAW);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, m_numMeshIndices * sizeof(s32), m_meshIndices);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	*/
 
 	ILogger::log("done\n", filename);
 	fileSystem->close();
@@ -79,25 +103,69 @@ bool CQ3Map::load(const char* filename) {
 
 void CQ3Map::render() {
 
+	glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
+
+	for (int i = 0; i < m_numFacesToDraw; ++i){
+		const CBspFace& face = m_faces[m_faceToDrawIndices[i]];
+
+		glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
+		glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), ((char*) 0) + face.firstVertexIdx);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
+
+//		std::cout << face.numElements << " " << face.firstElementIdx << std::endl;
+		glDrawElements(GL_TRIANGLES, face.numElements, GL_UNSIGNED_INT, ((char*)0) + face.firstElementIdx);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glDisableClientState(GL_VERTEX_ARRAY);
+	}
+	/*
+	glBindBuffer(GL_ARRAY_BUFFER, m_vboVerticesId);
+	glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), 0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboIndexesId);
+	glDrawElements(GL_TRIANGLES, m_numElements, GL_UNSIGNED_INT, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glDisableClientState(GL_VERTEX_ARRAY);
+	*/
+
+	/*
+	glBegin(GL_TRIANGLES);
+	for (int b = m_firstIndex; b < m_firstIndex + m_numIndexes; ++b)
+	{
+
+	glVertex3f(m_verticesPool.vertices[m_verticesPool.indexes[b] + m_firstVertex].position.x,
+	m_verticesPool.vertices[m_verticesPool.indexes[b] + m_firstVertex].position.y,
+	m_verticesPool.vertices[m_verticesPool.indexes[b] + m_firstVertex].position.z);
+
+	std::cout << m_verticesPool.vertices[m_verticesPool.indexes[b]].position.toString() << std::endl;
+	}
+	glEnd();
+	*/
 }
 
 void CQ3Map::update(const f64& delta) {
-
+	m_numFacesToDraw = 0;
+	this->updateFacesToDrawIndices(0);
 }
 
 
 
 bool CQ3Map::loadShaders(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_shaders = nullptr;
+	m_numShaders = 0;
 
-	m_shaders = (CBspShader*) (*m_memoryChunk)[l.offset];
-	m_numShaders = l.length / sizeof(CBspShader);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_shaders, l.length, 1);
-
-	for (int i = 0; i < m_numShaders; ++i) {
-		//std::cout << m_shaders[i].name << std::endl;
+	if (l.length > 0) {
+		m_shaders = (CBspShader*)(*m_memoryChunk)[l.offset];
+		m_numShaders = l.length / sizeof(CBspShader);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_shaders, l.length, 1);
 	}
+
 
 	return true;
 }
@@ -105,12 +173,15 @@ bool CQ3Map::loadShaders(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadLightmaps(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_lightMaps		= nullptr;
+	m_numLightMaps	= 0;
 
-	m_lightMaps = (CBspLightMap*)(*m_memoryChunk)[l.offset];
-	m_numLightMaps = l.length / sizeof(CBspLightMap);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_lightMaps, l.length, 1);
-
+	if (l.length > 0) {
+		m_lightMaps = (CBspLightMap*)(*m_memoryChunk)[l.offset];
+		m_numLightMaps = l.length / sizeof(CBspLightMap);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_lightMaps, l.length, 1);
+	}
 
 	return true;
 }
@@ -118,12 +189,15 @@ bool CQ3Map::loadLightmaps(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadVerts(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_vertices = nullptr;
+	m_numVertices = 0;
 
-	m_vertices = (CBspVertex*)(*m_memoryChunk)[l.offset];
-	m_numVertices = l.length / sizeof(CBspVertex);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_vertices, l.length, 1);
-
+	if (l.length > 0) {
+		m_vertices = (CBspVertex*)(*m_memoryChunk)[l.offset];
+		m_numVertices = l.length / sizeof(CBspVertex);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_vertices, l.length, 1);
+	}
 
 	return true;
 }
@@ -131,11 +205,15 @@ bool CQ3Map::loadVerts(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadFaces(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_faces = nullptr;
+	m_numFaces = 0;
 
-	m_faces = (CBspFace*)(*m_memoryChunk)[l.offset];
-	m_numFaces = l.length / sizeof(CBspFace);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_faces, l.length, 1);
+	if (l.length > 0) {
+		m_faces = (CBspFace*)(*m_memoryChunk)[l.offset];
+		m_numFaces = l.length / sizeof(CBspFace);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_faces, l.length, 1);
+	}
 
 	return true;
 }
@@ -143,11 +221,15 @@ bool CQ3Map::loadFaces(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadPlanes(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_planes = nullptr;
+	m_numPlanes = 0;
 
-	m_planes = (CBspPlane*)(*m_memoryChunk)[l.offset];
-	m_numPlanes = l.length / sizeof(CBspPlane);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_planes, l.length, 1);
+	if (l.length > 0) {
+		m_planes = (CBspPlane*)(*m_memoryChunk)[l.offset];
+		m_numPlanes = l.length / sizeof(CBspPlane);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_planes, l.length, 1);
+	}
 
 	return true;
 }
@@ -155,11 +237,15 @@ bool CQ3Map::loadPlanes(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadNodes(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_nodes = nullptr;
+	m_numNodes = 0;
 
-	m_nodes = (CBspNode*)(*m_memoryChunk)[l.offset];
-	m_numNodes = l.length / sizeof(CBspNode);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_nodes, l.length, 1);
+	if (l.length > 0) {
+		m_nodes = (CBspNode*)(*m_memoryChunk)[l.offset];
+		m_numNodes = l.length / sizeof(CBspNode);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_nodes, l.length, 1);
+	}
 
 	return true;
 }
@@ -167,11 +253,15 @@ bool CQ3Map::loadNodes(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadLeaves(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_leaves = nullptr;
+	m_numLeaves = 0;
 
-	m_leaves = (CBspLeaf*)(*m_memoryChunk)[l.offset];
-	m_numLeaves = l.length / sizeof(CBspLeaf);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_leaves, l.length, 1);
+	if (l.length > 0) {
+		m_leaves = (CBspLeaf*)(*m_memoryChunk)[l.offset];
+		m_numLeaves = l.length / sizeof(CBspLeaf);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_leaves, l.length, 1);
+	}
 
 	return true;
 }
@@ -179,11 +269,15 @@ bool CQ3Map::loadLeaves(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadLeafFaces(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_leafFaceIndices = nullptr;
+	m_numLeafFaceIndices = 0;
 
-	m_leafFaces = (s32*)(*m_memoryChunk)[l.offset];
-	m_numLeafFaces = l.length / sizeof(s32);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_leafFaces, l.length, 1);
+	if (l.length > 0) {
+		m_leafFaceIndices = (s32*)(*m_memoryChunk)[l.offset];
+		m_numLeafFaceIndices = l.length / sizeof(s32);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_leafFaceIndices, l.length, 1);
+	}
 
 	return true;
 }
@@ -191,13 +285,18 @@ bool CQ3Map::loadLeafFaces(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadVisData(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_visData.numClusters = m_visData.sizeClusters = 0;
+	m_visData.bits = nullptr;
 
-	fileSystem->seek(l.offset);
-	fileSystem->read(&m_visData, sizeof(s32), 2);
+	if (l.length > 0) {
+		fileSystem->seek(l.offset);
+		fileSystem->read(&m_visData, sizeof(s32), 2);
 
-	s32 size = m_visData.numClusters * m_visData.sizeClusters;
-	m_visData.bits = (u8*)(*m_memoryChunk)[l.offset];
-	fileSystem->read(m_visData.bits, size, 1);
+		s32 size = m_visData.numClusters * m_visData.sizeClusters;
+		m_visData.bits = (u8*)(*m_memoryChunk)[l.offset];
+
+		fileSystem->read(m_visData.bits, size, 1);
+	}
 
 	return true;
 }
@@ -218,11 +317,15 @@ bool CQ3Map::loadModels(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadMeshIndices(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_meshIndices = nullptr;
+	m_numMeshIndices = 0;
 
-	m_meshIndices = (s32*)(*m_memoryChunk)[l.offset];
-	m_numMeshIndices = l.length / sizeof(s32);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_meshIndices, l.length, 1);
+	if (l.length > 0) {
+		m_meshIndices = (s32*)(*m_memoryChunk)[l.offset];
+		m_numMeshIndices = l.length / sizeof(s32);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_meshIndices, l.length, 1);
+	}
 
 	return true;
 }
@@ -230,33 +333,45 @@ bool CQ3Map::loadMeshIndices(const CBspLumpEntry& l) {
 
 bool CQ3Map::loadBrushes(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_brushes = nullptr;
+	m_numBrushes = 0;
 
-	m_brushes = (CBspBrush*)(*m_memoryChunk)[l.offset];
-	m_numBrushes = l.length / sizeof(CBspBrush);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_brushes, l.length, 1);
+	if (l.length > 0) {
+		m_brushes = (CBspBrush*)(*m_memoryChunk)[l.offset];
+		m_numBrushes = l.length / sizeof(CBspBrush);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_brushes, l.length, 1);
+	}
 
 	return true;
 }
 
 bool CQ3Map::loadBrushSides(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_brushSides = nullptr;
+	m_numBrushSides = 0;
 
-	m_brushSides = (CBspBrushSide*)(*m_memoryChunk)[l.offset];
-	m_numBrushSides = l.length / sizeof(CBspBrushSide);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_brushSides, l.length, 1);
+	if (l.length > 0) {
+		m_brushSides = (CBspBrushSide*)(*m_memoryChunk)[l.offset];
+		m_numBrushSides = l.length / sizeof(CBspBrushSide);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_brushSides, l.length, 1);
+	}
 
 	return true;
 }
 
 bool CQ3Map::loadLeafBrushes(const CBspLumpEntry& l) {
 	FileSystem * fileSystem = FileSystem::getInstance();
+	m_leafBrushIndices = nullptr;
+	m_numLeafBrushIndices = 0;
 
-	m_leafBrushes = (s32*)(*m_memoryChunk)[l.offset];
-	m_numLeafBrushes = l.length / sizeof(s32);
-	fileSystem->seek(l.offset);
-	fileSystem->read(m_leafBrushes, l.length, 1);
+	if (l.length > 0) {
+		m_leafBrushIndices = (s32*)(*m_memoryChunk)[l.offset];
+		m_numLeafBrushIndices = l.length / sizeof(s32);
+		fileSystem->seek(l.offset);
+		fileSystem->read(m_leafBrushIndices, l.length, 1);
+	}
 
 	return true;
 }
@@ -264,6 +379,15 @@ bool CQ3Map::loadLeafBrushes(const CBspLumpEntry& l) {
 bool CQ3Map::loadFogs(const CBspLumpEntry& l) {
 	return true;
 }
+
+bool CQ3Map::loadExtras() {
+
+	m_faceToDrawIndices = (s32*)(*m_memoryChunk)[m_extraDataEntries[ELUMP_FACESTODRAW].offset];
+	m_numFacesToDraw = 0;
+
+	return true;
+}
+
 
 
 #if 0
