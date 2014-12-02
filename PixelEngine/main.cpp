@@ -90,7 +90,7 @@ int main(int argc, const char * argv[]){
             
 			updateTime = glfwGetTime() * 1000;
 			//sceneManager->update(deltaTime);
-//			q3bsp->update(deltaTime);
+			q3bsp->update(deltaTime);
 			updateTime = glfwGetTime() * 1000 - updateTime;
 
 			lastTime += deltaTime;
@@ -100,7 +100,7 @@ int main(int argc, const char * argv[]){
 		// Rendering
 		renderTime = glfwGetTime() * 1000;
 		video->beginFrame();
-//		q3bsp->render();
+		q3bsp->render();
 		//sceneManager->render();
 		video->endFrame();
 		renderTime = glfwGetTime() * 1000 - renderTime;
@@ -116,7 +116,7 @@ int main(int argc, const char * argv[]){
         
 		GLenum err;
 		while ((err = glGetError()) != GL_NO_ERROR) {
-			std::cout << gluErrorString(err) << std::endl;
+			std::cout << "GL Error:" << gluErrorString(err) << std::endl;
 		}
 		
 

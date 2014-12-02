@@ -52,13 +52,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>F:\PixelEngine\Vendor\physfs-2.0.3;F:\PixelEngine\Vendor\glfw\include;F:\PixelEngine\Vendor\glew-1.11.0\include;F:\PixelEngine\Vendor\DevIL\include;C:\Vendor\DevIL\include;C:\Vendor\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Vendor\glew-1.11.0\include;F:\PixelEngine\Vendor\physfs-2.0.3;F:\PixelEngine\Vendor\glfw\include;F:\PixelEngine\Vendor\glew-1.11.0\include;F:\PixelEngine\Vendor\DevIL\include;C:\Vendor\DevIL\include;C:\Vendor\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>F:\PixelEngine\Vendor\physfs-2.0.3\libs;F:\PixelEngine\Vendor\glfw\lib-msvc120;F:\PixelEngine\Vendor\DevIL\lib;F:\PixelEngine\Vendor\glew-1.11.0\lib\;C:\Vendor\DevIL\lib;C:\Vendor\glfw\lib-msvc120;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32.lib;glfw3.lib;DevIL.lib;ILU.lib;physfs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Vendor\glew-1.11.0\lib;F:\PixelEngine\Vendor\physfs-2.0.3\libs;F:\PixelEngine\Vendor\glfw\lib-msvc120;F:\PixelEngine\Vendor\DevIL\lib;F:\PixelEngine\Vendor\glew-1.11.0\lib\;C:\Vendor\DevIL\lib;C:\Vendor\glfw\lib-msvc120;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;glew32.lib;glfw3.lib;DevIL.lib;ILU.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -83,7 +83,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Memory.h" />
-    <ClInclude Include="Opengl.h" />
+    <ClInclude Include="OpenGL.h" />
     <ClInclude Include="Physics.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="File.h" />

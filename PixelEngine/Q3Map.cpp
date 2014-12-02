@@ -23,7 +23,7 @@ bool CQ3Map::load(const char* filename) {
 	
 	// Read the file header and check version
 	fileSystem->seek(0);
-	fileSystem->read(&m_header, sizeof(CBspHeader), 1);
+	fileSystem->read(&m_header, sizeof(CBspHeader));
 
 	if (m_header.magic != 0x50534249 ||
 		m_header.version != Q3BSP_VERSION)
@@ -67,10 +67,10 @@ bool CQ3Map::load(const char* filename) {
 		!this->loadEntities			(m_header.entries[LUMP_ENTITIES])		||
 		!this->loadModels			(m_header.entries[LUMP_MODELS])			||
 		!this->loadMeshIndices		(m_header.entries[LUMP_MESHINDICES])	||
-//		!this->loadBrushes			(m_header.entries[LUMP_BRUSHES])		||
-//		!this->loadBrushSides		(m_header.entries[LUMP_BRUSHSIDES])		||
-//		!this->loadLeafBrushes		(m_header.entries[LUMP_LEAFBRUSHES])	||
-//		!this->loadFogs				(m_header.entries[LUMP_FOGS])			||
+		!this->loadBrushes			(m_header.entries[LUMP_BRUSHES])		||
+		!this->loadBrushSides		(m_header.entries[LUMP_BRUSHSIDES])		||
+		!this->loadLeafBrushes		(m_header.entries[LUMP_LEAFBRUSHES])	||
+		!this->loadFogs				(m_header.entries[LUMP_FOGS])			||
 		!this->loadExtras			()
 		)
 	{
@@ -80,7 +80,7 @@ bool CQ3Map::load(const char* filename) {
 	}
 	
 	memoryManager->print();
-	/*
+	
 	glGenBuffers(2, vboIds);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
@@ -94,7 +94,7 @@ bool CQ3Map::load(const char* filename) {
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_numMeshIndices * sizeof(s32), 0, GL_STATIC_DRAW);
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, m_numMeshIndices * sizeof(s32), m_meshIndices);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	*/
+	
 
 	ILogger::log("done\n", filename);
 	fileSystem->close();
@@ -116,7 +116,7 @@ void CQ3Map::render() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
 
 //		std::cout << face.numElements << " " << face.firstElementIdx << std::endl;
-		glDrawElements(GL_TRIANGLES, face.numElements, GL_UNSIGNED_INT, ((char*)0) + face.firstElementIdx);
+	//	glDrawElements(GL_TRIANGLES, face.numElements, GL_UNSIGNED_INT, ((char*)0) + face.firstElementIdx);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glDisableClientState(GL_VERTEX_ARRAY);
 	}
@@ -163,7 +163,11 @@ bool CQ3Map::loadShaders(const CBspLumpEntry& l) {
 		m_shaders = (CBspShader*)(*m_memoryChunk)[l.offset];
 		m_numShaders = l.length / sizeof(CBspShader);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_shaders, l.length, 1);
+		fileSystem->read(m_shaders, l.length);
+		ILogger::log("-> %d shaders\n", m_numShaders);
+	}
+	else {
+		ILogger::log("-> No shaders\n");
 	}
 
 
@@ -180,7 +184,11 @@ bool CQ3Map::loadLightmaps(const CBspLumpEntry& l) {
 		m_lightMaps = (CBspLightMap*)(*m_memoryChunk)[l.offset];
 		m_numLightMaps = l.length / sizeof(CBspLightMap);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_lightMaps, l.length, 1);
+		fileSystem->read(m_lightMaps, l.length);
+		ILogger::log("-> %d lightmaps\n", m_numLightMaps);
+	}
+	else {
+		ILogger::log("-> No lightmaps\n");
 	}
 
 	return true;
@@ -196,7 +204,11 @@ bool CQ3Map::loadVerts(const CBspLumpEntry& l) {
 		m_vertices = (CBspVertex*)(*m_memoryChunk)[l.offset];
 		m_numVertices = l.length / sizeof(CBspVertex);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_vertices, l.length, 1);
+		fileSystem->read(m_vertices, l.length);
+		ILogger::log("-> %d vertices\n", m_numVertices);
+	}
+	else {
+		ILogger::log("-> No vertices\n");
 	}
 
 	return true;
@@ -212,7 +224,11 @@ bool CQ3Map::loadFaces(const CBspLumpEntry& l) {
 		m_faces = (CBspFace*)(*m_memoryChunk)[l.offset];
 		m_numFaces = l.length / sizeof(CBspFace);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_faces, l.length, 1);
+		fileSystem->read(m_faces, l.length);
+		ILogger::log("-> %d faces\n", m_numFaces);
+	}
+	else {
+		ILogger::log("-> No faces\n");
 	}
 
 	return true;
@@ -228,7 +244,11 @@ bool CQ3Map::loadPlanes(const CBspLumpEntry& l) {
 		m_planes = (CBspPlane*)(*m_memoryChunk)[l.offset];
 		m_numPlanes = l.length / sizeof(CBspPlane);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_planes, l.length, 1);
+		fileSystem->read(m_planes, l.length);
+		ILogger::log("-> %d planes\n", m_numPlanes);
+	}
+	else {
+		ILogger::log("-> No planes\n");
 	}
 
 	return true;
@@ -244,7 +264,11 @@ bool CQ3Map::loadNodes(const CBspLumpEntry& l) {
 		m_nodes = (CBspNode*)(*m_memoryChunk)[l.offset];
 		m_numNodes = l.length / sizeof(CBspNode);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_nodes, l.length, 1);
+		fileSystem->read(m_nodes, l.length);
+		ILogger::log("-> %d nodes\n", m_numNodes);
+	}
+	else {
+		ILogger::log("-> No nodes\n");
 	}
 
 	return true;
@@ -260,7 +284,11 @@ bool CQ3Map::loadLeaves(const CBspLumpEntry& l) {
 		m_leaves = (CBspLeaf*)(*m_memoryChunk)[l.offset];
 		m_numLeaves = l.length / sizeof(CBspLeaf);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_leaves, l.length, 1);
+		fileSystem->read(m_leaves, l.length);
+		ILogger::log("-> %d leaves\n", m_numLeaves);
+	}
+	else {
+		ILogger::log("-> No leaves\n");
 	}
 
 	return true;
@@ -276,7 +304,11 @@ bool CQ3Map::loadLeafFaces(const CBspLumpEntry& l) {
 		m_leafFaceIndices = (s32*)(*m_memoryChunk)[l.offset];
 		m_numLeafFaceIndices = l.length / sizeof(s32);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_leafFaceIndices, l.length, 1);
+		fileSystem->read(m_leafFaceIndices, l.length);
+		ILogger::log("-> %d leaf face indices\n", m_numLeafFaceIndices);
+	}
+	else {
+		ILogger::log("-> No leaf face indices\n");
 	}
 
 	return true;
@@ -290,12 +322,16 @@ bool CQ3Map::loadVisData(const CBspLumpEntry& l) {
 
 	if (l.length > 0) {
 		fileSystem->seek(l.offset);
-		fileSystem->read(&m_visData, sizeof(s32), 2);
+		fileSystem->read(&m_visData, sizeof(s32)*2);
 
 		s32 size = m_visData.numClusters * m_visData.sizeClusters;
 		m_visData.bits = (u8*)(*m_memoryChunk)[l.offset];
 
-		fileSystem->read(m_visData.bits, size, 1);
+		fileSystem->read(m_visData.bits, size);
+		ILogger::log("-> Vis data size %d\n", size);
+	}
+	else {
+		ILogger::log("-> No vis data\n");
 	}
 
 	return true;
@@ -324,7 +360,11 @@ bool CQ3Map::loadMeshIndices(const CBspLumpEntry& l) {
 		m_meshIndices = (s32*)(*m_memoryChunk)[l.offset];
 		m_numMeshIndices = l.length / sizeof(s32);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_meshIndices, l.length, 1);
+		fileSystem->read(m_meshIndices, l.length);
+		ILogger::log("-> %d mesh indices\n", m_numMeshIndices);
+	}
+	else {
+		ILogger::log("-> No mesh indices\n");
 	}
 
 	return true;
@@ -340,7 +380,11 @@ bool CQ3Map::loadBrushes(const CBspLumpEntry& l) {
 		m_brushes = (CBspBrush*)(*m_memoryChunk)[l.offset];
 		m_numBrushes = l.length / sizeof(CBspBrush);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_brushes, l.length, 1);
+		fileSystem->read(m_brushes, l.length);
+		ILogger::log("-> %d brushes\n", m_numBrushes);
+	}
+	else {
+		ILogger::log("-> No brushes\n");
 	}
 
 	return true;
@@ -355,7 +399,11 @@ bool CQ3Map::loadBrushSides(const CBspLumpEntry& l) {
 		m_brushSides = (CBspBrushSide*)(*m_memoryChunk)[l.offset];
 		m_numBrushSides = l.length / sizeof(CBspBrushSide);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_brushSides, l.length, 1);
+		fileSystem->read(m_brushSides, l.length);
+		ILogger::log("-> %d brush sides\n", m_numBrushSides);
+	}
+	else {
+		ILogger::log("-> No brush sides\n");
 	}
 
 	return true;
@@ -370,7 +418,11 @@ bool CQ3Map::loadLeafBrushes(const CBspLumpEntry& l) {
 		m_leafBrushIndices = (s32*)(*m_memoryChunk)[l.offset];
 		m_numLeafBrushIndices = l.length / sizeof(s32);
 		fileSystem->seek(l.offset);
-		fileSystem->read(m_leafBrushIndices, l.length, 1);
+		fileSystem->read(m_leafBrushIndices, l.length);
+		ILogger::log("-> %d leaf brush indices\n", m_numLeafBrushIndices);
+	}
+	else {
+		ILogger::log("-> No leaf brush indices\n");
 	}
 
 	return true;
