@@ -94,8 +94,8 @@ bool CVideo::init() {
 	}
 	ILogger::log("Using GLEW Version: %s.", glewGetString(GLEW_VERSION));
 
-	if (!GLEW_VERSION_2_0) {
-		ILogger::log("OpenGL 2.0 or above is required.");
+	if (!GLEW_VERSION_3_0) {
+		ILogger::log("OpenGL 3.0 or above is required.");
 		return false;
 	}
 

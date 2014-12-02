@@ -148,7 +148,7 @@ void CameraFree::update(GLdouble delta) {
 	m_position += (move * (m_speed * delta));
     
     
- //   std::cout << m_position.toString() << std::endl;
+//    std::cout << m_position.toString() << std::endl;
 
 	glfwSetCursorPos(window, winHalfWidth, winHalfHeight);
 }

@@ -91,15 +91,15 @@ bool SceneManager::deinit() {
 */
 
 void CSceneManager::render() const {
-    if(m_camera && m_root) {
+    if(m_camera /*&& m_root*/) {
 		m_camera->setView();
-		m_root->render();
+		//m_root->render();
     }
 }
 
 void CSceneManager::update(const f64& delta) {
-	if (m_camera && m_root) {
+	if (m_camera /*&& m_root*/) {
 		m_camera->update(delta);
-		m_root->update(delta);
+		//m_root->update(delta);
 	}
 }

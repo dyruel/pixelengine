@@ -80,7 +80,7 @@ bool CQ3Map::load(const char* filename) {
 	}
 	
 	memoryManager->print();
-	
+	glEnableClientState(GL_VERTEX_ARRAY);
 	glGenBuffers(2, vboIds);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
@@ -88,13 +88,12 @@ bool CQ3Map::load(const char* filename) {
 	glBufferSubData(GL_ARRAY_BUFFER, 0, m_numVertices * sizeof(CBspVertex), m_vertices);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-//	std::cout << m_numVertices * sizeof(CBspVertex) << std::endl;
-
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_numMeshIndices * sizeof(s32), 0, GL_STATIC_DRAW);
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, m_numMeshIndices * sizeof(s32), m_meshIndices);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	
+	glDisableClientState(GL_VERTEX_ARRAY);
+
 
 	ILogger::log("done\n", filename);
 	fileSystem->close();
@@ -102,24 +101,40 @@ bool CQ3Map::load(const char* filename) {
 }
 
 void CQ3Map::render() {
-
+	glEnableClientState(GL_VERTEX_ARRAY);
 	glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
 
 	for (int i = 0; i < m_numFacesToDraw; ++i){
 		const CBspFace& face = m_faces[m_faceToDrawIndices[i]];
 
-		glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
-		glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), ((char*) 0) + face.firstVertexIdx);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		/*
+		glBegin(GL_TRIANGLES);
+		for (int b = face.firstElementIdx; b < face.firstElementIdx + face.numElements; ++b)
+		{
 
-		glEnableClientState(GL_VERTEX_ARRAY);
+			glVertex3f(m_vertices[m_meshIndices[b] + face.firstVertexIdx].position.x,
+					   m_vertices[m_meshIndices[b] + face.firstVertexIdx].position.y,
+					   m_vertices[m_meshIndices[b] + face.firstVertexIdx].position.z);
+		}
+		glEnd();
+		*/
+
+		glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
+		glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), ((GLubyte*)0) + face.firstVertexIdx);
+		//glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
 
-//		std::cout << face.numElements << " " << face.firstElementIdx << std::endl;
-	//	glDrawElements(GL_TRIANGLES, face.numElements, GL_UNSIGNED_INT, ((char*)0) + face.firstElementIdx);
+		
+//		if (face.firstElementIdx > m_numMeshIndices || face.firstElementIdx + face.numElements > m_numMeshIndices) {
+//			std::cout << face.numElements << " " << face.firstElementIdx << std::endl;
+//		}
+		glDrawElements(GL_TRIANGLES, face.numElements, GL_UNSIGNED_INT, ((GLubyte*)0) + face.firstElementIdx);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glDisableClientState(GL_VERTEX_ARRAY);
+		
 	}
+	glDisableClientState(GL_VERTEX_ARRAY);
 	/*
 	glBindBuffer(GL_ARRAY_BUFFER, m_vboVerticesId);
 	glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), 0);
@@ -205,7 +220,7 @@ bool CQ3Map::loadVerts(const CBspLumpEntry& l) {
 		m_numVertices = l.length / sizeof(CBspVertex);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_vertices, l.length);
-		ILogger::log("-> %d vertices\n", m_numVertices);
+		ILogger::log("-> %d vertices (%d Ko)\n", m_numVertices, l.length >> 10);
 	}
 	else {
 		ILogger::log("-> No vertices\n");
@@ -361,7 +376,7 @@ bool CQ3Map::loadMeshIndices(const CBspLumpEntry& l) {
 		m_numMeshIndices = l.length / sizeof(s32);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_meshIndices, l.length);
-		ILogger::log("-> %d mesh indices\n", m_numMeshIndices);
+		ILogger::log("-> %d mesh indices (%d Ko)\n", m_numMeshIndices, l.length >> 10);
 	}
 	else {
 		ILogger::log("-> No mesh indices\n");

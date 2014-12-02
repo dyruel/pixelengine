@@ -21,10 +21,10 @@ int main(int argc, const char * argv[]){
 	CSceneManager* sceneManager = CSceneManager::getInstance(); // Each manager should have its own memory block
 
 	//std::shared_ptr<DummyNode> dummyNode(new DummyNode());
-	std::shared_ptr<Camera> camera(new CameraFree()); 
+	Camera* camera = new CameraFree(); 
 	std::shared_ptr<CQ3Map> q3bsp(new CQ3Map()); 
 
-	//sceneManager->attachCamera(camera);
+	sceneManager->attachCamera(camera);
 	//1sceneManager->addSceneNode(q3bsp);
 //    sceneManager->addSceneNode(dummyNode);
     
@@ -47,7 +47,7 @@ int main(int argc, const char * argv[]){
 	//PHYSFS_freeList(i);
 	*/
 
-	if (!q3bsp->load("maps/q3dm1.bsp")) {
+	if (!q3bsp->load("maps/q3dm11.bsp")) {
 		return 0;
 	}
 	
@@ -89,7 +89,7 @@ int main(int argc, const char * argv[]){
 		while (lastTime + deltaTime <= presentTime) {
             
 			updateTime = glfwGetTime() * 1000;
-			//sceneManager->update(deltaTime);
+			sceneManager->update(deltaTime);
 			q3bsp->update(deltaTime);
 			updateTime = glfwGetTime() * 1000 - updateTime;
 
@@ -101,7 +101,7 @@ int main(int argc, const char * argv[]){
 		renderTime = glfwGetTime() * 1000;
 		video->beginFrame();
 		q3bsp->render();
-		//sceneManager->render();
+		sceneManager->render();
 		video->endFrame();
 		renderTime = glfwGetTime() * 1000 - renderTime;
         
