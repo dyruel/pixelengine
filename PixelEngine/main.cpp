@@ -47,7 +47,7 @@ int main(int argc, const char * argv[]){
 	//PHYSFS_freeList(i);
 	*/
 
-	if (!q3bsp->load("maps/q3dm11.bsp")) {
+	if (!q3bsp->load("maps/q3dm1.bsp")) {
 		return 0;
 	}
 	
@@ -79,9 +79,10 @@ int main(int argc, const char * argv[]){
 	GLdouble renderTime = 0.0;
 	GLdouble updateTime = 0.0;
     
-
+	bool flag = true;
 	while (!video->windowShouldClose()) {
-		
+//	while (flag) {
+		flag = false;
 		
 		GLdouble presentTime = (GLdouble) glfwGetTime()*1000;
         frames++;

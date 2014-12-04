@@ -21,6 +21,8 @@ CMemoryChunk* CMemoryManager::getMemory(const u64& size, c8 * label) {
 		ILogger::log("MemoryManager :: Unable to allocate the memory block\n");
 		return nullptr;
 	}
+
+	memset(ptr, 0, size + sizeof(SMemoryBlock));
 	
 	block = (SMemoryBlock*)ptr;
 	block->id = MEM_ID;
