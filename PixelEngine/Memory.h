@@ -25,15 +25,24 @@ public:
 		assert(i >= 0 && i < m_size);
 		return (char*)m_ptr + i;
 	}
-	
+
+	void* reserve(const u64& size) {
+		assert(m_nextFree + size < m_size);
+//		std::cout << m_nextFree + size << " " << m_size << std::endl;
+		void* p = (char*)m_ptr + m_nextFree;
+		m_nextFree += size;
+		return p;
+	}
+
 private:
 	CMemoryChunk()
-		: m_ptr(nullptr) {};
+		: m_ptr(nullptr), m_size(0), m_nextFree(0) {};
 	CMemoryChunk(CMemoryChunk&);
 	void operator =(CMemoryChunk&);
 
 	void* m_ptr;
 	u64	  m_size;
+	u64   m_nextFree;
 };
 
 

@@ -22,6 +22,7 @@ Camera::Camera(GLdouble fov, GLdouble aspect, GLdouble near, GLdouble far)
 
 Camera::Camera() {
     GLint viewport[4] = {0,0,0,0};
+	GLdouble fW = .0, fH = .0;
     
     glGetIntegerv(GL_VIEWPORT, viewport);
     
@@ -33,9 +34,18 @@ Camera::Camera() {
 	m_position[0] = 0.; m_position[1] = 0.; m_position[2] = 0.;
 	m_dir[0] = 1.; m_dir[1] = 0.; m_dir[2] = 0.;
 	m_up[0] = 0.0;  m_up[1] = 0.0;  m_up[2] = 1.;
+
+	// Frustrum
+	fH = tan((m_fov / 360.) * PI) * m_near;
+	fW = fH * m_aspect;
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glFrustum(-fW, fW, -fH, fH, m_near, m_far);
 }
 
 bool Camera::init() {
+	/*
     GLdouble fW = .0, fH = .0;
     
     fH = tan( (m_fov / 360.) * PI) * m_near;
@@ -44,12 +54,12 @@ bool Camera::init() {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glFrustum(-fW, fW, -fH, fH, m_near, m_far);
-    
+    */
     return true;
 }
 
 void Camera::setView() {
-    Vector3d n, up, u, v;
+    Vector3f n, up, u, v;
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -83,7 +93,7 @@ void CameraFree::update(GLdouble delta) {
 	GLFWwindow* window = CVideo::getInstance()->getWindow();
 	GLdouble mx = 0., my = 0.;
 	GLint winHalfWidth = 0, winHalfHeight = 0;
-	Vector3d move;
+	Vector3f move;
     
     //GLint winWidth = 0., winHeight = 0.;
     //glfwGetWindowSize(Video::getInstance()->getWindow(), &winWidth, &winHeight);

@@ -218,8 +218,8 @@ private:
 		LUMP_VISDATA,
 		LUMP_TOTAL,
 
-		ELUMP_FACESTODRAW,
-		ELUMP_TOTAL
+//		ELUMP_FACESTODRAW,
+//		ELUMP_TOTAL
 	};
 
 	enum {
@@ -246,9 +246,9 @@ private:
 	};
 
 	CMemoryChunk*	m_memoryChunk;
-	CBspLumpEntry	m_extraDataEntries[ELUMP_TOTAL];
+//	CBspLumpEntry	m_extraDataEntries[ELUMP_TOTAL];
 
-	GLuint vboIds[2];
+
 
 	const int Q3BSP_VERSION = 46; // quake 3 maps
 
@@ -321,10 +321,10 @@ private:
 
 	class CBspVertex {
 	public:
-		Vector3<f32>	position;
-		Vector2<f32>	texcoord;
-		Vector2<f32>	lmcoord;
-		Vector3<f32>	normal;
+		Vector3f	position;
+		Vector2f	texcoord;
+		Vector2f	lmcoord;
+		Vector3f	normal;
 		Vector4<u8>		color;
 	};
 
@@ -393,10 +393,13 @@ private:
 	s32 m_numVertices;
 
 	CBspFace* m_faces;
-	s32 m_numFaces;
+	s32*	  m_pushedFaces;
+	s32		  m_numFaces;
 
 	s32* m_faceToDrawIndices;
 	s32 m_numFacesToDraw;
+
+
 
 	CBspPlane* m_planes;
 	s32 m_numPlanes;
@@ -447,6 +450,10 @@ private:
 	bool loadExtras			();
 
 	// Additional content
+	GLuint		vboIds[2];
+	s32			m_cameraCluster;
+	Matrix4f	m_clipMatrix;
+
 	const CBspLeaf& getLeafFromPosition(const Vector3f& v) const {
 		int index = 0;
 
@@ -484,6 +491,53 @@ private:
 		return (bits & (1 << (clusterTo & 7))) != 0;
 	}
 
+	bool clipTest(const s32 bbox[6]) const {
+		u32 and_clip = ~0;
+		const s32 bbox_index[8][3] =
+		{
+			{ 0, 1, 2 }, { 3, 1, 2 }, { 3, 4, 2 }, { 0, 4, 2 },
+			{ 0, 1, 5 }, { 3, 1, 5 }, { 3, 4, 5 }, { 0, 4, 5 }
+		};
+
+		for (s32 j = 0; j < 8; ++j)
+		{
+			Vector4f v, cv;
+			u32 flags = 0;
+
+			v.x = (f32)bbox[bbox_index[j][0]];
+			v.y = (f32)bbox[bbox_index[j][1]];
+			v.z = (f32)bbox[bbox_index[j][2]];
+			v.w = 1.0f;
+
+			cv = m_clipMatrix * v;
+
+			if (cv.x < -cv.w)
+				flags |= CLIP_X_LEFT;
+
+			if (cv.x > cv.w)
+				flags |= CLIP_X_RIGHT;
+
+			if (cv.y > cv.w)
+				flags |= CLIP_Y_LEFT;
+
+			if (cv.y > cv.w)
+				flags |= CLIP_Y_RIGHT;
+
+			if (cv.z > cv.w)
+				flags |= CLIP_Z_LEFT;
+
+			if (cv.z > cv.w)
+				flags |= CLIP_Z_RIGHT;
+
+			and_clip &= flags;
+		}
+
+		if (and_clip)
+			return true;
+
+		return false;
+	}
+
 
 	void updateFacesToDrawIndices(const s32& index) {
 		if (index < 0) { // Leaf
@@ -491,23 +545,22 @@ private:
 			const CBspLeaf& leaf = m_leaves[i];
 
 			// PVS test
-			/*
-			if (!this->isVisible(m_cameraCluster, m_leafNodes[i]->cluster)) {
+			if (!this->isVisible(m_cameraCluster, leaf.cluster)) {
 				return;
 			}
-			*/
-
+			
 			// Frustrum culling
-			/*
-			if (this->_clipTest(*leaf)) {
-				return;
-			}
-			*/
+			//if (this->clipTest(leaf.bbox)) {
+			//	return;
+			//}
 
 			const s32 end = leaf.firstFaceIdx + leaf.numFaces;
 
 			for (s32 j = leaf.firstFaceIdx; j < end && m_numFacesToDraw < m_numFaces; ++j) {
-				m_faceToDrawIndices[m_numFacesToDraw++] = m_leafFaceIndices[j];
+				if (!m_pushedFaces[m_leafFaceIndices[j]]) {
+					m_faceToDrawIndices[m_numFacesToDraw++] = m_leafFaceIndices[j];
+					m_pushedFaces[m_leafFaceIndices[j]] = 1;
+				}
 			}
 			
 		}
@@ -517,11 +570,10 @@ private:
 			//		 const Vector3f planeNormal(plane.normal[0], plane.normal[1], plane.normal[2]);
 
 			// Frustrum culling
-			/*
-			if (this->_clipTest(*node)) {
-				return;
-			}
-			*/
+			//if (this->clipTest(node.bbox)) {
+			//	return;
+			//}
+			
 
 			this->updateFacesToDrawIndices(node.children[0]);
 			this->updateFacesToDrawIndices(node.children[1]);

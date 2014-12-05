@@ -37,21 +37,34 @@ bool CQ3Map::load(const char* filename) {
 
 	// Calculate the total amount of memory needed to store the BSP data...
 	u32 totalMapSize = 0;
+	u32 additionalSize = 0;
+	CBspLumpEntry extraEntries[2];
 
 	for (int i = LUMP_ENTITIES; i < LUMP_TOTAL; ++i) {
 		totalMapSize += m_header.entries[i].length;
 	}
 
 	// ...  and additional data
-	m_extraDataEntries[ELUMP_FACESTODRAW].offset = totalMapSize;
-	m_extraDataEntries[ELUMP_FACESTODRAW].length = (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32);
+//	extraEntries[0].length = (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32);
+//	extraEntries[0].offset = totalMapSize;
 
-	for (int i = ELUMP_FACESTODRAW; i < ELUMP_TOTAL; ++i) {
-		totalMapSize += m_extraDataEntries[i].length;
-	}
+//	extraEntries[1].length = (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32);
+//	extraEntries[1].offset = extraEntries[0].offset + extraEntries[0].length;
+
+	additionalSize += (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32) * 2;
+
+
+//	m_extraDataEntries[ELUMP_FACESTODRAW].offset = totalMapSize;
+//	m_extraDataEntries[ELUMP_FACESTODRAW].length = (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32);
+
+//	for (int i = ELUMP_FACESTODRAW; i < ELUMP_TOTAL; ++i) {
+//		totalMapSize += m_extraDataEntries[i].length;
+//	}
+
+	
 
 	// Reserve a chunk
-	m_memoryChunk = memoryManager->getMemory(totalMapSize, "Q3 Map");
+	m_memoryChunk = memoryManager->getMemory(totalMapSize + additionalSize, "Q3 Map");
 
 	// Load each lump into the memory chunk
 	if (
@@ -70,15 +83,22 @@ bool CQ3Map::load(const char* filename) {
 		!this->loadBrushes			(m_header.entries[LUMP_BRUSHES])		||
 		!this->loadBrushSides		(m_header.entries[LUMP_BRUSHSIDES])		||
 		!this->loadLeafBrushes		(m_header.entries[LUMP_LEAFBRUSHES])	||
-		!this->loadFogs				(m_header.entries[LUMP_FOGS])			||
-		!this->loadExtras			()
+		!this->loadFogs				(m_header.entries[LUMP_FOGS])
+//		!this->loadExtras			()
 		)
 	{
 		ILogger::log("-> Error while loading data from bsp file.\n");
 		fileSystem->close();
 		return false;
 	}
-	
+
+
+	m_faceToDrawIndices = (s32*) m_memoryChunk->reserve((m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32));
+	m_pushedFaces		= (s32*)m_memoryChunk->reserve((m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32));
+	m_numFacesToDraw	= 0;
+
+	//(s32*)m_memoryChunk->reserve((m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32));
+
 	memoryManager->print();
 	
 	for (int i = 0; i < m_numFaces; ++i){
@@ -87,23 +107,115 @@ bool CQ3Map::load(const char* filename) {
 		for (int b = face.firstElementIdx; b < face.firstElementIdx + face.numElements; ++b) {
 			m_meshIndices[b] += face.firstVertexIdx;
 		}
+
+		switch (face.type) {
+
+			case FACE_TRIANGLE_SOUP:
+			case FACE_PLANAR:
+			{
+				if (Q3ShaderManager::getInstance()->exists(m_shaders[face.shaderIdx].name)) {
+
+					Q3Shader * shader = Q3ShaderManager::getInstance()->at(m_shaders[face.shaderIdx].name).get();
+
+					std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPass = shader->begin();
+					std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPassesEnd = shader->end();
+
+					while (shaderPass != shaderPassesEnd) {
+						Texture texture = (*shaderPass)->getTexture();
+
+						if ((*shaderPass)->getFlags() & SHADER_LIGHTMAP) {
+							//texture.m_texId = lmIds[bspFaces[i].lm_index];
+							//texture.m_texCoordPointer = &m_verticesPool.vertices[bspFaces[i].firstVertex].lmcoord.x;
+						}
+						else {
+							//texture.m_texCoordPointer = &m_verticesPool.vertices[bspFaces[i].firstVertex].texcoord.x;
+						}
+
+						//texture.m_Stride = sizeof(Q3Vertex);
+						(*shaderPass)->setTexture(texture);
+						(*shaderPass)->init();
+
+						++shaderPass;
+					}
+
+				}
+				else {
+
+					Texture tex[2];
+					std::shared_ptr<Q3Shader> shaderDefault = std::make_shared<Q3Shader>();
+					std::shared_ptr<Q3ShaderPass> shaderPass = std::make_shared<Q3ShaderPass>();
+
+					tex[0].m_name = m_shaders[face.shaderIdx].name;
+					//tex[0].m_texCoordPointer = &m_verticesPool.vertices[bspFaces[i].firstVertex].texcoord.x;
+					//tex[0].m_Stride = sizeof(Q3Vertex);
+
+					tex[1].m_name = "lightmap";
+					//tex[1].m_texId = lmIds[bspFaces[i].lm_index];
+					//tex[1].m_texCoordPointer = &m_verticesPool.vertices[bspFaces[i].firstVertex].lmcoord.x;
+					//tex[1].m_Stride = sizeof(Q3Vertex);
+
+					shaderDefault->setName("default");
+					shaderDefault->setFlags(0);
+
+					shaderPass->setFlags(SHADER_LIGHTMAP | SHADER_DEPTHWRITE);
+					shaderPass->setTexture(tex[1]);
+					shaderPass->setDepthFunc(GL_LEQUAL);
+					shaderDefault->push_back(shaderPass);
+
+					shaderPass = std::make_shared<Q3ShaderPass>();
+					shaderPass->setFlags(SHADER_BLENDFUNC | SHADER_DEPTHWRITE);
+					shaderPass->setTexture(tex[0]);
+					shaderPass->setDepthFunc(GL_LEQUAL);
+					shaderPass->setBlending(GL_DST_COLOR, GL_ZERO);
+					shaderPass->init();
+					shaderDefault->push_back(shaderPass);
+
+					std::string name(m_shaders[face.shaderIdx].name);
+					(*Q3ShaderManager::getInstance())[name] = shaderDefault;
+					//face->m_shader = shaderDefault;
+					//infoString = "(No shader script found, default loaded)";
+				}
+
+			}
+			break;
+
+			case FACE_PATCH:
+			{
+
+			}
+			break;
+
+			case FACE_FLARE:
+			{
+
+			}
+			break;
+
+			case FACE_BAD:
+			default:
+			{
+
+				ILogger::log("---> Face %d, type bad\n", i);
+			}
+			break;
+		}
+
+
 	}
 	
-
-
-//	glEnableClientState(GL_VERTEX_ARRAY);
 	glGenBuffers(2, vboIds);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
 	glBufferData(GL_ARRAY_BUFFER, m_numVertices * sizeof(CBspVertex), 0, GL_STATIC_DRAW);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, m_numVertices * sizeof(CBspVertex), m_vertices);
+	glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), 0);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(CBspVertex), (GLvoid*) sizeof(Vector3f));
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_numMeshIndices * sizeof(s32), 0, GL_STATIC_DRAW);
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, m_numMeshIndices * sizeof(s32), m_meshIndices);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-//	glDisableClientState(GL_VERTEX_ARRAY);
 
 
 	ILogger::log("done\n", filename);
@@ -114,72 +226,89 @@ bool CQ3Map::load(const char* filename) {
 void CQ3Map::render() {
 
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glBindBuffer(GL_ARRAY_BUFFER, vboIds[0]);
-	glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), 0);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
 
-	for (int i = 0; i < m_numFaces; ++i){
-		const CBspFace& face = m_faces[i];
+//	for (int i = 0; i < m_numFaces; ++i){
+//		const CBspFace& face = m_faces[i];
+	for (int i = 0; i < m_numFacesToDraw; ++i){
+		const CBspFace& face = m_faces[m_faceToDrawIndices[i]];
+		//const CBspShader& shader = m_shaders[face.shaderIdx];
 
-		/*
-		glBegin(GL_TRIANGLES);
-		for (int b = face.firstElementIdx; b < face.firstElementIdx + face.numElements; ++b)
-		{
-			glVertex3f(m_vertices[m_meshIndices[b] + face.firstVertexIdx].position.x,
-					   m_vertices[m_meshIndices[b] + face.firstVertexIdx].position.y,
-					   m_vertices[m_meshIndices[b] + face.firstVertexIdx].position.z);
+		if (face.type == FACE_TRIANGLE_SOUP || face.type == FACE_PLANAR) {
+			Q3Shader * shader = Q3ShaderManager::getInstance()->at(m_shaders[face.shaderIdx].name).get();
+
+
+			shader->start();
+			std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPasse = shader->begin();
+			std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPassesEnd = shader->end();
+
+
+			while (shaderPasse != shaderPassesEnd) {
+
+				(*shaderPasse)->start();
+
+				glDrawElements(GL_TRIANGLES, face.numElements, GL_UNSIGNED_INT, (GLvoid*) (sizeof(s32) * face.firstElementIdx));
+
+				(*shaderPasse)->stop();
+
+				++shaderPasse;
+			}
+
+
+			shader->stop();
 		}
-		glEnd();
-		*/
-		
-		
-//		glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), ((GLubyte*)0) + face.firstVertexIdx);
-//		glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), 0);
-		//glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-		
-		
 
-		
-//		if (face.firstElementIdx > m_numMeshIndices || face.firstElementIdx + face.numElements > m_numMeshIndices) {
-//			std::cout << face.numElements << " " << face.firstElementIdx << std::endl;
-//		}
-//		std::cout << i << " " << m_numMeshIndices << " " << face.numElements << " " << face.firstElementIdx << std::endl;
-		glDrawElements(GL_TRIANGLES, face.numElements, GL_UNSIGNED_INT, ((char*)0) + face.firstElementIdx);
 		
 	}
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glDisableClientState(GL_VERTEX_ARRAY);
-	/*
-	glBindBuffer(GL_ARRAY_BUFFER, m_vboVerticesId);
-	glVertexPointer(3, GL_FLOAT, sizeof(CBspVertex), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vboIndexesId);
-	glDrawElements(GL_TRIANGLES, m_numElements, GL_UNSIGNED_INT, 0);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-	glDisableClientState(GL_VERTEX_ARRAY);
-	*/
-
-	/*
-	glBegin(GL_TRIANGLES);
-	for (int b = m_firstIndex; b < m_firstIndex + m_numIndexes; ++b)
-	{
-
-	glVertex3f(m_verticesPool.vertices[m_verticesPool.indexes[b] + m_firstVertex].position.x,
-	m_verticesPool.vertices[m_verticesPool.indexes[b] + m_firstVertex].position.y,
-	m_verticesPool.vertices[m_verticesPool.indexes[b] + m_firstVertex].position.z);
-
-	std::cout << m_verticesPool.vertices[m_verticesPool.indexes[b]].position.toString() << std::endl;
-	}
-	glEnd();
-	*/
 }
 
+
+/*
+glBegin(GL_TRIANGLES);
+for (int b = face.firstElementIdx; b < face.firstElementIdx + face.numElements; ++b)
+{
+glVertex3f(m_vertices[m_meshIndices[b] + face.firstVertexIdx].position.x,
+m_vertices[m_meshIndices[b] + face.firstVertexIdx].position.y,
+m_vertices[m_meshIndices[b] + face.firstVertexIdx].position.z);
+}
+glEnd();
+*/
+/*
+glBegin(GL_TRIANGLES);
+for (int b = face.firstElementIdx; b < face.firstElementIdx + face.numElements; ++b)
+{
+glVertex3f(m_vertices[m_meshIndices[b] ].position.x,
+m_vertices[m_meshIndices[b] ].position.y,
+m_vertices[m_meshIndices[b] ].position.z);
+}
+glEnd();
+*/
+
 void CQ3Map::update(const f64& delta) {
-//	m_numFacesToDraw = 0;
-//	this->updateFacesToDrawIndices(0);
+
+	// Get clip matrix
+	float m[16], p[16], r[16];
+	glGetFloatv(GL_PROJECTION_MATRIX, p);
+	glGetFloatv(GL_MODELVIEW_MATRIX, m);
+	glPushMatrix();
+	glLoadMatrixf(p);
+	glMultMatrixf(m);
+	glGetFloatv(GL_MODELVIEW_MATRIX, r);
+	glPopMatrix();
+
+	m_clipMatrix = r;
+	m_numFacesToDraw = 0;
+	m_cameraCluster = this->getLeafFromPosition(CSceneManager::getInstance()->getCamera()->getPosition()).cluster;
+	memset(m_pushedFaces, 0, m_numFaces);
+
+	this->updateFacesToDrawIndices(0);
 }
 
 
@@ -190,7 +319,8 @@ bool CQ3Map::loadShaders(const CBspLumpEntry& l) {
 	m_numShaders = 0;
 
 	if (l.length > 0) {
-		m_shaders = (CBspShader*)(*m_memoryChunk)[l.offset];
+		//m_shaders = (CBspShader*)(*m_memoryChunk)[l.offset];
+		m_shaders = (CBspShader*)m_memoryChunk->reserve(l.length);
 		m_numShaders = l.length / sizeof(CBspShader);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_shaders, l.length);
@@ -211,7 +341,8 @@ bool CQ3Map::loadLightmaps(const CBspLumpEntry& l) {
 	m_numLightMaps	= 0;
 
 	if (l.length > 0) {
-		m_lightMaps = (CBspLightMap*)(*m_memoryChunk)[l.offset];
+		//m_lightMaps = (CBspLightMap*)(*m_memoryChunk)[l.offset];
+		m_lightMaps = (CBspLightMap*)m_memoryChunk->reserve(l.length);
 		m_numLightMaps = l.length / sizeof(CBspLightMap);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_lightMaps, l.length);
@@ -231,7 +362,8 @@ bool CQ3Map::loadVerts(const CBspLumpEntry& l) {
 	m_numVertices = 0;
 
 	if (l.length > 0) {
-		m_vertices = (CBspVertex*)(*m_memoryChunk)[l.offset];
+		//m_vertices = (CBspVertex*)(*m_memoryChunk)[l.offset];
+		m_vertices = (CBspVertex*)m_memoryChunk->reserve(l.length);
 		m_numVertices = l.length / sizeof(CBspVertex);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_vertices, l.length);
@@ -251,7 +383,8 @@ bool CQ3Map::loadFaces(const CBspLumpEntry& l) {
 	m_numFaces = 0;
 
 	if (l.length > 0) {
-		m_faces = (CBspFace*)(*m_memoryChunk)[l.offset];
+		//m_faces = (CBspFace*)(*m_memoryChunk)[l.offset];
+		m_faces = (CBspFace*)m_memoryChunk->reserve(l.length);
 		m_numFaces = l.length / sizeof(CBspFace);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_faces, l.length);
@@ -271,7 +404,8 @@ bool CQ3Map::loadPlanes(const CBspLumpEntry& l) {
 	m_numPlanes = 0;
 
 	if (l.length > 0) {
-		m_planes = (CBspPlane*)(*m_memoryChunk)[l.offset];
+		//m_planes = (CBspPlane*)(*m_memoryChunk)[l.offset];
+		m_planes = (CBspPlane*)m_memoryChunk->reserve(l.length);
 		m_numPlanes = l.length / sizeof(CBspPlane);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_planes, l.length);
@@ -291,7 +425,8 @@ bool CQ3Map::loadNodes(const CBspLumpEntry& l) {
 	m_numNodes = 0;
 
 	if (l.length > 0) {
-		m_nodes = (CBspNode*)(*m_memoryChunk)[l.offset];
+		//m_nodes = (CBspNode*)(*m_memoryChunk)[l.offset];
+		m_nodes = (CBspNode*)m_memoryChunk->reserve(l.length);
 		m_numNodes = l.length / sizeof(CBspNode);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_nodes, l.length);
@@ -311,7 +446,8 @@ bool CQ3Map::loadLeaves(const CBspLumpEntry& l) {
 	m_numLeaves = 0;
 
 	if (l.length > 0) {
-		m_leaves = (CBspLeaf*)(*m_memoryChunk)[l.offset];
+		//m_leaves = (CBspLeaf*)(*m_memoryChunk)[l.offset];
+		m_leaves = (CBspLeaf*)m_memoryChunk->reserve(l.length);
 		m_numLeaves = l.length / sizeof(CBspLeaf);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_leaves, l.length);
@@ -331,7 +467,8 @@ bool CQ3Map::loadLeafFaces(const CBspLumpEntry& l) {
 	m_numLeafFaceIndices = 0;
 
 	if (l.length > 0) {
-		m_leafFaceIndices = (s32*)(*m_memoryChunk)[l.offset];
+		//m_leafFaceIndices = (s32*)(*m_memoryChunk)[l.offset];
+		m_leafFaceIndices = (s32*)m_memoryChunk->reserve(l.length);
 		m_numLeafFaceIndices = l.length / sizeof(s32);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_leafFaceIndices, l.length);
@@ -355,7 +492,8 @@ bool CQ3Map::loadVisData(const CBspLumpEntry& l) {
 		fileSystem->read(&m_visData, sizeof(s32)*2);
 
 		s32 size = m_visData.numClusters * m_visData.sizeClusters;
-		m_visData.bits = (u8*)(*m_memoryChunk)[l.offset];
+		//m_visData.bits = (u8*)(*m_memoryChunk)[l.offset];
+		m_visData.bits = (u8*)m_memoryChunk->reserve(size);
 
 		fileSystem->read(m_visData.bits, size);
 		ILogger::log("-> Vis data size %d\n", size);
@@ -387,7 +525,8 @@ bool CQ3Map::loadMeshIndices(const CBspLumpEntry& l) {
 	m_numMeshIndices = 0;
 
 	if (l.length > 0) {
-		m_meshIndices = (s32*)(*m_memoryChunk)[l.offset];
+		//m_meshIndices = (s32*)(*m_memoryChunk)[l.offset];
+		m_meshIndices = (s32*)m_memoryChunk->reserve(l.length);
 		m_numMeshIndices = l.length / sizeof(s32);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_meshIndices, l.length);
@@ -407,7 +546,8 @@ bool CQ3Map::loadBrushes(const CBspLumpEntry& l) {
 	m_numBrushes = 0;
 
 	if (l.length > 0) {
-		m_brushes = (CBspBrush*)(*m_memoryChunk)[l.offset];
+		//m_brushes = (CBspBrush*)(*m_memoryChunk)[l.offset];
+		m_brushes = (CBspBrush*)m_memoryChunk->reserve(l.length);
 		m_numBrushes = l.length / sizeof(CBspBrush);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_brushes, l.length);
@@ -426,7 +566,8 @@ bool CQ3Map::loadBrushSides(const CBspLumpEntry& l) {
 	m_numBrushSides = 0;
 
 	if (l.length > 0) {
-		m_brushSides = (CBspBrushSide*)(*m_memoryChunk)[l.offset];
+		//m_brushSides = (CBspBrushSide*)(*m_memoryChunk)[l.offset];
+		m_brushSides = (CBspBrushSide*)m_memoryChunk->reserve(l.length);
 		m_numBrushSides = l.length / sizeof(CBspBrushSide);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_brushSides, l.length);
@@ -445,7 +586,8 @@ bool CQ3Map::loadLeafBrushes(const CBspLumpEntry& l) {
 	m_numLeafBrushIndices = 0;
 
 	if (l.length > 0) {
-		m_leafBrushIndices = (s32*)(*m_memoryChunk)[l.offset];
+		//m_leafBrushIndices = (s32*)(*m_memoryChunk)[l.offset];
+		m_leafBrushIndices = (s32*)m_memoryChunk->reserve(l.length);
 		m_numLeafBrushIndices = l.length / sizeof(s32);
 		fileSystem->seek(l.offset);
 		fileSystem->read(m_leafBrushIndices, l.length);
@@ -462,6 +604,7 @@ bool CQ3Map::loadFogs(const CBspLumpEntry& l) {
 	return true;
 }
 
+/*
 bool CQ3Map::loadExtras() {
 
 	m_faceToDrawIndices = (s32*)(*m_memoryChunk)[m_extraDataEntries[ELUMP_FACESTODRAW].offset];
@@ -469,7 +612,7 @@ bool CQ3Map::loadExtras() {
 
 	return true;
 }
-
+*/
 
 
 #if 0

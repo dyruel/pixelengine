@@ -33,22 +33,22 @@
 
 #include "Vector.h"
 
-template class Vector2<GLfloat>;
-template class Vector2<GLdouble>;
-template class Vector2<GLint>;
-template class Vector3<GLfloat>;
-template class Vector3<GLdouble>;
-template class Vector3<GLint>;
-template class Vector4<GLfloat>;
-template class Vector4<GLdouble>;
-template class Vector4<GLint>;
-template class Matrix3<GLfloat>;
-template class Matrix3<GLdouble>;
-template class Matrix3<GLint>;
-template class Matrix4<GLfloat>;
-template class Matrix4<GLdouble>;
-template class Matrix4<GLint>;
-template class Quaternion<GLfloat>;
-template class Quaternion<GLdouble>;
+template class Vector2<f32>;
+template class Vector2<f64>;
+template class Vector2<s32>;
+template class Vector3<f32>;
+template class Vector3<f64>;
+template class Vector3<s32>;
+template class Vector4<f32>;
+template class Vector4<f64>;
+template class Vector4<s32>;
+template class Matrix3<f32>;
+template class Matrix3<f64>;
+template class Matrix3<s32>;
+template class Matrix4<f32>;
+template class Matrix4<f64>;
+template class Matrix4<s32>;
+template class Quaternion<f64>;
+template class Quaternion<f64>;
 	
 

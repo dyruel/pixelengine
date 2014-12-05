@@ -18,9 +18,9 @@ class Camera {
 protected:
     GLdouble m_fov, m_aspect, m_near, m_far;
     
-    Vector3d m_position;
-	Vector3d m_dir;
-    Vector3d m_up;
+    Vector3f m_position;
+	Vector3f m_dir;
+    Vector3f m_up;
 
 public:
     Camera();
@@ -31,9 +31,11 @@ public:
     virtual void setView();
 	virtual void update(GLdouble delta) {};
     
-    Vector3d& getPosition()  { return m_position; };
-	Vector3d& getDir() { return m_dir; };
-    Vector3d& getUpVector()  { return m_up; };
+    const Vector3f& getPosition() const { return m_position; };
+	void setPosition(const Vector3d& pos) { m_position = pos; };
+
+	const Vector3f& getDir() const { return m_dir; };
+    const Vector3f& getUpVector() const { return m_up; };
 };
 
 

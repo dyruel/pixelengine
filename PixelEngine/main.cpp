@@ -14,11 +14,13 @@
 #include "Scene.h"
 #include "Q3Level.h"
 #include "File.h"
+#include "Q3Shader.h"
 
 int main(int argc, const char * argv[]){
 
 	CVideo* video = CVideo::getInstance();
 	CSceneManager* sceneManager = CSceneManager::getInstance(); // Each manager should have its own memory block
+	Q3ShaderManager* shaderManager = Q3ShaderManager::getInstance();
 
 	//std::shared_ptr<DummyNode> dummyNode(new DummyNode());
 	Camera* camera = new CameraFree(); 
@@ -28,10 +30,10 @@ int main(int argc, const char * argv[]){
 	//1sceneManager->addSceneNode(q3bsp);
 //    sceneManager->addSceneNode(dummyNode);
     
-	camera->init();
-	camera->getPosition()[0] = 0.;
-	camera->getPosition()[1] = 0.;
-	camera->getPosition()[2] = 50.;
+	//camera->init();
+
+	Vector3f v(0.f,0.f,50.f);
+	camera->setPosition(v);
 
 	
 	if (!FileSystem::getInstance()->mount("data/pak0.pk3")) {

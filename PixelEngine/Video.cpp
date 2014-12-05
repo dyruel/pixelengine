@@ -124,7 +124,11 @@ void CVideo::setOglDefaultState() {
 //	glEnableClientState(GL_VERTEX_ARRAY);
 //	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
+#if 0
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#else
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#endif
 	glDepthMask(GL_TRUE);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_SCISSOR_TEST);

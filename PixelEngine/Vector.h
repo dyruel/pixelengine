@@ -115,7 +115,7 @@
 #ifndef PixelEngine_Vector_h
 #define PixelEngine_Vector_h
 
-#include <GLFW/glfw3.h>
+#include "Types.h"
 
 #include <cmath>
 #include <cstring>
@@ -533,11 +533,11 @@ public:
 // Typedef shortcuts for 2D vector
 //-------------------------------------
 /// Two dimensional Vector of floats
-typedef class Vector2<GLfloat> Vector2f;
+typedef class Vector2<f32> Vector2f;
 /// Two dimensional Vector of doubles
-typedef class Vector2<GLdouble> Vector2d;
+typedef class Vector2<f64> Vector2d;
 /// Two dimensional Vector of ints
-typedef class Vector2<GLint> Vector2i;
+typedef class Vector2<s32> Vector2i;
 
 /**
  * Class for three dimensional vector.
@@ -1002,11 +1002,11 @@ public:
 };
 
 /// Three dimensional Vector of floats
-typedef Vector3<GLfloat> Vector3f;
+typedef Vector3<f32> Vector3f;
 /// Three dimensional Vector of doubles
-typedef Vector3<GLdouble> Vector3d;
+typedef Vector3<f64> Vector3d;
 /// Three dimensional Vector of ints
-typedef Vector3<GLint> Vector3i;
+typedef Vector3<s32> Vector3i;
 
 /**
  * Class for four dimensional vector.
@@ -1452,11 +1452,11 @@ public:
 };
 
 /// Three dimensional Vector of floats
-typedef Vector4<GLfloat> Vector4f;
+typedef Vector4<f32> Vector4f;
 /// Three dimensional Vector of doubles
-typedef Vector4<GLdouble> Vector4d;
+typedef Vector4<f64> Vector4d;
 /// Three dimensional Vector of ints
-typedef Vector4<GLint> Vector4i;
+typedef Vector4<s32> Vector4i;
 
 /**
  * Class for matrix 3x3. 
@@ -1951,11 +1951,11 @@ public:
 };
 
 /// Matrix 3x3 of floats
-typedef Matrix3<GLfloat> Matrix3f;
+typedef Matrix3<f32> Matrix3f;
 /// Matrix 3x3 of doubles
-typedef Matrix3<GLdouble> Matrix3d;
+typedef Matrix3<f64> Matrix3d;
 /// Matrix 3x3 of int
-typedef Matrix3<GLint> Matrix3i;
+typedef Matrix3<s32> Matrix3i;
 
 /**
  * Class for matrix 4x4 
@@ -2728,11 +2728,11 @@ public:
 };
 
 /// Matrix 4x4 of floats
-typedef Matrix4<GLfloat> Matrix4f;
+typedef Matrix4<f32> Matrix4f;
 /// Matrix 4x4 of doubles
-typedef Matrix4<GLdouble> Matrix4d;
+typedef Matrix4<f64> Matrix4d;
 /// Matrix 4x4 of int
-typedef Matrix4<GLint> Matrix4i;
+typedef Matrix4<s32> Matrix4i;
 
 /**
  * Quaternion class implementing some quaternion algebra operations.
@@ -3295,8 +3295,8 @@ public:
 
 };
 
-typedef Quaternion<GLfloat> Quatf;
-typedef Quaternion<GLdouble> Quatd;
+typedef Quaternion<f32> Quatf;
+typedef Quaternion<f64> Quatd;
 
 #endif // __vmath_Header_File__
 
