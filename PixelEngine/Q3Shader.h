@@ -52,28 +52,6 @@ enum {
 };
 
 
-/*
-class Q3ShaderParser {
-    
-    std::string m_script;
-    std::string::iterator m_pos;
-    std::string::iterator m_end;
-    std::string m_currentToken;
-    
-public:
-    Q3ShaderParser() {};
-    ~Q3ShaderParser() {};
-    
-    void parse(const std::string& script) {
-        m_script = script;
-        m_pos = m_script.begin();
-        m_end = m_script.end();
-        m_currentToken = "";
-    };
-    
-    const std::string& nexttok();
-};
-*/
 
 class Q3ShaderPass {
     
@@ -144,20 +122,14 @@ public:
 };
 
 
-class Q3Shader : public std::vector<std::shared_ptr<Q3ShaderPass>>  {
-
-protected:
-
-    std::string     m_name;
-	unsigned int    m_flags;
-
-    void _saveOglSates();
-    void _restoreOglStates();
+class Q3Shader {
 
 public:
 	Q3Shader()
     : m_name(""), m_flags(0) {};
 	virtual ~Q3Shader() {};
+
+	void addShaderPass(const Q3ShaderPass& shaderPass) { assert(m_numQ3ShaderPasses < MAX_SHADER_PASSES); m_q3shaderPasses[m_numQ3ShaderPasses++] = shaderPass; }
     
     void setFlags(const unsigned int& flags) { m_flags = flags; }
     void addFlag(const unsigned int& flag)   { m_flags |= flag; }
@@ -166,6 +138,7 @@ public:
     void setName(const std::string& name) { m_name = name; }
 	const std::string& getName() const { return m_name;  }
     
+	/*
     Q3Shader& operator=(const Q3Shader& shader)
     {
         if (this == &shader)
@@ -174,7 +147,7 @@ public:
         m_name  = shader.m_name;
         m_flags = shader.m_flags;
         
-        
+		
         for (Q3Shader::const_iterator i = shader.begin(); i != shader.end(); ++i) {
             std::shared_ptr<Q3ShaderPass> shaderPass = std::make_shared<Q3ShaderPass>();
             *shaderPass = *(*i);
@@ -183,37 +156,56 @@ public:
         
         return *this;
     }
+	*/
 
     void start();
     void stop();
+
+protected:
+
+	static const s32 MAX_SHADER_PASSES = 10;
+	Q3ShaderPass m_q3shaderPasses[MAX_SHADER_PASSES];
+	s32 m_numQ3ShaderPasses;
+
+	std::string     m_name;
+	unsigned int    m_flags;
+
+	void _saveOglSates();
+	void _restoreOglStates();
 };
 
 
-class Q3ShaderManager : public std::map<std::string, std::shared_ptr<Q3Shader>>, public Singleton<Q3ShaderManager> {
+class Q3ShaderManager : public Singleton<Q3ShaderManager> {
     friend class Singleton<Q3ShaderManager>;
-    
-private:
-    
-    void _loadCommand();
-    
-    bool init();
-    bool deinit() { return true; };
-    
-    // Variables used in the parser
-    unsigned int m_readingState;
-    unsigned int m_depth;
-    
-    Q3ShaderManager() {};
-    Q3ShaderManager(Q3ShaderManager&);
-    void operator =(Q3ShaderManager&);
-    
 public:
     
     virtual ~Q3ShaderManager() {};
     
-    bool exists(const std::string& name) {return this->find(name) != this->end();}
+	s32 exists(const c8* name) { 
+
+	}
     
     bool loadFromFile(const char* filename);
+
+private:
+
+	static const s32	MAX_SHADERS = 2000;
+	Q3Shader			m_q3shaders[MAX_SHADERS];
+	s32					m_numQ3Shaders;
+
+	void _loadCommand();
+
+	bool init();
+	bool deinit() { return true; };
+
+	// Variables used in the parser
+	u32 m_readingState;
+	u32 m_depth;
+
+	Q3ShaderManager()
+		: m_numQ3Shaders(0), m_readingState(0), m_depth(0) {};
+	Q3ShaderManager(Q3ShaderManager&);
+	void operator =(Q3ShaderManager&);
 
 };
 

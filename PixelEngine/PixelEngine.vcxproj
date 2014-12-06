@@ -94,6 +94,7 @@
     <ClInclude Include="Q3Shader.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Singleton.h" />
+    <ClInclude Include="Stack.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Types.h" />
     <ClInclude Include="unique.h" />

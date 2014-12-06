@@ -393,13 +393,7 @@ private:
 	s32 m_numVertices;
 
 	CBspFace* m_faces;
-	s32*	  m_pushedFaces;
 	s32		  m_numFaces;
-
-	s32* m_faceToDrawIndices;
-	s32 m_numFacesToDraw;
-
-
 
 	CBspPlane* m_planes;
 	s32 m_numPlanes;
@@ -453,6 +447,11 @@ private:
 	GLuint		vboIds[2];
 	s32			m_cameraCluster;
 	Matrix4f	m_clipMatrix;
+
+	s32*		m_pushedFaces;
+	s32*		m_faceToDrawIndices;
+	s32			m_numFacesToDraw;
+	Q3Shader **  m_faceQ3shaders;
 
 	const CBspLeaf& getLeafFromPosition(const Vector3f& v) const {
 		int index = 0;

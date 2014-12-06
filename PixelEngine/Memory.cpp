@@ -13,8 +13,8 @@
 #define MEM_ID	0x12345678l
 
 CMemoryChunk* CMemoryManager::getMemory(const u64& size, c8 * label) {
-	void* ptr;
-	SMemoryBlock* block;
+	void* ptr = nullptr;
+	SMemoryBlock* block = nullptr;
 
 	ptr = std::malloc(size + sizeof(SMemoryBlock));
 	if (ptr == nullptr) {
@@ -39,7 +39,7 @@ CMemoryChunk* CMemoryManager::getMemory(const u64& size, c8 * label) {
 }
 
 
-void CMemoryManager::freeBlock(void *ptr) {
+void CMemoryManager::freeChunk(CMemoryChunk *ptr) {
 	SMemoryBlock *block = nullptr;
 
 	block = this->getBlockFromPointer(ptr);
@@ -56,7 +56,7 @@ void CMemoryManager::freeBlock(void *ptr) {
 
 
 void CMemoryManager::print(void) {
-	SMemoryBlock* block;
+	SMemoryBlock* block = nullptr;
 	int i;
 	char buf[2048];
 
@@ -74,10 +74,10 @@ void CMemoryManager::print(void) {
 
 
 void CMemoryManager::clearMemory(void) {
-	SMemoryBlock* block;
+	SMemoryBlock* block = nullptr;
 
 	for (block = m_headBlock; block; block = m_headBlock) {
-		freeBlock(block->memChunk.m_ptr);
+		freeChunk(&block->memChunk);
 	}
 
 	m_totalMemorySize = 0;
@@ -99,14 +99,14 @@ void CMemoryManager::popMemoryBlock(SMemoryBlock* block) {
 }
 
 
-CMemoryManager::SMemoryBlock* CMemoryManager::getBlockFromPointer(void *ptr) {
+CMemoryManager::SMemoryBlock* CMemoryManager::getBlockFromPointer(CMemoryChunk *ptr) {
 	SMemoryBlock *block = nullptr;
 
-	if (!ptr) {
+	if (!ptr || !ptr->m_ptr) {
 		return nullptr;
 	}
 
-	block = (SMemoryBlock*)((u8*)ptr - sizeof(SMemoryBlock));
+	block = (SMemoryBlock*)((u8*)ptr->m_ptr - sizeof(SMemoryBlock));
 
 	if (block->id != MEM_ID) {
 		ILogger::log("MemoryManager :: invalid memory block\n");

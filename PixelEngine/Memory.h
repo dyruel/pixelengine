@@ -54,7 +54,7 @@ public:
 
 	CMemoryChunk* getMemory(const u64& size, c8 * label);
 
-	void freeBlock(void *ptr);
+	void freeChunk(CMemoryChunk *ptr);
 
 	void print(void);
 
@@ -82,7 +82,7 @@ private:
 
 	void pushMemoryBlock(SMemoryBlock* block);
 	void popMemoryBlock(SMemoryBlock* block);
-	SMemoryBlock* getBlockFromPointer(void *ptr);
+	SMemoryBlock* getBlockFromPointer(CMemoryChunk *ptr);
 };
 
 #endif

@@ -45,23 +45,8 @@ bool CQ3Map::load(const char* filename) {
 	}
 
 	// ...  and additional data
-//	extraEntries[0].length = (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32);
-//	extraEntries[0].offset = totalMapSize;
-
-//	extraEntries[1].length = (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32);
-//	extraEntries[1].offset = extraEntries[0].offset + extraEntries[0].length;
-
 	additionalSize += (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32) * 2;
-
-
-//	m_extraDataEntries[ELUMP_FACESTODRAW].offset = totalMapSize;
-//	m_extraDataEntries[ELUMP_FACESTODRAW].length = (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32);
-
-//	for (int i = ELUMP_FACESTODRAW; i < ELUMP_TOTAL; ++i) {
-//		totalMapSize += m_extraDataEntries[i].length;
-//	}
-
-	
+	additionalSize += (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(Q3Shader*);
 
 	// Reserve a chunk
 	m_memoryChunk = memoryManager->getMemory(totalMapSize + additionalSize, "Q3 Map");
@@ -93,8 +78,9 @@ bool CQ3Map::load(const char* filename) {
 	}
 
 
-	m_faceToDrawIndices = (s32*) m_memoryChunk->reserve((m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32));
-	m_pushedFaces		= (s32*)m_memoryChunk->reserve((m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32));
+	m_faceToDrawIndices = (s32*)m_memoryChunk->reserve(m_numFaces * sizeof(s32));
+	m_pushedFaces =		  (s32*)m_memoryChunk->reserve(m_numFaces * sizeof(s32));
+	m_faceQ3shaders = (Q3Shader**)m_memoryChunk->reserve(m_numFaces * sizeof(Q3Shader*));
 	m_numFacesToDraw	= 0;
 
 	//(s32*)m_memoryChunk->reserve((m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32));
@@ -138,6 +124,9 @@ bool CQ3Map::load(const char* filename) {
 						++shaderPass;
 					}
 
+
+					m_faceQ3shaders[i] = shader;
+
 				}
 				else {
 
@@ -171,7 +160,9 @@ bool CQ3Map::load(const char* filename) {
 					shaderDefault->push_back(shaderPass);
 
 					std::string name(m_shaders[face.shaderIdx].name);
-					(*Q3ShaderManager::getInstance())[name] = shaderDefault;
+
+					m_faceQ3shaders[i] = shaderDefault.get();
+					//(*Q3ShaderManager::getInstance())[name] = shaderDefault;
 					//face->m_shader = shaderDefault;
 					//infoString = "(No shader script found, default loaded)";
 				}
@@ -230,21 +221,23 @@ void CQ3Map::render() {
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vboIds[1]);
 
-//	for (int i = 0; i < m_numFaces; ++i){
-//		const CBspFace& face = m_faces[i];
-	for (int i = 0; i < m_numFacesToDraw; ++i){
-		const CBspFace& face = m_faces[m_faceToDrawIndices[i]];
+	for (int i = 0; i < m_numFaces; ++i){
+		const CBspFace& face = m_faces[i];
+//	for (int i = 0; i < m_numFacesToDraw; ++i){
+//		const CBspFace& face = m_faces[m_faceToDrawIndices[i]];
 		//const CBspShader& shader = m_shaders[face.shaderIdx];
 
 		if (face.type == FACE_TRIANGLE_SOUP || face.type == FACE_PLANAR) {
-			Q3Shader * shader = Q3ShaderManager::getInstance()->at(m_shaders[face.shaderIdx].name).get();
+			//Q3Shader * shader = Q3ShaderManager::getInstance()->at(m_shaders[face.shaderIdx].name).get();
+			Q3Shader * shader = m_faceQ3shaders[i];
 
-
+			
 			shader->start();
+			/*
 			std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPasse = shader->begin();
 			std::vector<std::shared_ptr<Q3ShaderPass>>::iterator shaderPassesEnd = shader->end();
 
-
+			
 			while (shaderPasse != shaderPassesEnd) {
 
 				(*shaderPasse)->start();
@@ -256,8 +249,9 @@ void CQ3Map::render() {
 				++shaderPasse;
 			}
 
-
+			*/
 			shader->stop();
+			
 		}
 
 
