@@ -54,7 +54,9 @@ enum {
 
 
 class Q3ShaderPass {
-    
+	friend class Q3ShaderManager;
+	friend class Q3Shader;
+
 private:
     
     enum {
@@ -64,8 +66,8 @@ private:
         NO_CULL,
         NUMSTATES
     };
-    
-    Texture                 m_Texture;
+
+	static const s32 MAX_ANIM_FRAMES = 15;
     
 	unsigned int            m_flags;
     
@@ -77,7 +79,8 @@ private:
 
 	// Animmap
 	float                   m_animSpeed;
-    std::vector<Texture>    m_animFrames;
+	Texture					m_frames[MAX_ANIM_FRAMES];
+	u32						m_numFrames;
 	float                   m_frame;
 
 	// Alpha func
@@ -95,38 +98,58 @@ public:
     
     Q3ShaderPass()
     : m_flags(0), m_blendSrc(GL_DST_COLOR), m_blendDst(GL_ZERO),
-      m_animSpeed(0.0f), m_frame(0.0f),
+	m_animSpeed(0.0f), m_frame(0.0f), m_numFrames(0),
       m_alphaFunc(0), m_alphaFuncRef(0.0f), m_depthFunc(GL_LEQUAL) {}
     ~Q3ShaderPass() {}
 
-    
-    void setTexture(const Texture& texture) { m_Texture = texture; }
-    const Texture& getTexture() const { return m_Texture; }
+
     void setFlags(const unsigned int& flags) { m_flags = flags; }
     void addFlag(const unsigned int& flag)   { m_flags |= flag; }
     const unsigned int getFlags() const { return m_flags; }
     void setBlending(const GLenum& blendSrc, const GLenum& blendDst) { m_blendSrc = blendSrc; m_blendDst = blendDst; };
-    void setAnimation(const float& animSpeed, const std::vector<Texture>& animFrames) {
-        m_animSpeed      = animSpeed;
-        m_animFrames     = animFrames;
+
+
+	void setAnimSpeed(const float& animSpeed) { m_animSpeed = animSpeed; }
+
+	void addFrame(const Texture& frame) {
+		assert(m_numFrames < MAX_ANIM_FRAMES);
+		m_frames[m_numFrames++] = frame;
     }
+
     void setAlphaFunc(const GLenum& alphaFunc, const GLclampf& alphaFuncRef) { m_alphaFunc = alphaFunc; m_alphaFuncRef = alphaFuncRef; }
     void setDepthFunc(const GLenum& depthFunc) { m_depthFunc = depthFunc; }
     
-    void init();
-    void update(const double& delta);
+	void clear() {
+		m_flags = 0;
+		memset(m_oglStates, 0, NUMSTATES);
+		m_blendSrc = GL_DST_COLOR;
+		m_blendDst = GL_ZERO;
+		m_animSpeed = 0.0f;
+
+		for (int i = 0; i < MAX_ANIM_FRAMES; ++i) {
+			m_frames[i].clear();
+		}
+
+		m_numFrames = 0;
+		m_frame = 0.0f;
+		m_alphaFunc = 0;
+		m_alphaFuncRef = 0.0f;
+		m_depthFunc = GL_LEQUAL;
+	}
+
+	void update(const double& delta);
     
     void start();
     void stop();
-
 };
 
 
 class Q3Shader {
+	friend class Q3ShaderManager;
 
 public:
 	Q3Shader()
-    : m_name(""), m_flags(0) {};
+		: m_name(""), m_flags(0), m_numQ3ShaderPasses(0) {};
 	virtual ~Q3Shader() {};
 
 	void addShaderPass(const Q3ShaderPass& shaderPass) { assert(m_numQ3ShaderPasses < MAX_SHADER_PASSES); m_q3shaderPasses[m_numQ3ShaderPasses++] = shaderPass; }
@@ -137,6 +160,33 @@ public:
     
     void setName(const std::string& name) { m_name = name; }
 	const std::string& getName() const { return m_name;  }
+
+	Q3ShaderPass& getShaderPass(const s32& i) {
+		assert(i < MAX_SHADER_PASSES);
+		return m_q3shaderPasses[i];
+	}
+
+	const s32& getNumShaderPasses() const {
+		return m_numQ3ShaderPasses;
+	}
+
+	void clear() {
+		m_name = "";
+		m_flags = 0;
+		m_numQ3ShaderPasses = 0;
+
+		for (int i = 0; i < MAX_SHADER_PASSES; ++i) {
+			m_q3shaderPasses[i].clear();
+		}
+	}
+
+	void init() {
+		for (int i = 0; i < m_numQ3ShaderPasses; ++i) {
+			for (int j = 0; j < m_q3shaderPasses[i].m_numFrames; ++j) {
+				TextureManager::getInstance()->initTexture(m_q3shaderPasses[i].m_frames[j]);
+			}
+		}
+	}
     
 	/*
     Q3Shader& operator=(const Q3Shader& shader)
@@ -175,35 +225,38 @@ protected:
 };
 
 
-class Q3ShaderManager : public Singleton<Q3ShaderManager> {
+class Q3ShaderManager : public std::map<std::string, Q3Shader>, public Singleton<Q3ShaderManager> {
     friend class Singleton<Q3ShaderManager>;
 public:
     
     virtual ~Q3ShaderManager() {};
     
-	s32 exists(const c8* name) { 
-
+	bool exists(const std::string& name) {
+		return false;
 	}
     
     bool loadFromFile(const char* filename);
 
 private:
 
-	static const s32	MAX_SHADERS = 2000;
-	Q3Shader			m_q3shaders[MAX_SHADERS];
-	s32					m_numQ3Shaders;
+//	static const s32	MAX_SHADERS = 2000;
+//	Q3Shader			m_q3shaders[MAX_SHADERS];
+//	s32					m_numQ3Shaders;
 
 	void _loadCommand();
 
 	bool init();
 	bool deinit() { return true; };
 
+
+	std::string m_buffer;
+
 	// Variables used in the parser
 	u32 m_readingState;
 	u32 m_depth;
 
 	Q3ShaderManager()
-		: m_numQ3Shaders(0), m_readingState(0), m_depth(0) {};
+		: /*m_numQ3Shaders(0),*/ m_readingState(0), m_depth(0) {};
 	Q3ShaderManager(Q3ShaderManager&);
 	void operator =(Q3ShaderManager&);
 

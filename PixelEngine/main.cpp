@@ -81,10 +81,10 @@ int main(int argc, const char * argv[]){
 	GLdouble renderTime = 0.0;
 	GLdouble updateTime = 0.0;
     
-	bool flag = true;
+//	bool flag = true;
 	while (!video->windowShouldClose()) {
 //	while (flag) {
-		flag = false;
+//		flag = false;
 		
 		GLdouble presentTime = (GLdouble) glfwGetTime()*1000;
         frames++;
@@ -109,7 +109,7 @@ int main(int argc, const char * argv[]){
 		renderTime = glfwGetTime() * 1000 - renderTime;
         
         if(((GLdouble) glfwGetTime()) - timer > 1.) {
-			std::cout << (1.0 / updates) * 1000 << " ms/u, " << (1.0 / frames) * 1000 << " ms/f, " << 0 << "ms (pushing time) " << renderTime << " " << updateTime << std::endl;
+			std::cout << (1.0 / updates) * 1000 << " ms/u, " << (1.0 / frames) * 1000 << " ms/f, " << frames << "fps " << renderTime << " " << updateTime << std::endl;
             updates = 0;
             frames = 0;
             timer += 1.;

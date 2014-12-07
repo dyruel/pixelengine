@@ -852,7 +852,6 @@ public:
 			ILogger::log("FileSystem :: Error while opening %s.\n", filename);
 			return false;
 		}
-		
 
 		m_file.name = filename;
 

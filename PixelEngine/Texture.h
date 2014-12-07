@@ -29,7 +29,7 @@ enum {
 
 struct Texture {
     std::string     m_name;
-    int             m_texId;
+	GLuint          m_texId;
     GLuint          m_flags;
 //    GLvoid*         m_texCoordPointer;
 //    GLsizei         m_Stride;
@@ -43,7 +43,7 @@ struct Texture {
 //        }
         
         m_name  = "";
-        m_texId = -1;
+        m_texId = 0;
         m_flags = 0;
 //        m_Stride = 0;
 //        m_texCoordPointer = nullptr;
@@ -89,7 +89,7 @@ public:
 		}
 	}
 
-    void getTexture(Texture& tex) {
+    void initTexture(Texture& tex) {
         tex.m_texId = this->getTexture(tex.m_name, tex.m_flags);
     }
     

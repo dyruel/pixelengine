@@ -83,12 +83,12 @@ void Q3ShaderPass::start() {
     
     this->_saveOglSates();
     
-    if (m_flags & SHADER_ANIMMAP) {
-        glBindTexture(GL_TEXTURE_2D, m_animFrames[(int) m_frame].m_texId);
-    }
-    else  {
-        glBindTexture(GL_TEXTURE_2D, m_Texture.m_texId);
-    }
+//    if (m_flags & SHADER_ANIMMAP) {
+	glBindTexture(GL_TEXTURE_2D, m_frames[(int)m_frame].m_texId);
+ //   }
+ //   else  {
+//		glBindTexture(GL_TEXTURE_2D, m_texIds[0]);
+//    }
     
     if (m_flags & SHADER_BLENDFUNC) {
         glEnable(GL_BLEND);
@@ -114,7 +114,6 @@ void Q3ShaderPass::start() {
     else {
         glDepthMask(GL_FALSE);
     }
-    
 }
 
 
@@ -126,20 +125,11 @@ void Q3ShaderPass::stop() {
 
 
 
-void Q3ShaderPass::init() {
-    if(m_Texture.m_texId < 0) {
-        TextureManager::getInstance()->getTexture(m_Texture);
-    }
-
-	for (std::vector<Texture>::iterator i = m_animFrames.begin(); i != m_animFrames.end(); ++i) {
-		TextureManager::getInstance()->getTexture(*i);
-	}
-}
 
 void Q3ShaderPass::update(const double& delta) {
     if (m_flags & SHADER_ANIMMAP) {
         m_frame += delta * m_animSpeed;
-        if(((int) m_frame) >= m_animFrames.size())
+		if (((int)m_frame) >= m_numFrames)
             m_frame = 0.f;
     }
 }
@@ -180,8 +170,8 @@ void Q3Shader::stop() {
 bool Q3ShaderManager::loadFromFile(const char* filename) {
 	std::ifstream file(filename, std::ios::in);
 	std::stringstream sstream;
-    Q3Shader shader;
-	Q3ShaderPass shaderPass;
+    Q3Shader  shader;
+	Q3ShaderPass  shaderPass;
     std::string token = "";
     
     std::vector<std::string> args;
@@ -201,8 +191,10 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 	m_readingState = SP_BEGIN_COM;
     m_depth = 0;
     
-//    shader = std::make_shared<Q3Shader>();
-//    shaderPass = std::make_shared<Q3ShaderPass>();
+	//shader = &m_q3shaders[m_numQ3Shaders];
+	//shaderPass = &shader->m_q3shaderPasses[shader->m_numQ3ShaderPasses];
+	shader.clear();
+	shaderPass.clear();
     args.clear();
 
     std::string::iterator i = buffer.begin();
@@ -337,16 +329,46 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 						shader.m_shaderPasses[0].m_flags |= SHADER_DEPTHWRITE;
 					}
 					*/
-                    //(*this)[shader->getName()] = shader;
+
+                    (*this)[shader.getName()] = shader;
+					shader.clear();
 
                     //shader = std::make_shared<Q3Shader>();
 
-					assert(m_numQ3Shaders < MAX_SHADERS);
-
-					m_q3shaders[m_numQ3Shaders++] = shader;
+					//assert(m_numQ3Shaders+1 < MAX_SHADERS);
+					/*
+					if (m_numQ3Shaders + 1 < MAX_SHADERS) {
+						++m_numQ3Shaders;
+						shader = &m_q3shaders[m_numQ3Shaders];
+					}
+					else {
+						ILogger::log("WARNING: Q3Shader:: The maximum number of shaders is attained. No more shaders will be loaded.\n");
+						return true;
+					}
+					*/
+					//m_q3shaders[m_numQ3Shaders++] = shader;
                 }
                 else { // end of a shader pass
-                    shader.addShaderPass(shaderPass);
+
+					if (shaderPass.m_numFrames > Q3ShaderPass::MAX_ANIM_FRAMES) {
+						std::cout << shader.getName() << " " << filename << std::endl;
+					}
+
+
+					shader.addShaderPass(shaderPass);
+					shaderPass.clear();
+
+					/*
+					if (shader->m_numQ3ShaderPasses + 1 < Q3Shader::MAX_SHADER_PASSES) {
+						++(shader->m_numQ3ShaderPasses);
+						shaderPass = &(shader->m_q3shaderPasses[shader->m_numQ3ShaderPasses]);
+					}
+					else {
+						ILogger::log("WARNING: Q3Shader:: The maximum number of shader passes is attained. No more shader pass will be loaded for the shader %s.\n", shader->getName().c_str());
+						return true;
+					}
+					*/
+                    //shader.addShaderPass(shaderPass);
 
 					//shaderPass = std::make_shared<Q3ShaderPass>();
                 }
@@ -379,23 +401,23 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 
 							if (args.size() > 1) {
 								if (!args[1].compare("none") || !args[1].compare("disable")) {
-                                    shader.addFlag(SHADER_NOCULL);
+									shader.addFlag(SHADER_NOCULL);
 								}
 								else if (!args[1].compare("front")){
-                                    shader.addFlag(SHADER_FRONTCULL);
+									shader.addFlag(SHADER_FRONTCULL);
 								}
 								else if (!args[1].compare("back")){
-                                    shader.addFlag(SHADER_BACKCULL);
+									shader.addFlag(SHADER_BACKCULL);
 								}
 							}
 
 						}
 						else if (!args[0].compare("surfaceparm")) {
 							if (!args[1].compare("trans")) {
-                                shader.addFlag(SHADER_TRANSPARENT);
+								shader.addFlag(SHADER_TRANSPARENT);
 							}
 							else if (!args[1].compare("sky")) {
-                                shader.addFlag(SHADER_SKY);
+								shader.addFlag(SHADER_SKY);
 							}
 							else {
 								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with surfaceparm\n", shader.getName().c_str(), args[1].c_str());
@@ -410,32 +432,30 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 					}
 					else { // Shader pass command
 						if (!args[0].compare("animmap")) {
-                            shaderPass.addFlag(SHADER_ANIMMAP);
-                            std::vector<Texture> animFrames;
-                            Texture texture;
+							shaderPass.addFlag(SHADER_ANIMMAP);
+							Texture	 frame;
 
 							std::vector<std::string>::iterator j = args.begin() + 2;
 							while (j != args.end()){
-                                texture.m_name = *j;
-                                animFrames.push_back(texture);
+								frame.m_name = *j;
+								shaderPass.addFrame(frame);
 								++j;
 							}
 							
-                            shaderPass.setAnimation(atof(args[1].c_str()), animFrames);
-
+							shaderPass.setAnimSpeed(atof(args[1].c_str()));
 						}
 						else if (!args[0].compare("blendfunc")) {
-                            shaderPass.addFlag(SHADER_BLENDFUNC);
+							shaderPass.addFlag(SHADER_BLENDFUNC);
 
 							if (args.size() == 2) {
 								if (!args[1].compare("blend")) {
-                                    shaderPass.setBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+									shaderPass.setBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 								}
 								else if (!args[1].compare("filter")) {
-                                    shaderPass.setBlending(GL_DST_COLOR, GL_ZERO);
+									shaderPass.setBlending(GL_DST_COLOR, GL_ZERO);
 								}
 								else if (!args[1].compare("add")) {
-                                    shaderPass.setBlending(GL_ONE, GL_ONE);
+									shaderPass.setBlending(GL_ONE, GL_ONE);
 								}
 								else {
 									ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with blendfunc\n", shader.getName().c_str(), args[1].c_str());
@@ -471,18 +491,18 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 									}
 								}
                                 
-                                shaderPass.setBlending(blend[0], blend[1]);
+								shaderPass.setBlending(blend[0], blend[1]);
                                 
 							}
 						}
 						else if (!args[0].compare("map")) {
 							if (!args[1].compare("$lightmap")) {
-                                shaderPass.addFlag(SHADER_LIGHTMAP);
+								shaderPass.addFlag(SHADER_LIGHTMAP);
 							}
 							else {
                                 Texture texture;
                                 texture.m_name = args[1];
-                                shaderPass.setTexture(texture);
+								shaderPass.addFrame(texture);
 							}
 
 						}
@@ -499,16 +519,16 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
                             Texture texture;
                             texture.m_name = args[1];
                             texture.m_flags = TEXTURE_CLAMP;
-                            shaderPass.setTexture(texture);
+							shaderPass.addFrame(texture);
 						}
 						else if (!args[0].compare("alphafunc")) {
-                            shaderPass.addFlag(SHADER_ALPHAFUNC);
+							shaderPass.addFlag(SHADER_ALPHAFUNC);
 
 							if (!args[1].compare("gt0")) {
-                                shaderPass.setAlphaFunc(GL_GREATER, 0.0f);
+								shaderPass.setAlphaFunc(GL_GREATER, 0.0f);
 							}
 							else if (!args[1].compare("ge128")) {
-                                shaderPass.setAlphaFunc(GL_GEQUAL, 0.5f);
+								shaderPass.setAlphaFunc(GL_GEQUAL, 0.5f);
 							}
 							else {
 								ILogger::log("Q3Shader::Syntax error in %s: The keyword %s is not valid with alphafunc\n", shader.getName().c_str(), args[1].c_str());
@@ -524,7 +544,7 @@ bool Q3ShaderManager::loadFromFile(const char* filename) {
 							}
 						}
 						else if (!args[0].compare("depthwrite")) {
-                            shaderPass.addFlag(SHADER_DEPTHWRITE);
+							shaderPass.addFlag(SHADER_DEPTHWRITE);
 						}
 						else {
 							ILogger::log("Q3Shader::Syntax error in %s: The keyword %s does not exist\n", shader.getName().c_str(), args[0].c_str());

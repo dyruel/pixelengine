@@ -444,14 +444,25 @@ private:
 	bool loadExtras			();
 
 	// Additional content
+	class CShadedFace {
+	public:
+		CBspFace * face;
+		Q3Shader shader;
+		bool toBeDrawn;
+	};
+
+	CShadedFace* m_shadedFaces;
+	s32 m_numShadedFaces;
+
+
 	GLuint		vboIds[2];
 	s32			m_cameraCluster;
-	Matrix4f	m_clipMatrix;
+	f32			m_clipMatrix[16];
 
-	s32*		m_pushedFaces;
-	s32*		m_faceToDrawIndices;
-	s32			m_numFacesToDraw;
-	Q3Shader **  m_faceQ3shaders;
+//	s32*		m_pushedFaces;
+//	s32*		m_faceToDrawIndices;
+//	s32			m_numFacesToDraw;
+//	Q3Shader **  m_faceQ3shaders;
 
 	const CBspLeaf& getLeafFromPosition(const Vector3f& v) const {
 		int index = 0;
@@ -500,32 +511,58 @@ private:
 
 		for (s32 j = 0; j < 8; ++j)
 		{
-			Vector4f v, cv;
+//			Vector4f v, cv;
+			f32 v[4], cv[4];
 			u32 flags = 0;
 
-			v.x = (f32)bbox[bbox_index[j][0]];
-			v.y = (f32)bbox[bbox_index[j][1]];
-			v.z = (f32)bbox[bbox_index[j][2]];
-			v.w = 1.0f;
+			v[0] = (f32)bbox[bbox_index[j][0]];
+			v[1] = (f32)bbox[bbox_index[j][1]];
+			v[2] = (f32)bbox[bbox_index[j][2]];
+			v[3] = 1.0f;
 
-			cv = m_clipMatrix * v;
+//			cv[0] = m_clipMatrix[0] * v[0] + m_clipMatrix[4] * v[1] + m_clipMatrix[8] * v[2] + m_clipMatrix[12] * v[3];
+//			cv[1] = m_clipMatrix[1] * v[0] + m_clipMatrix[5] * v[1] + m_clipMatrix[9] * v[2] + m_clipMatrix[13] * v[3];
+//			cv[2] = m_clipMatrix[2] * v[0] + m_clipMatrix[6] * v[1] + m_clipMatrix[10] * v[2] + m_clipMatrix[14] * v[3];
+//			cv[3] = m_clipMatrix[3] * v[0] + m_clipMatrix[7] * v[1] + m_clipMatrix[11] * v[2] + m_clipMatrix[15] * v[3];
 
-			if (cv.x < -cv.w)
+			__m128 x = _mm_loadu_ps((const float*)&v);
+			__m128 A0 = _mm_loadu_ps((const float*)(m_clipMatrix + 0));
+			__m128 A1 = _mm_loadu_ps((const float*)(m_clipMatrix + 4));
+			__m128 A2 = _mm_loadu_ps((const float*)(m_clipMatrix + 8));
+			__m128 A3 = _mm_loadu_ps((const float*)(m_clipMatrix + 12));
+
+			// Multiply each matrix row with the vector x
+			__m128 m0 = _mm_mul_ps(A0, x);
+			__m128 m1 = _mm_mul_ps(A1, x);
+			__m128 m2 = _mm_mul_ps(A2, x);
+			__m128 m3 = _mm_mul_ps(A3, x);
+
+			// Using HADD, we add four floats at a time
+			__m128 sum_01 = _mm_hadd_ps(m0, m1);
+			__m128 sum_23 = _mm_hadd_ps(m2, m3);
+			__m128 result = _mm_hadd_ps(sum_01, sum_23);
+
+			// Finally, store the result
+			_mm_storeu_ps((float*)&cv, result);
+
+			//cv = m_clipMatrix * v;
+
+			if (cv[0] < -cv[3])
 				flags |= CLIP_X_LEFT;
 
-			if (cv.x > cv.w)
+			if (cv[0] > cv[3])
 				flags |= CLIP_X_RIGHT;
-
-			if (cv.y > cv.w)
+			
+			if (cv[1] < -cv[3])
 				flags |= CLIP_Y_LEFT;
 
-			if (cv.y > cv.w)
+			if (cv[1] > cv[3])
 				flags |= CLIP_Y_RIGHT;
 
-			if (cv.z > cv.w)
+			if (cv[2] < -cv[3])
 				flags |= CLIP_Z_LEFT;
 
-			if (cv.z > cv.w)
+			if (cv[2] > cv[3])
 				flags |= CLIP_Z_RIGHT;
 
 			and_clip &= flags;
@@ -544,21 +581,20 @@ private:
 			const CBspLeaf& leaf = m_leaves[i];
 
 			// PVS test
-			if (!this->isVisible(m_cameraCluster, leaf.cluster)) {
+			//if (!this->isVisible(m_cameraCluster, leaf.cluster)) {
+			//	return;
+			//}
+			
+			// Frustrum culling
+			if (this->clipTest(leaf.bbox)) {
 				return;
 			}
 			
-			// Frustrum culling
-			//if (this->clipTest(leaf.bbox)) {
-			//	return;
-			//}
-
 			const s32 end = leaf.firstFaceIdx + leaf.numFaces;
 
-			for (s32 j = leaf.firstFaceIdx; j < end && m_numFacesToDraw < m_numFaces; ++j) {
-				if (!m_pushedFaces[m_leafFaceIndices[j]]) {
-					m_faceToDrawIndices[m_numFacesToDraw++] = m_leafFaceIndices[j];
-					m_pushedFaces[m_leafFaceIndices[j]] = 1;
+			for (s32 j = leaf.firstFaceIdx; j < end; ++j) {
+				if (!m_shadedFaces[m_leafFaceIndices[j]].toBeDrawn) {
+					m_shadedFaces[m_leafFaceIndices[j]].toBeDrawn = true;
 				}
 			}
 			
@@ -571,8 +607,7 @@ private:
 			// Frustrum culling
 			//if (this->clipTest(node.bbox)) {
 			//	return;
-			//}
-			
+			//}		
 
 			this->updateFacesToDrawIndices(node.children[0]);
 			this->updateFacesToDrawIndices(node.children[1]);
