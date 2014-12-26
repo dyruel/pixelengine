@@ -90,7 +90,9 @@ public:
 	}
 
     void initTexture(Texture& tex) {
-        tex.m_texId = this->getTexture(tex.m_name, tex.m_flags);
+		if (tex.m_texId < 1) {
+			tex.m_texId = this->getTexture(tex.m_name, tex.m_flags);
+		}
     }
     
 };

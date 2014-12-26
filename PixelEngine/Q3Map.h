@@ -586,9 +586,9 @@ private:
 			//}
 			
 			// Frustrum culling
-			if (this->clipTest(leaf.bbox)) {
-				return;
-			}
+			//if (this->clipTest(leaf.bbox)) {
+			//	return;
+			//}
 			
 			const s32 end = leaf.firstFaceIdx + leaf.numFaces;
 

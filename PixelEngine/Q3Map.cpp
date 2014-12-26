@@ -14,6 +14,7 @@ bool CQ3Map::load(const char* filename) {
 
 	FileSystem * fileSystem = FileSystem::getInstance();
 	CMemoryManager * memoryManager = CMemoryManager::getInstance();
+	GLuint * lmIds = nullptr;
 
 	ILogger::log("Loading Q3 Map %s\n", filename);
 
@@ -38,7 +39,7 @@ bool CQ3Map::load(const char* filename) {
 	// Calculate the total amount of memory needed to store the BSP data...
 	u32 totalMapSize = 0;
 	u32 additionalSize = 0;
-	CBspLumpEntry extraEntries[2];
+//	CBspLumpEntry extraEntries[2];
 
 	for (int i = LUMP_ENTITIES; i < LUMP_TOTAL; ++i) {
 		totalMapSize += m_header.entries[i].length;
@@ -46,7 +47,7 @@ bool CQ3Map::load(const char* filename) {
 
 	// ...  and additional data
 	additionalSize += (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(CShadedFace);
-//	additionalSize += (m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(Q3Shader*);
+	additionalSize += (m_header.entries[LUMP_LIGHTMAPS].length / sizeof(CBspLightMap)) * sizeof(GLuint);
 
 	// Reserve a chunk
 	m_memoryChunk = memoryManager->getMemory(totalMapSize + additionalSize, "Q3 Map");
@@ -86,7 +87,19 @@ bool CQ3Map::load(const char* filename) {
 	//(s32*)m_memoryChunk->reserve((m_header.entries[LUMP_FACES].length / sizeof(CBspFace)) * sizeof(s32));
 
 	m_shadedFaces = (CShadedFace*) m_memoryChunk->reserve(m_numFaces * sizeof(CShadedFace));
+	lmIds = (GLuint*)m_memoryChunk->reserve(m_numLightMaps * sizeof(GLuint));
+	
+	glGenTextures(m_numLightMaps, lmIds);
 
+	for (int i = 0; i < m_numLightMaps; ++i) {
+		glBindTexture(GL_TEXTURE_2D, lmIds[i]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 128, 128, 0, GL_RGB, GL_UNSIGNED_BYTE, m_lightMaps[i].map);
+	}
+	
 	memoryManager->print();
 
 	for (int i = 0; i < m_numFaces; ++i){
@@ -146,7 +159,8 @@ bool CQ3Map::load(const char* filename) {
 					//tex[0].m_Stride = sizeof(Q3Vertex);
 
 					tex[1].m_name = "lightmap";
-					//tex[1].m_texId = lmIds[bspFaces[i].lm_index];
+					tex[1].m_texId = lmIds[face.lmIdx];
+//					std::cout << lmIds[face.lmIdx] << std::endl;
 					//tex[1].m_texCoordPointer = &m_verticesPool.vertices[bspFaces[i].firstVertex].lmcoord.x;
 					//tex[1].m_Stride = sizeof(Q3Vertex);
 
@@ -165,7 +179,7 @@ bool CQ3Map::load(const char* filename) {
 					shaderPass[1].addFrame(tex[0]);
 					shaderPass[1].setDepthFunc(GL_LEQUAL);
 					shaderPass[1].setBlending(GL_DST_COLOR, GL_ZERO);
-					shaderDefault.addShaderPass(shaderPass[1]);
+					//shaderDefault.addShaderPass(shaderPass[1]);
 
 					m_shadedFaces[i].shader = shaderDefault;
 					m_shadedFaces[i].shader.init();

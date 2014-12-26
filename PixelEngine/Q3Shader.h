@@ -183,7 +183,9 @@ public:
 	void init() {
 		for (int i = 0; i < m_numQ3ShaderPasses; ++i) {
 			for (int j = 0; j < m_q3shaderPasses[i].m_numFrames; ++j) {
-				TextureManager::getInstance()->initTexture(m_q3shaderPasses[i].m_frames[j]);
+				if (!(m_q3shaderPasses[i].m_flags & SHADER_LIGHTMAP)) {
+					TextureManager::getInstance()->initTexture(m_q3shaderPasses[i].m_frames[j]);
+				}
 			}
 		}
 	}
